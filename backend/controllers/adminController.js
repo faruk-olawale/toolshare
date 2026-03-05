@@ -142,8 +142,17 @@ const getAllUsers = async (req, res, next) => {
 
 const deleteUser = async (req, res, next) => {
   try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found.' });
+    if (user.role === 'admin') return res.status(403).json({ success: false, message: 'Cannot delete admin accounts.' });
+
+    // Delete all their tools and bookings too
+    await Tool.deleteMany({ ownerId: user._id });
+    await Booking.deleteMany({ $or: [{ renterId: user._id }, { ownerId: user._id }] });
+    await Payment.deleteMany({ userId: user._id });
     await User.findByIdAndDelete(req.params.id);
-    res.status(200).json({ success: true, message: 'User deleted.' });
+
+    res.status(200).json({ success: true, message: 'User and all associated data deleted.' });
   } catch (error) { next(error); }
 };
 

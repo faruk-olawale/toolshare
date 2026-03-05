@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 import toast from 'react-hot-toast';
-import { CheckCircle, XCircle, Users, Package, BookOpen, TrendingUp, Eye, AlertTriangle, Shield } from 'lucide-react';
+import { CheckCircle, XCircle, Users, Package, BookOpen, TrendingUp, Eye, AlertTriangle, Shield, Trash2 } from 'lucide-react';
 
 const BASE_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || '';
 const PLACEHOLDER = 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400&q=80';
@@ -14,9 +14,10 @@ export default function AdminDashboard() {
   const [allUsers, setAllUsers] = useState([]);
   const [allBookings, setAllBookings] = useState([]);
   const [loading, setLoading] = useState(true);
-  const [modal, setModal] = useState(null); // { type: 'rejectTool'|'rejectKyc', id }
+  const [modal, setModal] = useState(null);
   const [reason, setReason] = useState('');
   const [processing, setProcessing] = useState(null);
+  const [deleteModal, setDeleteModal] = useState(null); // user to delete
 
   useEffect(() => { fetchAll(); }, []);
 
@@ -45,6 +46,7 @@ export default function AdminDashboard() {
       await api.put(`/admin/tools/${id}/verify`);
       toast.success('Tool approved and live! ✅');
       setPendingTools(prev => prev.filter(t => t._id !== id));
+      setStats(prev => ({ ...prev, pendingTools: prev.pendingTools - 1 }));
     } catch (err) { toast.error(err.response?.data?.message || 'Failed.'); }
     setProcessing(null);
   };
@@ -55,6 +57,7 @@ export default function AdminDashboard() {
       await api.put(`/admin/kyc/${id}/approve`);
       toast.success('KYC approved! ✅');
       setPendingKyc(prev => prev.filter(u => u._id !== id));
+      setStats(prev => ({ ...prev, pendingKyc: prev.pendingKyc - 1 }));
     } catch (err) { toast.error(err.response?.data?.message || 'Failed.'); }
     setProcessing(null);
   };
@@ -73,6 +76,18 @@ export default function AdminDashboard() {
       }
       setModal(null); setReason('');
     } catch (err) { toast.error(err.response?.data?.message || 'Failed.'); }
+    setProcessing(null);
+  };
+
+  const handleDeleteUser = async () => {
+    setProcessing(deleteModal._id);
+    try {
+      await api.delete(`/admin/users/${deleteModal._id}`);
+      toast.success(`${deleteModal.name}'s account deleted.`);
+      setAllUsers(prev => prev.filter(u => u._id !== deleteModal._id));
+      setStats(prev => ({ ...prev, totalUsers: prev.totalUsers - 1 }));
+      setDeleteModal(null);
+    } catch (err) { toast.error(err.response?.data?.message || 'Failed to delete.'); }
     setProcessing(null);
   };
 
@@ -148,7 +163,6 @@ export default function AdminDashboard() {
                     </div>
                     <div className="text-brand-600 font-bold text-sm mt-1">₦{tool.pricePerDay?.toLocaleString()}/day</div>
                     <p className="text-xs text-gray-400 truncate">{tool.ownerId?.name} · {tool.ownerId?.email}</p>
-                    {/* KYC badge on owner */}
                     <span className={`inline-block mt-1 text-xs px-2 py-0.5 rounded-full font-medium ${tool.ownerId?.kyc?.status === 'approved' ? 'bg-green-50 text-green-700' : 'bg-yellow-50 text-yellow-700'}`}>
                       Owner KYC: {tool.ownerId?.kyc?.status || 'not submitted'}
                     </span>
@@ -157,14 +171,13 @@ export default function AdminDashboard() {
                 <p className="text-sm text-gray-500 mb-3 line-clamp-2">{tool.description}</p>
                 {tool.ownershipNote && (
                   <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 mb-3">
-                    <p className="text-xs font-medium text-blue-700 mb-1">Owner's note about ownership:</p>
+                    <p className="text-xs font-medium text-blue-700 mb-1">Owner's note:</p>
                     <p className="text-sm text-blue-800">{tool.ownershipNote}</p>
                   </div>
                 )}
-                {/* Ownership documents */}
                 {tool.ownershipDocs?.length > 0 && (
                   <div className="mb-3">
-                    <p className="text-xs font-medium text-gray-500 mb-2">Proof of Ownership Documents:</p>
+                    <p className="text-xs font-medium text-gray-500 mb-2">Proof of Ownership:</p>
                     <div className="flex flex-wrap gap-2">
                       {tool.ownershipDocs.map((doc, i) => (
                         <a key={i} href={`${BASE_URL}${doc}`} target="_blank" rel="noreferrer"
@@ -194,7 +207,7 @@ export default function AdminDashboard() {
           </div>
         )}
 
-        {/* KYC Verification */}
+        {/* KYC */}
         {tab === 'kyc' && (
           <div className="space-y-4">
             {pendingKyc.length === 0 ? (
@@ -210,9 +223,8 @@ export default function AdminDashboard() {
                       <span className="badge text-xs bg-yellow-50 text-yellow-700 border-yellow-100">KYC Pending</span>
                     </div>
                   </div>
-                  <p className="text-xs text-gray-400">{new Date(user.kyc?.submittedAt).toLocaleDateString()}</p>
+                  <p className="text-xs text-gray-400 whitespace-nowrap">{new Date(user.kyc?.submittedAt).toLocaleDateString()}</p>
                 </div>
-
                 <div className="grid grid-cols-2 gap-3 mb-4">
                   <div className="bg-gray-50 rounded-xl p-3">
                     <p className="text-xs text-gray-400 mb-1">ID Type</p>
@@ -223,7 +235,6 @@ export default function AdminDashboard() {
                     <p className="text-sm font-medium text-gray-800">{user.kyc?.idNumber}</p>
                   </div>
                 </div>
-
                 <div className="grid grid-cols-2 gap-3 mb-4">
                   {user.kyc?.idDocument && (
                     <div>
@@ -242,7 +253,6 @@ export default function AdminDashboard() {
                     </div>
                   )}
                 </div>
-
                 <div className="flex flex-col sm:flex-row gap-2">
                   <button onClick={() => { setModal({ type: 'rejectKyc', id: user._id }); setReason(''); }}
                     disabled={processing === user._id}
@@ -265,7 +275,7 @@ export default function AdminDashboard() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 border-b border-gray-100">
-                  <tr>{['Name', 'Email', 'Role', 'KYC', 'Joined'].map(h => (
+                  <tr>{['Name', 'Email', 'Role', 'KYC', 'Joined', 'Action'].map(h => (
                     <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
                   ))}</tr>
                 </thead>
@@ -274,9 +284,23 @@ export default function AdminDashboard() {
                     <tr key={u._id} className="hover:bg-gray-50">
                       <td className="px-4 py-3 font-medium text-gray-800 whitespace-nowrap">{u.name}</td>
                       <td className="px-4 py-3 text-gray-500">{u.email}</td>
-                      <td className="px-4 py-3"><span className={`badge text-xs ${u.role === 'owner' ? 'bg-brand-50 text-brand-700 border-brand-100' : u.role === 'admin' ? 'bg-purple-50 text-purple-700 border-purple-100' : 'bg-blue-50 text-blue-700 border-blue-100'}`}>{u.role}</span></td>
-                      <td className="px-4 py-3"><span className={`badge text-xs ${u.kyc?.status === 'approved' ? 'bg-green-50 text-green-700 border-green-100' : u.kyc?.status === 'pending' ? 'bg-yellow-50 text-yellow-700 border-yellow-100' : u.kyc?.status === 'rejected' ? 'bg-red-50 text-red-700 border-red-100' : 'bg-gray-50 text-gray-500 border-gray-100'}`}>{u.kyc?.status || 'not submitted'}</span></td>
+                      <td className="px-4 py-3">
+                        <span className={`badge text-xs ${u.role === 'owner' ? 'bg-brand-50 text-brand-700 border-brand-100' : u.role === 'admin' ? 'bg-purple-50 text-purple-700 border-purple-100' : 'bg-blue-50 text-blue-700 border-blue-100'}`}>{u.role}</span>
+                      </td>
+                      <td className="px-4 py-3">
+                        <span className={`badge text-xs ${u.kyc?.status === 'approved' ? 'bg-green-50 text-green-700 border-green-100' : u.kyc?.status === 'pending' ? 'bg-yellow-50 text-yellow-700 border-yellow-100' : u.kyc?.status === 'rejected' ? 'bg-red-50 text-red-700 border-red-100' : 'bg-gray-50 text-gray-500 border-gray-100'}`}>
+                          {u.kyc?.status || 'not submitted'}
+                        </span>
+                      </td>
                       <td className="px-4 py-3 text-gray-400 whitespace-nowrap">{new Date(u.createdAt).toLocaleDateString()}</td>
+                      <td className="px-4 py-3">
+                        {u.role !== 'admin' && (
+                          <button onClick={() => setDeleteModal(u)}
+                            className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1.5 rounded-lg transition-colors">
+                            <Trash2 size={13} /> Delete
+                          </button>
+                        )}
+                      </td>
                     </tr>
                   ))}
                 </tbody>
@@ -301,8 +325,12 @@ export default function AdminDashboard() {
                       <td className="px-4 py-3 font-medium text-gray-800 whitespace-nowrap">{b.toolId?.name}</td>
                       <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{b.renterId?.name}</td>
                       <td className="px-4 py-3 font-semibold text-brand-600 whitespace-nowrap">₦{b.totalAmount?.toLocaleString()}</td>
-                      <td className="px-4 py-3 whitespace-nowrap"><span className={`badge text-xs ${b.status === 'approved' ? 'bg-green-50 text-green-700 border-green-100' : b.status === 'pending' ? 'bg-yellow-50 text-yellow-700 border-yellow-100' : b.status === 'completed' ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-red-50 text-red-700 border-red-100'}`}>{b.status}</span></td>
-                      <td className="px-4 py-3 whitespace-nowrap"><span className={`badge text-xs ${b.paymentStatus === 'paid' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-gray-50 text-gray-500 border-gray-100'}`}>{b.paymentStatus}</span></td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <span className={`badge text-xs ${b.status === 'approved' ? 'bg-green-50 text-green-700 border-green-100' : b.status === 'pending' ? 'bg-yellow-50 text-yellow-700 border-yellow-100' : b.status === 'completed' ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-red-50 text-red-700 border-red-100'}`}>{b.status}</span>
+                      </td>
+                      <td className="px-4 py-3 whitespace-nowrap">
+                        <span className={`badge text-xs ${b.paymentStatus === 'paid' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-gray-50 text-gray-500 border-gray-100'}`}>{b.paymentStatus}</span>
+                      </td>
                       <td className="px-4 py-3 text-gray-400 whitespace-nowrap">{new Date(b.createdAt).toLocaleDateString()}</td>
                     </tr>
                   ))}
@@ -322,13 +350,38 @@ export default function AdminDashboard() {
             </h3>
             <p className="text-sm text-gray-500 mb-4">Provide a reason so the user knows what to fix:</p>
             <textarea className="input-field resize-none mb-4" rows={4}
-              placeholder={modal.type === 'rejectTool' ? 'e.g. No proof of ownership provided, images unclear...' : 'e.g. ID document is blurry, selfie does not match ID...'}
+              placeholder={modal.type === 'rejectTool' ? 'e.g. No proof of ownership, images unclear...' : 'e.g. ID document is blurry, selfie does not match ID...'}
               value={reason} onChange={e => setReason(e.target.value)} />
             <div className="flex gap-3">
               <button onClick={() => setModal(null)} className="btn-secondary flex-1">Cancel</button>
               <button onClick={handleReject} disabled={!reason || processing}
                 className="flex-1 bg-red-500 hover:bg-red-600 text-white font-medium px-6 py-3 rounded-xl transition-colors disabled:opacity-50">
                 {processing ? 'Processing...' : 'Reject'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Delete User Modal */}
+      {deleteModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md animate-slide-up">
+            <div className="w-12 h-12 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <Trash2 size={22} className="text-red-500" />
+            </div>
+            <h3 className="font-display font-bold text-lg text-gray-900 mb-2 text-center">Delete Account</h3>
+            <p className="text-sm text-gray-500 text-center mb-1">You are about to permanently delete:</p>
+            <p className="text-center font-semibold text-gray-800 mb-1">{deleteModal.name}</p>
+            <p className="text-center text-sm text-gray-400 mb-5">{deleteModal.email} · {deleteModal.role}</p>
+            <div className="bg-red-50 border border-red-100 rounded-xl p-3 mb-5">
+              <p className="text-xs text-red-600 text-center">⚠️ This action cannot be undone. All their data will be permanently deleted.</p>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => setDeleteModal(null)} className="btn-secondary flex-1">Cancel</button>
+              <button onClick={handleDeleteUser} disabled={processing === deleteModal._id}
+                className="flex-1 bg-red-500 hover:bg-red-600 text-white font-medium px-6 py-3 rounded-xl transition-colors disabled:opacity-50 flex items-center justify-center gap-2">
+                <Trash2 size={15} /> {processing === deleteModal._id ? 'Deleting...' : 'Delete Account'}
               </button>
             </div>
           </div>
