@@ -6,6 +6,8 @@ import LoadingScreen from './components/ui/LoadingScreen';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import BrowseTools from './pages/BrowseTools';
 import ToolDetail from './pages/ToolDetail';
 import Dashboard from './pages/Dashboard';
@@ -53,6 +55,8 @@ export default function App() {
           <Route path="/tools/:id" element={<ToolDetail />} />
           <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
           <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+          <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
+          <Route path="/reset-password" element={<PublicRoute><ResetPassword /></PublicRoute>} />
           <Route path="/auth/google/success" element={<GoogleSuccess />} />
           <Route path="/help" element={<HelpCenter />} />
           <Route path="/terms" element={<Terms />} />

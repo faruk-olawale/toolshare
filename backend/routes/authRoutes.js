@@ -3,6 +3,7 @@ const router = express.Router();
 const { body } = require('express-validator');
 const passport = require('../config/passport');
 const { register, login, googleAuthCallback, getProfile, updateProfile } = require('../controllers/authController');
+const { forgotPassword, resetPassword } = require('../controllers/forgotPassword');
 const { protect } = require('../middleware/auth');
 
 router.post('/register', [
@@ -17,7 +18,9 @@ router.post('/login', [
   body('password').notEmpty().withMessage('Password is required'),
 ], login);
 
-// Google OAuth routes
+router.post('/forgot-password', forgotPassword);
+router.post('/reset-password', resetPassword);
+
 router.get('/google', passport.authenticate('google', { scope: ['profile', 'email'] }));
 router.get('/google/callback',
   passport.authenticate('google', { session: false, failureRedirect: `${process.env.CLIENT_URL}/login?error=oauth_failed` }),

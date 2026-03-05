@@ -12,13 +12,17 @@ const userSchema = new mongoose.Schema({
   avatar: { type: String, default: null },
   googleId: { type: String, default: null },
 
-  // KYC Verification
+  // Password reset
+  passwordResetToken: { type: String, default: null },
+  passwordResetExpiry: { type: Date, default: null },
+
+  // KYC
   kyc: {
     status: { type: String, enum: ['not_submitted', 'pending', 'approved', 'rejected'], default: 'not_submitted' },
     idType: { type: String, enum: ['nin', 'passport', 'drivers_license', 'voters_card', null], default: null },
     idNumber: { type: String, default: null },
-    idDocument: { type: String, default: null },   // file path
-    selfie: { type: String, default: null },        // file path
+    idDocument: { type: String, default: null },
+    selfie: { type: String, default: null },
     rejectionReason: { type: String, default: null },
     submittedAt: { type: Date, default: null },
     reviewedAt: { type: Date, default: null },
@@ -49,6 +53,8 @@ userSchema.methods.comparePassword = async function (pw) {
 userSchema.methods.toJSON = function () {
   const user = this.toObject();
   delete user.passwordHash;
+  delete user.passwordResetToken;
+  delete user.passwordResetExpiry;
   return user;
 };
 

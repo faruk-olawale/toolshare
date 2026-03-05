@@ -122,6 +122,16 @@ const templates = {
     ${reason ? `<div style="${box}"><p style="margin:0;color:#dc2626;"><strong>Reason:</strong> ${reason}</p></div>` : ''}
     <a href="${dashboardUrl}" style="${btn}">Update Listing →</a>
   `),
+
+  forgotPassword: ({ name, resetUrl }) => base(`
+    <h2 style="${h2}">🔑 Reset Your Password</h2>
+    <p style="${p}">Hi <strong>${name}</strong>, we received a request to reset your password.</p>
+    <p style="${p}">Click the button below to set a new password. This link expires in <strong>30 minutes</strong>.</p>
+    <a href="${resetUrl}" style="${btn}">Reset Password →</a>
+    <div style="${box}">
+      <p style="margin:0;font-size:13px;color:#6b7280;">If you didn't request this, you can safely ignore this email. Your password will not change.</p>
+    </div>
+  `),
 };
 
 const sendEmail = async ({ to, subject, template, data }) => {
