@@ -98,13 +98,13 @@ export default function Login() {
             </p>
           </div>
 
-          <div className="mt-6 p-4 bg-earth-50 rounded-xl border border-earth-100">
+          {/* <div className="mt-6 p-4 bg-earth-50 rounded-xl border border-earth-100">
             <p className="text-xs text-gray-500 font-medium mb-2">Demo Accounts:</p>
             <div className="space-y-1">
               <p className="text-xs text-gray-400">Owner: owner@demo.com / demo1234</p>
               <p className="text-xs text-gray-400">Renter: renter@demo.com / demo1234</p>
             </div>
-          </div>
+          </div> */}
         </div>
       </div>
     </div>
