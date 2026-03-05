@@ -3,38 +3,38 @@ const path = require('path');
 const fs = require('fs');
 const { v4: uuidv4 } = require('uuid');
 
-// Auto-create uploads directory if it doesn't exist
-const uploadDir = path.join(__dirname, '../uploads');
-if (!fs.existsSync(uploadDir)) {
-  fs.mkdirSync(uploadDir, { recursive: true });
-}
+const ensureDir = (dir) => { if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true }); };
 
-const storage = multer.diskStorage({
-  destination: (req, file, cb) => {
-    cb(null, uploadDir);
-  },
-  filename: (req, file, cb) => {
-    const ext = path.extname(file.originalname);
-    cb(null, `tool-${uuidv4()}${ext}`);
-  },
+// Tool images
+const toolStorage = multer.diskStorage({
+  destination: (req, file, cb) => { const d = path.join(__dirname, '../uploads/tools'); ensureDir(d); cb(null, d); },
+  filename: (req, file, cb) => cb(null, `tool-${uuidv4()}${path.extname(file.originalname)}`),
 });
 
-const fileFilter = (req, file, cb) => {
-  const allowedTypes = /jpeg|jpg|png|webp/;
-  const extname = allowedTypes.test(path.extname(file.originalname).toLowerCase());
-  const mimetype = allowedTypes.test(file.mimetype);
+// KYC documents (ID + selfie)
+const kycStorage = multer.diskStorage({
+  destination: (req, file, cb) => { const d = path.join(__dirname, '../uploads/kyc'); ensureDir(d); cb(null, d); },
+  filename: (req, file, cb) => cb(null, `kyc-${uuidv4()}${path.extname(file.originalname)}`),
+});
 
-  if (extname && mimetype) {
-    cb(null, true);
-  } else {
-    cb(new Error('Only image files (jpeg, jpg, png, webp) are allowed.'), false);
-  }
+// Ownership proof documents
+const docsStorage = multer.diskStorage({
+  destination: (req, file, cb) => { const d = path.join(__dirname, '../uploads/docs'); ensureDir(d); cb(null, d); },
+  filename: (req, file, cb) => cb(null, `doc-${uuidv4()}${path.extname(file.originalname)}`),
+});
+
+const imageFilter = (req, file, cb) => {
+  /jpeg|jpg|png|webp/i.test(path.extname(file.originalname)) && /jpeg|jpg|png|webp/i.test(file.mimetype)
+    ? cb(null, true) : cb(new Error('Only image files allowed.'), false);
 };
 
-const upload = multer({
-  storage,
-  limits: { fileSize: 5 * 1024 * 1024 },
-  fileFilter,
-});
+const docFilter = (req, file, cb) => {
+  /jpeg|jpg|png|webp|pdf/i.test(path.extname(file.originalname))
+    ? cb(null, true) : cb(new Error('Only images and PDFs allowed.'), false);
+};
 
-module.exports = upload;
+const upload = multer({ storage: toolStorage, limits: { fileSize: 5 * 1024 * 1024 }, fileFilter: imageFilter });
+const uploadKyc = multer({ storage: kycStorage, limits: { fileSize: 10 * 1024 * 1024 }, fileFilter: docFilter });
+const uploadDocs = multer({ storage: docsStorage, limits: { fileSize: 10 * 1024 * 1024 }, fileFilter: docFilter });
+
+module.exports = { upload, uploadKyc, uploadDocs };

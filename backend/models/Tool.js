@@ -13,11 +13,16 @@ const toolSchema = new mongoose.Schema({
   location: { type: String, required: true, trim: true },
   available: { type: Boolean, default: true },
   condition: { type: String, enum: ['Excellent','Good','Fair'], default: 'Good' },
+
   // Admin verification
   adminVerified: { type: Boolean, default: false },
   adminNote: { type: String, default: null },
   verifiedAt: { type: Date, default: null },
   verifiedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+
+  // Ownership proof documents
+  ownershipDocs: { type: [String], default: [] }, // file paths (receipts, invoices etc)
+  ownershipNote: { type: String, default: null },  // owner's explanation
 }, { timestamps: true });
 
 toolSchema.index({ name: 'text', description: 'text' });

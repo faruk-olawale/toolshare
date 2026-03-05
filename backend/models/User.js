@@ -11,6 +11,20 @@ const userSchema = new mongoose.Schema({
   verified: { type: Boolean, default: false },
   avatar: { type: String, default: null },
   googleId: { type: String, default: null },
+
+  // KYC Verification
+  kyc: {
+    status: { type: String, enum: ['not_submitted', 'pending', 'approved', 'rejected'], default: 'not_submitted' },
+    idType: { type: String, enum: ['nin', 'passport', 'drivers_license', 'voters_card', null], default: null },
+    idNumber: { type: String, default: null },
+    idDocument: { type: String, default: null },   // file path
+    selfie: { type: String, default: null },        // file path
+    rejectionReason: { type: String, default: null },
+    submittedAt: { type: Date, default: null },
+    reviewedAt: { type: Date, default: null },
+    reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+  },
+
   bankDetails: {
     bankName: { type: String, default: null },
     accountNumber: { type: String, default: null },
@@ -22,15 +36,14 @@ const userSchema = new mongoose.Schema({
 
 userSchema.pre('save', async function (next) {
   if (!this.isModified('passwordHash')) return next();
-  // Skip hashing for Google OAuth placeholder passwords
   if (this.passwordHash.startsWith('google_')) return next();
   const salt = await bcrypt.genSalt(12);
   this.passwordHash = await bcrypt.hash(this.passwordHash, salt);
   next();
 });
 
-userSchema.methods.comparePassword = async function (candidatePassword) {
-  return await bcrypt.compare(candidatePassword, this.passwordHash);
+userSchema.methods.comparePassword = async function (pw) {
+  return await bcrypt.compare(pw, this.passwordHash);
 };
 
 userSchema.methods.toJSON = function () {

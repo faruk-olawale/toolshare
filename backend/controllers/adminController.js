@@ -4,39 +4,31 @@ const Booking = require('../models/Booking');
 const Payment = require('../models/Payment');
 const { sendEmail } = require('../utils/sendEmail');
 
-// @desc  Get dashboard stats
-// GET /api/admin/stats
 const getStats = async (req, res, next) => {
   try {
-    const [totalUsers, totalTools, totalBookings, pendingTools, payments] = await Promise.all([
+    const [totalUsers, totalTools, totalBookings, pendingTools, pendingKyc, payments] = await Promise.all([
       User.countDocuments(),
       Tool.countDocuments(),
       Booking.countDocuments(),
       Tool.countDocuments({ adminVerified: false }),
+      User.countDocuments({ 'kyc.status': 'pending' }),
       Payment.find({ status: 'success' }),
     ]);
     const totalRevenue = payments.reduce((sum, p) => sum + (p.platformFee || 0), 0) / 100;
-
-    res.status(200).json({
-      success: true,
-      stats: { totalUsers, totalTools, totalBookings, pendingTools, totalRevenue },
-    });
+    res.status(200).json({ success: true, stats: { totalUsers, totalTools, totalBookings, pendingTools, pendingKyc, totalRevenue } });
   } catch (error) { next(error); }
 };
 
-// @desc  Get all tools pending verification
-// GET /api/admin/tools/pending
+// ── TOOL MANAGEMENT ──────────────────────────────────────────────────────────
 const getPendingTools = async (req, res, next) => {
   try {
     const tools = await Tool.find({ adminVerified: false })
-      .populate('ownerId', 'name email phone location')
+      .populate('ownerId', 'name email phone location kyc')
       .sort({ createdAt: -1 });
     res.status(200).json({ success: true, count: tools.length, tools });
   } catch (error) { next(error); }
 };
 
-// @desc  Get all tools
-// GET /api/admin/tools
 const getAllTools = async (req, res, next) => {
   try {
     const { verified } = req.query;
@@ -48,16 +40,12 @@ const getAllTools = async (req, res, next) => {
   } catch (error) { next(error); }
 };
 
-// @desc  Verify tool
-// PUT /api/admin/tools/:id/verify
 const verifyTool = async (req, res, next) => {
   try {
-    const tool = await Tool.findByIdAndUpdate(
-      req.params.id,
+    const tool = await Tool.findByIdAndUpdate(req.params.id,
       { adminVerified: true, adminNote: null, verifiedAt: new Date(), verifiedBy: req.user._id },
       { new: true }
     ).populate('ownerId', 'name email');
-
     if (!tool) return res.status(404).json({ success: false, message: 'Tool not found.' });
 
     sendEmail({
@@ -67,21 +55,17 @@ const verifyTool = async (req, res, next) => {
       data: { ownerName: tool.ownerId.name, toolName: tool.name, browseUrl: `${process.env.CLIENT_URL}/tools/${tool._id}` },
     });
 
-    res.status(200).json({ success: true, message: 'Tool verified and now live!', tool });
+    res.status(200).json({ success: true, message: 'Tool verified and live!', tool });
   } catch (error) { next(error); }
 };
 
-// @desc  Reject tool
-// PUT /api/admin/tools/:id/reject
 const rejectTool = async (req, res, next) => {
   try {
     const { reason } = req.body;
-    const tool = await Tool.findByIdAndUpdate(
-      req.params.id,
+    const tool = await Tool.findByIdAndUpdate(req.params.id,
       { adminVerified: false, adminNote: reason || 'Did not meet listing standards.' },
       { new: true }
     ).populate('ownerId', 'name email');
-
     if (!tool) return res.status(404).json({ success: false, message: 'Tool not found.' });
 
     sendEmail({
@@ -95,8 +79,60 @@ const rejectTool = async (req, res, next) => {
   } catch (error) { next(error); }
 };
 
-// @desc  Get all users
-// GET /api/admin/users
+// ── KYC MANAGEMENT ──────────────────────────────────────────────────────────
+const getPendingKyc = async (req, res, next) => {
+  try {
+    const users = await User.find({ 'kyc.status': 'pending' }).sort({ 'kyc.submittedAt': 1 });
+    res.status(200).json({ success: true, count: users.length, users });
+  } catch (error) { next(error); }
+};
+
+const approveKyc = async (req, res, next) => {
+  try {
+    const user = await User.findByIdAndUpdate(req.params.id, {
+      'kyc.status': 'approved',
+      'kyc.rejectionReason': null,
+      'kyc.reviewedAt': new Date(),
+      'kyc.reviewedBy': req.user._id,
+    }, { new: true });
+
+    if (!user) return res.status(404).json({ success: false, message: 'User not found.' });
+
+    sendEmail({
+      to: user.email,
+      subject: '✅ Identity Verified — You\'re all set on ToolShare Africa!',
+      template: 'kycApproved',
+      data: { name: user.name, role: user.role, clientUrl: process.env.CLIENT_URL },
+    });
+
+    res.status(200).json({ success: true, message: 'KYC approved!', user });
+  } catch (error) { next(error); }
+};
+
+const rejectKyc = async (req, res, next) => {
+  try {
+    const { reason } = req.body;
+    const user = await User.findByIdAndUpdate(req.params.id, {
+      'kyc.status': 'rejected',
+      'kyc.rejectionReason': reason || 'Documents could not be verified.',
+      'kyc.reviewedAt': new Date(),
+      'kyc.reviewedBy': req.user._id,
+    }, { new: true });
+
+    if (!user) return res.status(404).json({ success: false, message: 'User not found.' });
+
+    sendEmail({
+      to: user.email,
+      subject: '⚠️ Identity Verification — Action Required',
+      template: 'kycRejected',
+      data: { name: user.name, reason, clientUrl: process.env.CLIENT_URL },
+    });
+
+    res.status(200).json({ success: true, message: 'KYC rejected.', user });
+  } catch (error) { next(error); }
+};
+
+// ── USER MANAGEMENT ──────────────────────────────────────────────────────────
 const getAllUsers = async (req, res, next) => {
   try {
     const users = await User.find().sort({ createdAt: -1 });
@@ -104,8 +140,6 @@ const getAllUsers = async (req, res, next) => {
   } catch (error) { next(error); }
 };
 
-// @desc  Delete user
-// DELETE /api/admin/users/:id
 const deleteUser = async (req, res, next) => {
   try {
     await User.findByIdAndDelete(req.params.id);
@@ -113,8 +147,6 @@ const deleteUser = async (req, res, next) => {
   } catch (error) { next(error); }
 };
 
-// @desc  Get all bookings
-// GET /api/admin/bookings
 const getAllBookings = async (req, res, next) => {
   try {
     const bookings = await Booking.find()
@@ -126,4 +158,8 @@ const getAllBookings = async (req, res, next) => {
   } catch (error) { next(error); }
 };
 
-module.exports = { getStats, getPendingTools, getAllTools, verifyTool, rejectTool, getAllUsers, deleteUser, getAllBookings };
+module.exports = {
+  getStats, getPendingTools, getAllTools, verifyTool, rejectTool,
+  getPendingKyc, approveKyc, rejectKyc,
+  getAllUsers, deleteUser, getAllBookings,
+};
