@@ -1,113 +1,76 @@
 const { validationResult } = require('express-validator');
 const User = require('../models/User');
 const { generateToken } = require('../utils/generateToken');
+const { sendEmail } = require('../utils/sendEmail');
 
-// @desc    Register user
-// @route   POST /api/auth/register
-// @access  Public
+// @desc    Register
 const register = async (req, res, next) => {
   try {
     const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ success: false, message: errors.array()[0].msg });
-    }
+    if (!errors.isEmpty()) return res.status(400).json({ success: false, message: errors.array()[0].msg });
 
     const { name, email, password, phone, location, role } = req.body;
-
     const existingUser = await User.findOne({ email });
-    if (existingUser) {
-      return res.status(409).json({ success: false, message: 'Email already registered.' });
-    }
+    if (existingUser) return res.status(409).json({ success: false, message: 'Email already registered.' });
 
-    const user = await User.create({
-      name,
-      email,
-      passwordHash: password,
-      phone,
-      location,
-      role,
-    });
-
+    const user = await User.create({ name, email, passwordHash: password, phone, location, role });
     const token = generateToken(user._id);
 
-    res.status(201).json({
-      success: true,
-      message: 'Registration successful! Welcome to ToolShare Africa.',
-      token,
-      user,
+    // Welcome email
+    sendEmail({
+      to: email,
+      subject: 'Welcome to ToolShare Africa! 🔧',
+      template: 'welcome',
+      data: { name, role, loginUrl: process.env.CLIENT_URL },
     });
-  } catch (error) {
-    next(error);
-  }
+
+    res.status(201).json({ success: true, message: 'Registration successful!', token, user });
+  } catch (error) { next(error); }
 };
 
-// @desc    Login user
-// @route   POST /api/auth/login
-// @access  Public
+// @desc    Login
 const login = async (req, res, next) => {
   try {
     const errors = validationResult(req);
-    if (!errors.isEmpty()) {
-      return res.status(400).json({ success: false, message: errors.array()[0].msg });
-    }
+    if (!errors.isEmpty()) return res.status(400).json({ success: false, message: errors.array()[0].msg });
 
     const { email, password } = req.body;
-
     const user = await User.findOne({ email }).select('+passwordHash');
-    if (!user) {
-      return res.status(401).json({ success: false, message: 'Invalid email or password.' });
-    }
+    if (!user) return res.status(401).json({ success: false, message: 'Invalid email or password.' });
 
     const isMatch = await user.comparePassword(password);
-    if (!isMatch) {
-      return res.status(401).json({ success: false, message: 'Invalid email or password.' });
-    }
+    if (!isMatch) return res.status(401).json({ success: false, message: 'Invalid email or password.' });
 
     const token = generateToken(user._id);
+    res.status(200).json({ success: true, message: 'Login successful.', token, user: user.toJSON() });
+  } catch (error) { next(error); }
+};
 
-    // Return user without passwordHash
-    const userObj = user.toJSON();
-
-    res.status(200).json({
-      success: true,
-      message: 'Login successful.',
-      token,
-      user: userObj,
-    });
+// @desc    Google OAuth callback — create/find user and return JWT
+const googleAuthCallback = async (req, res) => {
+  try {
+    const token = generateToken(req.user._id);
+    res.redirect(`${process.env.CLIENT_URL}/auth/google/success?token=${token}`);
   } catch (error) {
-    next(error);
+    res.redirect(`${process.env.CLIENT_URL}/login?error=oauth_failed`);
   }
 };
 
-// @desc    Get current user profile
-// @route   GET /api/auth/profile
-// @access  Private
+// @desc    Get profile
 const getProfile = async (req, res, next) => {
   try {
     const user = await User.findById(req.user._id);
     res.status(200).json({ success: true, user });
-  } catch (error) {
-    next(error);
-  }
+  } catch (error) { next(error); }
 };
 
 // @desc    Update profile
-// @route   PUT /api/auth/profile
-// @access  Private
 const updateProfile = async (req, res, next) => {
   try {
     const { name, phone, location } = req.body;
-
-    const user = await User.findByIdAndUpdate(
-      req.user._id,
-      { name, phone, location },
-      { new: true, runValidators: true }
-    );
-
+    const user = await User.findByIdAndUpdate(req.user._id, { name, phone, location }, { new: true, runValidators: true });
     res.status(200).json({ success: true, message: 'Profile updated.', user });
-  } catch (error) {
-    next(error);
-  }
+  } catch (error) { next(error); }
 };
 
-module.exports = { register, login, getProfile, updateProfile };
+module.exports = { register, login, googleAuthCallback, getProfile, updateProfile };

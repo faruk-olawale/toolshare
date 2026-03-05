@@ -17,7 +17,7 @@ export default function Footer() {
               </div>
             </div>
             <p className="text-sm text-gray-400 max-w-xs leading-relaxed">
-              Nigeria's premier peer-to-peer equipment rental marketplace. Empowering communities through shared tools and trusted connections.
+              Nigeria's premier peer-to-peer equipment rental marketplace. Empowering communities through shared tools.
             </p>
             <div className="flex items-center gap-3 mt-5">
               {[Twitter, Instagram, Linkedin, Mail].map((Icon, i) => (
@@ -30,7 +30,7 @@ export default function Footer() {
           <div>
             <h4 className="text-white font-semibold mb-4 text-sm uppercase tracking-wider">Platform</h4>
             <ul className="space-y-2.5">
-              {[['Browse Tools', '/tools'], ['How It Works', '/'], ['List Your Tool', '/register'], ['Pricing', '/']].map(([label, href]) => (
+              {[['Browse Tools', '/tools'], ['List Your Tool', '/register?role=owner'], ['How It Works', '/'], ['Contact Us', '/contact']].map(([label, href]) => (
                 <li key={label}><Link to={href} className="text-sm text-gray-400 hover:text-white transition-colors">{label}</Link></li>
               ))}
             </ul>
@@ -38,8 +38,8 @@ export default function Footer() {
           <div>
             <h4 className="text-white font-semibold mb-4 text-sm uppercase tracking-wider">Support</h4>
             <ul className="space-y-2.5">
-              {['Help Center', 'Safety', 'Privacy Policy', 'Terms of Service'].map((item) => (
-                <li key={item}><a href="#" className="text-sm text-gray-400 hover:text-white transition-colors">{item}</a></li>
+              {[['Help Center', '/help'], ['Safety Guidelines', '/safety'], ['Privacy Policy', '/privacy'], ['Terms of Service', '/terms']].map(([label, href]) => (
+                <li key={label}><Link to={href} className="text-sm text-gray-400 hover:text-white transition-colors">{label}</Link></li>
               ))}
             </ul>
           </div>
