@@ -13,40 +13,38 @@ connectDB();
 const app = express();
 
 app.use(cors({
-  origin: [
-    'http://localhost:5173',
-    'https://toolshare-kuv1.vercel.app',
-    process.env.CLIENT_URL,
-  ].filter(Boolean),
+  origin: ['http://localhost:5173', 'https://toolshare-kuv1.vercel.app', process.env.CLIENT_URL].filter(Boolean),
   credentials: true,
 }));
 
-// Raw body for Paystack webhook (must be before express.json())
 app.use('/api/payments/webhook', express.raw({ type: 'application/json' }));
-
 app.use(express.json({ limit: '10mb' }));
 app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-
-app.use(session({
-  secret: process.env.JWT_SECRET,
-  resave: false,
-  saveUninitialized: false,
-}));
-
+app.use(session({ secret: process.env.JWT_SECRET || 'secret', resave: false, saveUninitialized: false }));
 app.use(passport.initialize());
 app.use(passport.session());
-
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-app.get('/api/health', (req, res) => {
-  res.status(200).json({ success: true, message: '🔧 ToolShare Africa API is running!', version: '1.0.0' });
-});
+app.get('/api/health', (req, res) => res.status(200).json({ success: true, message: '🔧 ToolShare Africa API is running!' }));
 
 app.use('/api/auth', require('./routes/authRoutes'));
 app.use('/api/tools', require('./routes/toolRoutes'));
 app.use('/api/bookings', require('./routes/bookingRoutes'));
 app.use('/api/payments', require('./routes/paymentRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
+app.use('/api/kyc', require('./routes/kycRoutes'));
+
+// // Temporary email test route — remove before final production
+// app.get('/api/test-email', async (req, res) => {
+//   const { sendEmail } = require('./utils/sendEmail');
+//   await sendEmail({
+//     to: 'farukolawale509@gmail.com',
+//     subject: 'ToolShare Test Email',
+//     template: 'welcome',
+//     data: { name: 'Faruk', role: 'owner', loginUrl: 'http://localhost:5173' },
+//   });
+//   res.json({ success: true, message: 'Test email sent! Check terminal for result.' });
+// });
 
 app.use((req, res) => res.status(404).json({ success: false, message: `Route ${req.originalUrl} not found.` }));
 app.use(errorHandler);
