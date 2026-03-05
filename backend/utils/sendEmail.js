@@ -1,4 +1,7 @@
-const nodemailer = require('nodemailer');
+const { Resend } = require('resend');
+
+const resend = new Resend(process.env.RESEND_API_KEY);
+const FROM = process.env.EMAIL_FROM || 'onboarding@resend.dev';
 
 const btn = `display:inline-block;background:#f2711c;color:white;padding:12px 28px;border-radius:10px;text-decoration:none;font-weight:600;font-size:15px;margin-top:16px;`;
 const h2 = `color:#1a1a1a;font-size:22px;margin:0 0 8px;`;
@@ -19,23 +22,13 @@ const base = (content) => `<!DOCTYPE html><html><head><meta charset="utf-8"></he
 const templates = {
   welcome: ({ name, role, loginUrl }) => base(`
     <h2 style="${h2}">Welcome to ToolShare Africa! 🎉</h2>
-    <p style="${p}">Hi <strong>${name}</strong>, your account has been created successfully.</p>
+    <p style="${p}">Hi <strong>${name}</strong>, your account has been created.</p>
     <p style="${p}">You registered as a <strong style="color:#f2711c;text-transform:capitalize;">${role}</strong>.</p>
     <div style="${box}">
       <p style="margin:0;color:#92400e;font-size:14px;"><strong>⚠️ Next Step: Verify Your Identity</strong></p>
-      <p style="margin:6px 0 0;color:#78350f;font-size:13px;">Complete identity verification (KYC) to unlock full access to ToolShare Africa.</p>
+      <p style="margin:6px 0 0;color:#78350f;font-size:13px;">Before you can ${role === 'owner' ? 'list tools' : 'make bookings'}, you need to complete identity verification (KYC). This keeps our community safe.</p>
     </div>
     <a href="${loginUrl}/kyc" style="${btn}">Complete Verification →</a>
-  `),
-
-  forgotPassword: ({ name, resetUrl }) => base(`
-    <h2 style="${h2}">🔑 Reset Your Password</h2>
-    <p style="${p}">Hi <strong>${name}</strong>, we received a request to reset your ToolShare Africa password.</p>
-    <p style="${p}">Click the button below to set a new password. This link expires in <strong>30 minutes</strong>.</p>
-    <a href="${resetUrl}" style="${btn}">Reset Password →</a>
-    <div style="${box}">
-      <p style="margin:0;font-size:13px;color:#6b7280;">If you didn't request this, you can safely ignore this email. Your password will not change.</p>
-    </div>
   `),
 
   kycSubmitted: ({ name }) => base(`
@@ -88,8 +81,7 @@ const templates = {
 
   bookingRejected: ({ renterName, toolName, browseUrl }) => base(`
     <h2 style="${h2}">❌ Booking Not Available</h2>
-    <p style="${p}">Hi <strong>${renterName}</strong>, your booking request for <strong>${toolName}</strong> was not approved.</p>
-    <p style="${p}">Don't worry — there are many other tools available!</p>
+    <p style="${p}">Hi <strong>${renterName}</strong>, your booking for <strong>${toolName}</strong> was not approved.</p>
     <a href="${browseUrl}" style="${btn}">Browse Other Tools →</a>
   `),
 
@@ -100,7 +92,7 @@ const templates = {
       <p style="${p}"><strong>Tool:</strong> ${toolName}</p>
       <p style="${p}"><strong>Period:</strong> ${startDate} → ${endDate}</p>
       <p style="${p}"><strong>Amount Paid:</strong> <span style="color:#16a34a;font-size:18px;font-weight:700;">₦${Number(totalAmount).toLocaleString()}</span></p>
-      <p style="${p}"><strong>Reference:</strong> <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;font-size:13px;">${reference}</code></p>
+      <p style="${p}"><strong>Ref:</strong> <code>${reference}</code></p>
     </div>
     <div style="background:#f0fdf4;border:1px solid #bbf7d0;border-radius:12px;padding:16px;margin-top:16px;">
       <p style="margin:0;color:#15803d;font-size:14px;"><strong>Owner:</strong> ${ownerName} ${ownerPhone ? '· ' + ownerPhone : ''}</p>
@@ -114,50 +106,108 @@ const templates = {
       <p style="${p}"><strong>Tool:</strong> ${toolName}</p>
       <p style="${p}"><strong>Platform Fee (10%):</strong> <span style="color:#ef4444;">−₦${Number(platformFee).toLocaleString()}</span></p>
       <p style="${p}"><strong>Your Earnings:</strong> <span style="color:#16a34a;font-size:20px;font-weight:700;">₦${Number(amount).toLocaleString()}</span></p>
-      <p style="${p}"><strong>Reference:</strong> <code style="background:#f3f4f6;padding:2px 6px;border-radius:4px;font-size:13px;">${reference}</code></p>
+      <p style="${p}"><strong>Ref:</strong> <code>${reference}</code></p>
     </div>
-    <p style="${p}">Money will arrive in your bank account within minutes via NIP transfer.</p>
   `),
 
   toolVerified: ({ ownerName, toolName, browseUrl }) => base(`
     <h2 style="${h2}">✅ Your Tool is Now Live!</h2>
     <p style="${p}">Hi <strong>${ownerName}</strong>, your tool <strong>${toolName}</strong> has been verified and is now visible to renters.</p>
-    <a href="${browseUrl}" style="${btn}">View Your Listing →</a>
+    <a href="${browseUrl}" style="${btn}">View Listing →</a>
+  `),
+
+
+  escrowReceiptConfirmed: ({ renterName, toolName, ownerPhone, endDate }) => base(`
+    <h2 style="${h2}">✅ Receipt Confirmed!</h2>
+    <p style="${p}">Hi <strong>${renterName}</strong>, you have confirmed receiving <strong>${toolName}</strong>.</p>
+    <div style="${box}">
+      <p style="${p}">50% of the payment has been released to the owner.</p>
+      <p style="${p}"><strong>Return Date:</strong> ${endDate}</p>
+      ${ownerPhone ? `<p style="${p}"><strong>Owner Phone:</strong> ${ownerPhone}</p>` : ''}
+    </div>
+    <p style="${p}">Please return the tool in the same condition by the return date.</p>
+  `),
+
+  escrowFirstPayout: ({ ownerName, toolName, amount, renterName, reference }) => base(`
+    <h2 style="${h2}">💰 50% Payout Released!</h2>
+    <p style="${p}">Hi <strong>${ownerName}</strong>, <strong>${renterName}</strong> has confirmed receiving <strong>${toolName}</strong>.</p>
+    <div style="${box}">
+      <p style="${p}"><strong>Amount Released:</strong> <span style="color:#16a34a;font-size:18px;font-weight:700;">₦${Number(amount).toLocaleString()}</span></p>
+      <p style="${p}"><strong>Reference:</strong> <code>${reference}</code></p>
+    </div>
+    <p style="${p}">The remaining 50% will be released when you confirm the tool has been returned.</p>
+  `),
+
+  escrowFinalPayout: ({ ownerName, toolName, amount, totalEarned, reference }) => base(`
+    <h2 style="${h2}">🎉 Final Payout Released!</h2>
+    <p style="${p}">Hi <strong>${ownerName}</strong>, the rental of <strong>${toolName}</strong> is now complete!</p>
+    <div style="${box}">
+      <p style="${p}"><strong>Final Payout:</strong> <span style="color:#16a34a;font-size:18px;font-weight:700;">₦${Number(amount).toLocaleString()}</span></p>
+      <p style="${p}"><strong>Total Earned:</strong> <span style="color:#16a34a;font-weight:700;">₦${Number(totalEarned).toLocaleString()}</span></p>
+      <p style="${p}"><strong>Reference:</strong> <code>${reference}</code></p>
+    </div>
+  `),
+
+  escrowRentalComplete: ({ renterName, toolName }) => base(`
+    <h2 style="${h2}">✅ Rental Complete!</h2>
+    <p style="${p}">Hi <strong>${renterName}</strong>, your rental of <strong>${toolName}</strong> has been completed successfully.</p>
+    <p style="${p}">Thank you for using ToolShare Africa!</p>
+  `),
+
+  disputeRaised: ({ raisedBy, raisedByRole, toolName, reason, renterName, ownerName, adminUrl }) => base(`
+    <h2 style="${h2}">🚨 Dispute Raised</h2>
+    <p style="${p}"><strong>${raisedBy}</strong> (${raisedByRole}) has raised a dispute.</p>
+    <div style="${box}">
+      <p style="${p}"><strong>Tool:</strong> ${toolName}</p>
+      <p style="${p}"><strong>Renter:</strong> ${renterName}</p>
+      <p style="${p}"><strong>Owner:</strong> ${ownerName}</p>
+      <p style="${p}"><strong>Reason:</strong> ${reason}</p>
+    </div>
+    <a href="${adminUrl}" style="${btn}">Review Dispute →</a>
+  `),
+
+  disputeNotification: ({ name, toolName, reason, raisedByRole }) => base(`
+    <h2 style="${h2}">⚠️ Dispute Raised on Your Booking</h2>
+    <p style="${p}">Hi <strong>${name}</strong>, the ${raisedByRole === 'renter' ? 'renter' : 'owner'} has raised a dispute on the booking for <strong>${toolName}</strong>.</p>
+    <div style="${box}"><p style="${p}"><strong>Reason:</strong> ${reason}</p></div>
+    <p style="${p}">Our admin team will review and resolve this within 24 hours.</p>
+  `),
+
+  disputeResolved: ({ name, toolName, resolution, favour }) => base(`
+    <h2 style="${h2}">✅ Dispute Resolved</h2>
+    <p style="${p}">Hi <strong>${name}</strong>, the dispute for <strong>${toolName}</strong> has been resolved.</p>
+    <div style="${box}">
+      <p style="${p}"><strong>Resolution:</strong> ${resolution}</p>
+      <p style="${p}"><strong>Decision:</strong> ${favour === 'you' ? '✅ In your favour' : 'In favour of the other party'}</p>
+    </div>
   `),
 
   toolRejected: ({ ownerName, toolName, reason, dashboardUrl }) => base(`
     <h2 style="${h2}">⚠️ Tool Listing Needs Update</h2>
     <p style="${p}">Hi <strong>${ownerName}</strong>, your tool <strong>${toolName}</strong> was not approved.</p>
     ${reason ? `<div style="${box}"><p style="margin:0;color:#dc2626;"><strong>Reason:</strong> ${reason}</p></div>` : ''}
-    <p style="${p}">Please update your listing and resubmit for review.</p>
     <a href="${dashboardUrl}" style="${btn}">Update Listing →</a>
+  `),
+
+  forgotPassword: ({ name, resetUrl }) => base(`
+    <h2 style="${h2}">🔑 Reset Your Password</h2>
+    <p style="${p}">Hi <strong>${name}</strong>, we received a request to reset your password.</p>
+    <p style="${p}">Click the button below to set a new password. This link expires in <strong>30 minutes</strong>.</p>
+    <a href="${resetUrl}" style="${btn}">Reset Password →</a>
+    <div style="${box}">
+      <p style="margin:0;font-size:13px;color:#6b7280;">If you didn't request this, you can safely ignore this email. Your password will not change.</p>
+    </div>
   `),
 };
 
 const sendEmail = async ({ to, subject, template, data }) => {
   try {
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-      console.log(`📧 Email skipped (EMAIL_USER or EMAIL_PASS not set): ${subject} → ${to}`);
+    if (!process.env.RESEND_API_KEY) {
+      console.log(`📧 Email skipped (no RESEND_API_KEY): ${subject} → ${to}`);
       return;
     }
-
-    const transporter = nodemailer.createTransport({
-      service: 'gmail',
-      auth: {
-        user: process.env.EMAIL_USER,
-        pass: process.env.EMAIL_PASS,
-      },
-    });
-
     const html = templates[template](data);
-
-    await transporter.sendMail({
-      from: `"ToolShare Africa" <${process.env.EMAIL_USER}>`,
-      to,
-      subject,
-      html,
-    });
-
+    await resend.emails.send({ from: `ToolShare Africa <${FROM}>`, to, subject, html });
     console.log(`📧 Email sent: ${subject} → ${to}`);
   } catch (err) {
     console.error(`📧 Email failed: ${err.message}`);

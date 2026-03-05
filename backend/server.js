@@ -33,18 +33,7 @@ app.use('/api/bookings', require('./routes/bookingRoutes'));
 app.use('/api/payments', require('./routes/paymentRoutes'));
 app.use('/api/admin', require('./routes/adminRoutes'));
 app.use('/api/kyc', require('./routes/kycRoutes'));
-
-// // Temporary email test route — remove before final production
-// app.get('/api/test-email', async (req, res) => {
-//   const { sendEmail } = require('./utils/sendEmail');
-//   await sendEmail({
-//     to: 'farukolawale509@gmail.com',
-//     subject: 'ToolShare Test Email',
-//     template: 'welcome',
-//     data: { name: 'Faruk', role: 'owner', loginUrl: 'http://localhost:5173' },
-//   });
-//   res.json({ success: true, message: 'Test email sent! Check terminal for result.' });
-// });
+app.use('/api/escrow', require('./routes/escrowRoutes'));
 
 app.use((req, res) => res.status(404).json({ success: false, message: `Route ${req.originalUrl} not found.` }));
 app.use(errorHandler);
