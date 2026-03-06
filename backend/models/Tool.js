@@ -10,8 +10,14 @@ const toolSchema = new mongoose.Schema({
   description: { type: String, required: true, maxlength: 1000 },
   pricePerDay: { type: Number, required: true, min: 0 },
   images: { type: [String], default: [] },
+  coordinates: {
+    type: { type: String, enum: ['Point'], default: 'Point' },
+    coordinates: { type: [Number], default: null }, // [longitude, latitude]
+  },
   location: { type: String, required: true, trim: true },
-  available: { type: Boolean, default: true },
+  available:     { type: Boolean, default: true },
+  averageRating: { type: Number,  default: null },
+  reviewCount:   { type: Number,  default: 0 },
   condition: { type: String, enum: ['Excellent','Good','Fair'], default: 'Good' },
 
   // Admin verification
@@ -27,5 +33,7 @@ const toolSchema = new mongoose.Schema({
 
 toolSchema.index({ name: 'text', description: 'text' });
 toolSchema.index({ category: 1, location: 1, available: 1, adminVerified: 1 });
+
+toolSchema.index({ coordinates: '2dsphere' });
 
 module.exports = mongoose.model('Tool', toolSchema);

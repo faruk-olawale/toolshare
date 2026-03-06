@@ -1,40 +1,40 @@
+const express = require('express');
+const router = express.Router();
 const multer = require('multer');
-const path = require('path');
-const fs = require('fs');
-const { v4: uuidv4 } = require('uuid');
+const { CloudinaryStorage } = require('multer-storage-cloudinary');
+const cloudinary = require('../config/cloudinary');
+const { protect, authorize } = require('../middleware/auth');
+const {
+  getTools, getTool, createTool, updateTool, deleteTool, getMyTools,
+} = require('../controllers/toolController');
 
-const ensureDir = (dir) => { if (!fs.existsSync(dir)) fs.mkdirSync(dir, { recursive: true }); };
-
-// Tool images
-const toolStorage = multer.diskStorage({
-  destination: (req, file, cb) => { const d = path.join(__dirname, '../uploads/tools'); ensureDir(d); cb(null, d); },
-  filename: (req, file, cb) => cb(null, `tool-${uuidv4()}${path.extname(file.originalname)}`),
+// Combined storage for tool images + ownership docs
+const combinedStorage = new CloudinaryStorage({
+  cloudinary,
+  params: async (req, file) => {
+    const isDoc = file.fieldname === 'ownershipDocs';
+    return {
+      folder: isDoc ? 'toolshare/docs' : 'toolshare/tools',
+      allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'pdf'],
+      resource_type: 'auto',
+      transformation: isDoc ? [] : [{ width: 1200, height: 900, crop: 'limit', quality: 'auto' }],
+    };
+  },
 });
 
-// KYC documents (ID + selfie)
-const kycStorage = multer.diskStorage({
-  destination: (req, file, cb) => { const d = path.join(__dirname, '../uploads/kyc'); ensureDir(d); cb(null, d); },
-  filename: (req, file, cb) => cb(null, `kyc-${uuidv4()}${path.extname(file.originalname)}`),
-});
+const combinedUpload = multer({
+  storage: combinedStorage,
+  limits: { fileSize: 10 * 1024 * 1024 },
+}).fields([
+  { name: 'images', maxCount: 5 },
+  { name: 'ownershipDocs', maxCount: 5 },
+]);
 
-// Ownership proof documents
-const docsStorage = multer.diskStorage({
-  destination: (req, file, cb) => { const d = path.join(__dirname, '../uploads/docs'); ensureDir(d); cb(null, d); },
-  filename: (req, file, cb) => cb(null, `doc-${uuidv4()}${path.extname(file.originalname)}`),
-});
+router.get('/', getTools);
+router.get('/my-tools', protect, authorize('owner'), getMyTools);
+router.get('/:id', getTool);
+router.post('/', protect, authorize('owner'), combinedUpload, createTool);
+router.put('/:id', protect, authorize('owner'), combinedUpload, updateTool);
+router.delete('/:id', protect, authorize('owner'), deleteTool);
 
-const imageFilter = (req, file, cb) => {
-  /jpeg|jpg|png|webp/i.test(path.extname(file.originalname)) && /jpeg|jpg|png|webp/i.test(file.mimetype)
-    ? cb(null, true) : cb(new Error('Only image files allowed.'), false);
-};
-
-const docFilter = (req, file, cb) => {
-  /jpeg|jpg|png|webp|pdf/i.test(path.extname(file.originalname))
-    ? cb(null, true) : cb(new Error('Only images and PDFs allowed.'), false);
-};
-
-const upload = multer({ storage: toolStorage, limits: { fileSize: 5 * 1024 * 1024 }, fileFilter: imageFilter });
-const uploadKyc = multer({ storage: kycStorage, limits: { fileSize: 10 * 1024 * 1024 }, fileFilter: docFilter });
-const uploadDocs = multer({ storage: docsStorage, limits: { fileSize: 10 * 1024 * 1024 }, fileFilter: docFilter });
-
-module.exports = { upload, uploadKyc, uploadDocs };
+module.exports = router;

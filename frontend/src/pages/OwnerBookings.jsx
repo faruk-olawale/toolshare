@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
+import ReviewForm from '../components/reviews/ReviewForm';
 import toast from 'react-hot-toast';
 import EscrowStatus from '../components/escrow/EscrowStatus';
 import EscrowActions from '../components/escrow/EscrowActions';
@@ -17,15 +18,30 @@ const STATUS_STYLES = {
 };
 
 export default function OwnerBookings() {
-  const [bookings, setBookings] = useState([]);
+  const [bookings, setBookings]       = useState([]);
+  const [reviewedIds, setReviewedIds] = useState(new Set());
+  const [showReview, setShowReview]   = useState(null);
   const [loading, setLoading] = useState(true);
   const [processing, setProcessing] = useState(null);
 
   useEffect(() => {
-    api.get('/bookings/owner-bookings').then(({ data }) => {
-      setBookings(data.bookings);
+    const fetchData = async () => {
+      try {
+        const { data } = await api.get('/bookings/owner-bookings');
+        setBookings(data.bookings);
+        const completed = data.bookings.filter(b => b.status === 'completed');
+        const reviewed = new Set();
+        await Promise.all(completed.map(async (b) => {
+          try {
+            const r = await api.get(`/reviews/booking/${b._id}`);
+            if (r.data.reviews?.length >= 2) reviewed.add(b._id);
+          } catch {}
+        }));
+        setReviewedIds(reviewed);
+      } catch {}
       setLoading(false);
-    }).catch(() => setLoading(false));
+    };
+    fetchData();
   }, []);
 
   const handleAction = async (id, action) => {
@@ -113,6 +129,26 @@ export default function OwnerBookings() {
                   <div className="space-y-3 mt-3">
                     <EscrowStatus booking={booking} />
                     <EscrowActions booking={booking} onUpdate={handleUpdate} />
+                  </div>
+                )}
+
+                {/* Review completed rentals */}
+                {booking.status === 'completed' && !reviewedIds.has(booking._id) && (
+                  showReview === booking._id ? (
+                    <ReviewForm booking={booking} onSubmitted={() => {
+                      setReviewedIds(prev => new Set([...prev, booking._id]));
+                      setShowReview(null);
+                    }} />
+                  ) : (
+                    <button onClick={() => setShowReview(booking._id)}
+                      className="w-full py-2.5 text-sm font-medium bg-yellow-50 hover:bg-yellow-100 text-yellow-800 border border-yellow-200 rounded-xl transition-colors flex items-center justify-center gap-2 mt-2">
+                      ⭐ Review This Renter
+                    </button>
+                  )
+                )}
+                {booking.status === 'completed' && reviewedIds.has(booking._id) && (
+                  <div className="bg-green-50 border border-green-100 rounded-xl p-3 text-center mt-2">
+                    <p className="text-xs text-green-700">✅ Both parties have reviewed this rental.</p>
                   </div>
                 )}
               </div>

@@ -1,7 +1,12 @@
-const { Resend } = require('resend');
+const nodemailer = require('nodemailer');
 
-const resend = new Resend(process.env.RESEND_API_KEY);
-const FROM = process.env.EMAIL_FROM || 'onboarding@resend.dev';
+const createTransporter = () => nodemailer.createTransport({
+  service: 'gmail',
+  auth: {
+    user: process.env.EMAIL_USER,
+    pass: process.env.EMAIL_PASS,
+  },
+});
 
 const btn = `display:inline-block;background:#f2711c;color:white;padding:12px 28px;border-radius:10px;text-decoration:none;font-weight:600;font-size:15px;margin-top:16px;`;
 const h2 = `color:#1a1a1a;font-size:22px;margin:0 0 8px;`;
@@ -182,6 +187,74 @@ const templates = {
     </div>
   `),
 
+
+  ticketCreated: ({ name, ticketNumber, subject, message, clientUrl }) => base(`
+    <h2 style="${h2}">✅ Support Ticket Received</h2>
+    <p style="${p}">Hi <strong>${name}</strong>, we've received your message and will reply within 24 hours.</p>
+    <div style="${box}">
+      <p style="${p}"><strong>Ticket Number:</strong> <span style="color:#f2711c;font-size:18px;font-weight:700;">#${ticketNumber}</span></p>
+      <p style="${p}"><strong>Subject:</strong> ${subject}</p>
+      <p style="${p}"><strong>Your Message:</strong> ${message}</p>
+    </div>
+    <p style="${p}">Keep this ticket number for reference. We'll reply to this email address directly.</p>
+  `),
+
+  ticketAlert: ({ name, email, subject, message, category, ticketNumber, adminUrl }) => base(`
+    <h2 style="${h2}">🎫 New Support Ticket #${ticketNumber}</h2>
+    <div style="${box}">
+      <p style="${p}"><strong>From:</strong> ${name} (${email})</p>
+      <p style="${p}"><strong>Category:</strong> <span style="text-transform:capitalize;">${category}</span></p>
+      <p style="${p}"><strong>Subject:</strong> ${subject}</p>
+      <p style="${p}"><strong>Message:</strong> ${message}</p>
+    </div>
+    <a href="${adminUrl}" style="${btn}">Reply in Admin Dashboard →</a>
+  `),
+
+  ticketReply: ({ name, ticketNumber, subject, adminMessage, clientUrl }) => base(`
+    <h2 style="${h2}">💬 Reply to Your Support Ticket</h2>
+    <p style="${p}">Hi <strong>${name}</strong>, we've replied to your ticket <strong>#${ticketNumber}</strong>.</p>
+    <div style="${box}">
+      <p style="${p}"><strong>Subject:</strong> ${subject}</p>
+      <p style="${p}"><strong>Our Reply:</strong></p>
+      <p style="${p}">${adminMessage}</p>
+    </div>
+    <p style="${p}">If you need further help, reply to this email or visit our help center.</p>
+    <a href="${clientUrl}/help" style="${btn}">Visit Help Center →</a>
+  `),
+
+  ticketResolved: ({ name, ticketNumber, subject, clientUrl }) => base(`
+    <h2 style="${h2}">✅ Ticket #${ticketNumber} Resolved</h2>
+    <p style="${p}">Hi <strong>${name}</strong>, your support ticket has been marked as resolved.</p>
+    <div style="${box}"><p style="${p}"><strong>Subject:</strong> ${subject}</p></div>
+    <p style="${p}">If you still have issues, feel free to open a new ticket anytime.</p>
+    <a href="${clientUrl}/help" style="${btn}">Visit Help Center →</a>
+  `),
+
+
+  bookingExpired: ({ renterName, toolName, reason, browseUrl }) => base(`
+    <h2 style="${h2}">⏰ Booking Request Expired</h2>
+    <p style="${p}">Hi <strong>${renterName}</strong>, your booking request for <strong>${toolName}</strong> has expired.</p>
+    <div style="${box}"><p style="${p}"><strong>Reason:</strong> ${reason}</p></div>
+    <a href="${browseUrl}" style="${btn}">Browse Other Tools →</a>
+  `),
+
+  bookingExpiredOwner: ({ ownerName, toolName, renterName, dashboardUrl }) => base(`
+    <h2 style="${h2}">⚠️ Booking Request Expired</h2>
+    <p style="${p}">Hi <strong>${ownerName}</strong>, a booking request from <strong>${renterName}</strong> for <strong>${toolName}</strong> has expired because it was not responded to within 48 hours.</p>
+    <a href="${dashboardUrl}" style="${btn}">View Dashboard →</a>
+  `),
+
+  autoReceiptConfirmed: ({ renterName, toolName, endDate }) => base(`
+    <h2 style="${h2}">⏰ Receipt Auto-Confirmed</h2>
+    <p style="${p}">Hi <strong>${renterName}</strong>, since you did not confirm receiving <strong>${toolName}</strong> within 3 days, receipt has been auto-confirmed and 50% has been released to the owner.</p>
+    <p style="${p}">Please remember to return the tool by <strong>${endDate}</strong>.</p>
+  `),
+
+  autoReturnConfirmed: ({ ownerName, toolName }) => base(`
+    <h2 style="${h2}">⏰ Return Auto-Confirmed — Payment Released</h2>
+    <p style="${p}">Hi <strong>${ownerName}</strong>, since the return was not confirmed within 2 days of the rental end date, the system has auto-confirmed the return of <strong>${toolName}</strong> and released your final payment.</p>
+  `),
+
   toolRejected: ({ ownerName, toolName, reason, dashboardUrl }) => base(`
     <h2 style="${h2}">⚠️ Tool Listing Needs Update</h2>
     <p style="${p}">Hi <strong>${ownerName}</strong>, your tool <strong>${toolName}</strong> was not approved.</p>
@@ -202,12 +275,20 @@ const templates = {
 
 const sendEmail = async ({ to, subject, template, data }) => {
   try {
-    if (!process.env.RESEND_API_KEY) {
-      console.log(`📧 Email skipped (no RESEND_API_KEY): ${subject} → ${to}`);
+    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
+      console.log(`📧 Email skipped (no EMAIL_USER/PASS): ${subject} → ${to}`);
+      return;
+    }
+    if (!templates[template]) {
+      console.error(`📧 Unknown template: ${template}`);
       return;
     }
     const html = templates[template](data);
-    await resend.emails.send({ from: `ToolShare Africa <${FROM}>`, to, subject, html });
+    const transporter = createTransporter();
+    await transporter.sendMail({
+      from: `ToolShare Africa <${process.env.EMAIL_USER}>`,
+      to, subject, html,
+    });
     console.log(`📧 Email sent: ${subject} → ${to}`);
   } catch (err) {
     console.error(`📧 Email failed: ${err.message}`);

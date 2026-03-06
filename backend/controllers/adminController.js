@@ -146,10 +146,12 @@ const deleteUser = async (req, res, next) => {
     if (!user) return res.status(404).json({ success: false, message: 'User not found.' });
     if (user.role === 'admin') return res.status(403).json({ success: false, message: 'Cannot delete admin accounts.' });
 
-    // Delete all their tools and bookings too
-    await Tool.deleteMany({ ownerId: user._id });
-    await Booking.deleteMany({ $or: [{ renterId: user._id }, { ownerId: user._id }] });
-    await Payment.deleteMany({ userId: user._id });
+    // Cascade delete — remove all their data
+    const Tool = require('../models/Tool');
+    const Booking = require('../models/Booking');
+
+    await Tool.deleteMany({ ownerId: req.params.id });
+    await Booking.deleteMany({ $or: [{ renterId: req.params.id }, { ownerId: req.params.id }] });
     await User.findByIdAndDelete(req.params.id);
 
     res.status(200).json({ success: true, message: 'User and all associated data deleted.' });

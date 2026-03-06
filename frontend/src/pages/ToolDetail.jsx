@@ -4,6 +4,8 @@ import api from '../services/api';
 import { useAuth } from '../context/AuthContext';
 import toast from 'react-hot-toast';
 import { MapPin, Phone, Mail, Calendar, AlertCircle, ChevronLeft, CheckCircle } from 'lucide-react';
+import StarRating from '../components/reviews/StarRating';
+import ReviewList from '../components/reviews/ReviewList';
 
 const PLACEHOLDER = 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=800&q=80';
 const BASE_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || '';
@@ -17,6 +19,8 @@ export default function ToolDetail() {
   const [activeImg, setActiveImg] = useState(0);
   const [booking, setBooking] = useState({ startDate: '', endDate: '', notes: '' });
   const [submitting, setSubmitting] = useState(false);
+  const [reviews, setReviews]     = useState([]);
+  const [avgRating, setAvgRating] = useState(null);
   const [kycStatus, setKycStatus] = useState(null);
 
   useEffect(() => {
@@ -24,6 +28,9 @@ export default function ToolDetail() {
       .then(({ data }) => setTool(data.tool))
       .catch(() => toast.error('Tool not found.'))
       .finally(() => setLoading(false));
+    api.get(`/reviews/tool/${id}`)
+      .then(({ data }) => { setReviews(data.reviews || []); setAvgRating(data.averageRating); })
+      .catch(() => {});
     if (user) {
       api.get('/kyc/status').then(({ data }) => setKycStatus(data.kyc?.status)).catch(() => {});
     }
@@ -295,6 +302,15 @@ export default function ToolDetail() {
               </div>
             </div>
           </div>
+
+          {/* Reviews Section */}
+          <div className="card p-6 mt-6">
+            <h2 className="font-display font-bold text-xl text-gray-900 mb-4">
+              ⭐ Reviews {avgRating && <span className="text-brand-600">{avgRating} / 5</span>}
+            </h2>
+            <ReviewList reviews={reviews} averageRating={avgRating} />
+          </div>
+
         </div>
       </div>
     </div>

@@ -6,8 +6,6 @@ import LoadingScreen from './components/ui/LoadingScreen';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
-import ForgotPassword from './pages/ForgotPassword';
-import ResetPassword from './pages/ResetPassword';
 import BrowseTools from './pages/BrowseTools';
 import ToolDetail from './pages/ToolDetail';
 import Dashboard from './pages/Dashboard';
@@ -20,6 +18,7 @@ import BankDetails from './pages/BankDetails';
 import KYCVerification from './pages/KYCVerification';
 import GoogleSuccess from './pages/GoogleSuccess';
 import AdminDashboard from './pages/AdminDashboard';
+import MapSearch from './pages/MapSearch';
 import HelpCenter from './pages/support/HelpCenter';
 import Terms from './pages/support/Terms';
 import Privacy from './pages/support/Privacy';
@@ -55,8 +54,6 @@ export default function App() {
           <Route path="/tools/:id" element={<ToolDetail />} />
           <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
           <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
-          <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
-          <Route path="/reset-password" element={<PublicRoute><ResetPassword /></PublicRoute>} />
           <Route path="/auth/google/success" element={<GoogleSuccess />} />
           <Route path="/help" element={<HelpCenter />} />
           <Route path="/terms" element={<Terms />} />
@@ -71,7 +68,8 @@ export default function App() {
           <Route path="/bank-details" element={<PrivateRoute role="owner"><BankDetails /></PrivateRoute>} />
           <Route path="/bookings" element={<PrivateRoute role="renter"><MyBookings /></PrivateRoute>} />
           <Route path="/booking-requests" element={<PrivateRoute role="owner"><OwnerBookings /></PrivateRoute>} />
-          <Route path="/admin" element={<PrivateRoute role="admin"><AdminDashboard /></PrivateRoute>} />
+          <Route path="/map" element={<MapSearch />} />
+        <Route path="/admin" element={<PrivateRoute role="admin"><AdminDashboard /></PrivateRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

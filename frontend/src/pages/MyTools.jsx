@@ -73,7 +73,7 @@ export default function MyTools() {
               <div key={tool._id} className="card group">
                 <div className="relative h-48 bg-earth-100 overflow-hidden">
                   <img
-                    src={tool.images?.[0] ? `${BASE_URL}${tool.images[0]}` : PLACEHOLDER}
+                    src={tool.images?.[0] ? (tool.images[0].startsWith("http") ? tool.images[0] : tool.images[0].startsWith("http") ? tool.images[0] : `${BASE_URL}${tool.images[0]}`) : PLACEHOLDER}
                     alt={tool.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     onError={(e) => { e.target.src = PLACEHOLDER; }}
