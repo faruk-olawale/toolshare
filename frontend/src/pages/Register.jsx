@@ -28,9 +28,9 @@ export default function Register() {
     }
     setLoading(true);
     try {
-      const data = await register(form);
-      toast.success(`Welcome to ToolShare Africa, ${data.user.name.split(' ')[0]}! 🎉`);
-      navigate('/dashboard');
+      await register(form);
+      toast.success('Account created successfully! Please sign in. 🎉');
+      navigate('/login');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Registration failed.');
     } finally {
