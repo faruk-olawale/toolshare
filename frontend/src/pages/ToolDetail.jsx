@@ -17,13 +17,17 @@ export default function ToolDetail() {
   const [activeImg, setActiveImg] = useState(0);
   const [booking, setBooking] = useState({ startDate: '', endDate: '', notes: '' });
   const [submitting, setSubmitting] = useState(false);
+  const [kycStatus, setKycStatus] = useState(null);
 
   useEffect(() => {
     api.get(`/tools/${id}`)
       .then(({ data }) => setTool(data.tool))
       .catch(() => toast.error('Tool not found.'))
       .finally(() => setLoading(false));
-  }, [id]);
+    if (user) {
+      api.get('/kyc/status').then(({ data }) => setKycStatus(data.kyc?.status)).catch(() => {});
+    }
+  }, [id, user]);
 
   const totalDays = booking.startDate && booking.endDate
     ? Math.max(0, Math.ceil((new Date(booking.endDate) - new Date(booking.startDate)) / (1000 * 60 * 60 * 24)))
@@ -38,6 +42,10 @@ export default function ToolDetail() {
     }
     if (user.role !== 'renter') {
       return toast.error('Only renters can book tools.');
+    }
+    if (kycStatus !== 'approved') {
+      toast.error('Complete identity verification (KYC) before booking.');
+      return navigate('/kyc');
     }
     if (!booking.startDate || !booking.endDate) {
       return toast.error('Please select both start and end dates.');
@@ -198,6 +206,20 @@ export default function ToolDetail() {
                   <p className="text-yellow-700 text-sm font-medium">Owners can't book tools. Switch to a renter account to book.</p>
                 </div>
               ) : (
+                <>
+                {user && kycStatus !== 'approved' && (
+                  <div className={`rounded-xl p-3 mb-3 border ${kycStatus === 'pending' ? 'bg-yellow-50 border-yellow-200' : 'bg-orange-50 border-orange-200'}`}>
+                    <p className={`text-xs font-medium mb-1 ${kycStatus === 'pending' ? 'text-yellow-700' : 'text-orange-700'}`}>
+                      {kycStatus === 'pending' ? '🕐 KYC Under Review' : '⚠️ Identity Verification Required'}
+                    </p>
+                    <p className={`text-xs mb-2 ${kycStatus === 'pending' ? 'text-yellow-600' : 'text-orange-600'}`}>
+                      {kycStatus === 'pending' ? 'Your documents are being reviewed. You can book once approved.' : 'Verify your identity before booking any tool.'}
+                    </p>
+                    <Link to="/kyc" className="text-xs font-semibold text-brand-600 hover:underline">
+                      {kycStatus === 'pending' ? 'View Status →' : 'Complete Verification →'}
+                    </Link>
+                  </div>
+                )}
                 <form onSubmit={handleBook} className="space-y-4">
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1.5">
@@ -264,6 +286,7 @@ export default function ToolDetail() {
                     </button>
                   )}
                 </form>
+                </>
               )}
 
               <div className="mt-4 flex items-start gap-2 bg-gray-50 rounded-xl p-3">

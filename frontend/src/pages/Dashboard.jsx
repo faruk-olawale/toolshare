@@ -2,63 +2,70 @@ import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
 import api from '../services/api';
-import { PlusCircle, Package, BookOpen, TrendingUp, Clock, CheckCircle, XCircle, ArrowRight } from 'lucide-react';
+import KYCBanner from '../components/kyc/KYCBanner';
+import { PlusCircle, Package, BookOpen, TrendingUp, Clock, CheckCircle, ArrowRight } from 'lucide-react';
 
 export default function Dashboard() {
   const { user } = useAuth();
   const [stats, setStats] = useState(null);
+  const [kycStatus, setKycStatus] = useState(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    const fetchStats = async () => {
+    const fetchAll = async () => {
       try {
+        // Fetch KYC status
+        const kycRes = await api.get('/kyc/status');
+        setKycStatus(kycRes.data.kyc);
+
+        // Fetch dashboard stats
         if (user.role === 'owner') {
           const [toolsRes, bookingsRes] = await Promise.all([
             api.get('/tools/my-tools'),
-            api.get('/bookings/owner'),
+            api.get('/bookings/owner-bookings'),
           ]);
           const bookings = bookingsRes.data.bookings;
           setStats({
             totalTools: toolsRes.data.count,
             totalBookings: bookings.length,
-            pending: bookings.filter((b) => b.status === 'pending').length,
-            approved: bookings.filter((b) => b.status === 'approved').length,
-            completed: bookings.filter((b) => b.status === 'completed').length,
-            earnings: bookings.filter((b) => b.paymentStatus === 'paid').reduce((sum, b) => sum + b.totalAmount, 0),
+            pending: bookings.filter(b => b.status === 'pending').length,
+            approved: bookings.filter(b => b.status === 'approved').length,
+            completed: bookings.filter(b => b.status === 'completed').length,
+            earnings: bookings.filter(b => b.paymentStatus === 'paid').reduce((sum, b) => sum + b.totalAmount, 0),
             recentBookings: bookings.slice(0, 5),
           });
         } else {
-          const { data } = await api.get('/bookings/user');
+          const { data } = await api.get('/bookings/my-bookings');
           const bookings = data.bookings;
           setStats({
             totalBookings: bookings.length,
-            pending: bookings.filter((b) => b.status === 'pending').length,
-            approved: bookings.filter((b) => b.status === 'approved').length,
-            completed: bookings.filter((b) => b.status === 'completed').length,
-            spent: bookings.filter((b) => b.paymentStatus === 'paid').reduce((sum, b) => sum + b.totalAmount, 0),
+            pending: bookings.filter(b => b.status === 'pending').length,
+            approved: bookings.filter(b => b.status === 'approved').length,
+            completed: bookings.filter(b => b.status === 'completed').length,
+            spent: bookings.filter(b => b.paymentStatus === 'paid').reduce((sum, b) => sum + b.totalAmount, 0),
             recentBookings: bookings.slice(0, 5),
           });
         }
-      } catch { }
+      } catch {}
       setLoading(false);
     };
-    fetchStats();
+    fetchAll();
   }, [user]);
 
-  if (loading) {
-    return (
-      <div className="py-8 page-container">
-        <div className="animate-pulse space-y-6">
-          <div className="h-8 bg-gray-100 rounded-xl w-64" />
-          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-            {[...Array(4)].map((_, i) => <div key={i} className="h-28 bg-gray-100 rounded-2xl" />)}
-          </div>
+  if (loading) return (
+    <div className="py-8 page-container">
+      <div className="animate-pulse space-y-6">
+        <div className="h-8 bg-gray-100 rounded-xl w-64" />
+        <div className="h-16 bg-orange-50 rounded-2xl" />
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+          {[...Array(4)].map((_, i) => <div key={i} className="h-28 bg-gray-100 rounded-2xl" />)}
         </div>
       </div>
-    );
-  }
+    </div>
+  );
 
   const isOwner = user.role === 'owner';
+  const kycApproved = kycStatus?.status === 'approved';
 
   const statCards = isOwner ? [
     { label: 'My Tools', value: stats?.totalTools || 0, icon: <Package size={20} />, color: 'bg-blue-50 text-blue-600', link: '/my-tools' },
@@ -76,17 +83,21 @@ export default function Dashboard() {
     <div className="py-8 animate-fade-in">
       <div className="page-container">
         {/* Header */}
-        <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center justify-between mb-6">
           <div>
-            <h1 className="section-title">
-              Welcome back, {user.name?.split(' ')[0]}! 👋
-            </h1>
+            <h1 className="section-title">Welcome back, {user.name?.split(' ')[0]}! 👋</h1>
             <p className="text-gray-500 mt-1 capitalize">{user.role} Account · {user.location || 'Nigeria'}</p>
           </div>
           {isOwner ? (
-            <Link to="/tools/new" className="btn-primary flex items-center gap-2">
-              <PlusCircle size={18} /> List Tool
-            </Link>
+            kycApproved ? (
+              <Link to="/tools/new" className="btn-primary flex items-center gap-2">
+                <PlusCircle size={18} /> List Tool
+              </Link>
+            ) : (
+              <Link to="/kyc" className="btn-primary flex items-center gap-2 bg-orange-500 hover:bg-orange-600">
+                🪪 Verify Identity
+              </Link>
+            )
           ) : (
             <Link to="/tools" className="btn-primary flex items-center gap-2">
               Browse Tools <ArrowRight size={18} />
@@ -94,13 +105,14 @@ export default function Dashboard() {
           )}
         </div>
 
+        {/* KYC Banner — shown prominently when not approved */}
+        <KYCBanner kyc={kycStatus} />
+
         {/* Stats */}
         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
           {statCards.map(({ label, value, icon, color, link }) => (
             <Link key={label} to={link} className="card p-5 hover:shadow-md hover:-translate-y-0.5 transition-all">
-              <div className={`w-10 h-10 ${color} rounded-xl flex items-center justify-center mb-3`}>
-                {icon}
-              </div>
+              <div className={`w-10 h-10 ${color} rounded-xl flex items-center justify-center mb-3`}>{icon}</div>
               <div className="text-2xl font-bold text-gray-900">{value}</div>
               <div className="text-sm text-gray-500">{label}</div>
             </Link>
@@ -113,13 +125,15 @@ export default function Dashboard() {
             <h3 className="font-display font-semibold text-lg text-gray-900 mb-4">Quick Actions</h3>
             <div className="space-y-2">
               {(isOwner ? [
-                { label: 'List a new tool', to: '/tools/new', icon: '➕' },
+                { label: kycApproved ? 'List a new tool' : 'Complete KYC to list tools', to: kycApproved ? '/tools/new' : '/kyc', icon: kycApproved ? '➕' : '🪪' },
                 { label: 'View my tools', to: '/my-tools', icon: '🔧' },
                 { label: 'Check booking requests', to: '/booking-requests', icon: '📋' },
+                { label: 'Update bank details', to: '/bank-details', icon: '🏦' },
               ] : [
-                { label: 'Browse available tools', to: '/tools', icon: '🔍' },
+                { label: kycApproved ? 'Browse available tools' : 'Complete KYC to book tools', to: kycApproved ? '/tools' : '/kyc', icon: kycApproved ? '🔍' : '🪪' },
                 { label: 'View my bookings', to: '/bookings', icon: '📋' },
                 { label: 'Explore categories', to: '/tools', icon: '📂' },
+                { label: 'Help center', to: '/help', icon: '❓' },
               ]).map(({ label, to, icon }) => (
                 <Link key={label} to={to} className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors group">
                   <span className="text-xl">{icon}</span>
@@ -140,31 +154,28 @@ export default function Dashboard() {
               <div className="text-center py-8">
                 <div className="text-4xl mb-2">📭</div>
                 <p className="text-gray-500 text-sm">No activity yet.</p>
+                {!kycApproved && <Link to="/kyc" className="text-sm text-brand-600 hover:underline mt-2 block">Complete KYC to get started →</Link>}
               </div>
             ) : (
               <div className="space-y-3">
-                {stats?.recentBookings?.map((booking) => (
+                {stats?.recentBookings?.map(booking => (
                   <div key={booking._id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl">
                     <div className="w-9 h-9 bg-white rounded-xl border border-gray-100 flex items-center justify-center flex-shrink-0">
                       <span className="text-sm">
-                        {booking.status === 'pending' ? '⏳' : booking.status === 'approved' ? '✅' : booking.status === 'completed' ? '🏁' : '❌'}
+                        {booking.status === 'pending' ? '⏳' : booking.status === 'approved' ? '✅' : booking.status === 'completed' ? '🏁' : booking.status === 'disputed' ? '🚨' : '❌'}
                       </span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-800 truncate">
-                        {booking.toolId?.name || 'Tool'}
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        ₦{booking.totalAmount?.toLocaleString()} · {new Date(booking.startDate).toLocaleDateString()}
-                      </p>
+                      <p className="text-sm font-medium text-gray-800 truncate">{booking.toolId?.name || 'Tool'}</p>
+                      <p className="text-xs text-gray-500">₦{booking.totalAmount?.toLocaleString()} · {new Date(booking.startDate).toLocaleDateString()}</p>
                     </div>
                     <span className={`badge text-xs ${
-                      booking.status === 'pending' ? 'badge-pending' :
-                      booking.status === 'approved' ? 'badge-approved' :
-                      booking.status === 'completed' ? 'badge-completed' : 'badge-rejected'
-                    }`}>
-                      {booking.status}
-                    </span>
+                      booking.status === 'pending' ? 'bg-yellow-50 text-yellow-700 border-yellow-100' :
+                      booking.status === 'approved' ? 'bg-green-50 text-green-700 border-green-100' :
+                      booking.status === 'completed' ? 'bg-blue-50 text-blue-700 border-blue-100' :
+                      booking.status === 'disputed' ? 'bg-red-50 text-red-700 border-red-100' :
+                      'bg-gray-50 text-gray-500 border-gray-100'
+                    }`}>{booking.status}</span>
                   </div>
                 ))}
               </div>

@@ -1,14 +1,23 @@
-import { useState } from 'react';
-import { useNavigate } from 'react-router-dom';
+import { useState, useEffect } from 'react';
+import { useNavigate, Link } from 'react-router-dom';
 import api from '../services/api';
 import toast from 'react-hot-toast';
-import { Upload, X, ImagePlus } from 'lucide-react';
+import { Upload, X, ImagePlus, Shield } from 'lucide-react';
 
 const CATEGORIES = ['Construction', 'Agriculture', 'Electrical', 'Plumbing', 'Woodworking', 'Gardening', 'Transportation', 'Cleaning', 'Safety', 'Other'];
 const CITIES = ['Lagos', 'Abuja', 'Kano', 'Ibadan', 'Port Harcourt', 'Benin City', 'Maiduguri', 'Zaria', 'Aba', 'Jos', 'Ilorin', 'Enugu', 'Abeokuta', 'Onitsha', 'Warri', 'Kaduna', 'Calabar', 'Uyo', 'Owerri'];
 
 export default function AddTool() {
   const navigate = useNavigate();
+  const [kycStatus, setKycStatus] = useState(null);
+  const [kycLoading, setKycLoading] = useState(true);
+
+  useEffect(() => {
+    api.get('/kyc/status').then(({ data }) => {
+      setKycStatus(data.kyc?.status);
+      setKycLoading(false);
+    }).catch(() => setKycLoading(false));
+  }, []);
   const [form, setForm] = useState({
     name: '', category: '', description: '', pricePerDay: '', location: '', condition: 'Good',
   });
@@ -54,6 +63,27 @@ export default function AddTool() {
       setLoading(false);
     }
   };
+
+  if (kycLoading) return <div className="py-12 page-container"><div className="animate-pulse h-8 bg-gray-100 rounded w-48" /></div>;
+
+  if (kycStatus !== 'approved') return (
+    <div className="min-h-[calc(100vh-64px)] flex items-center justify-center px-4">
+      <div className="card p-8 max-w-md w-full text-center">
+        <div className="w-16 h-16 bg-orange-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <Shield size={28} className="text-orange-500" />
+        </div>
+        <h2 className="text-xl font-display font-bold text-gray-900 mb-2">Verify Your Identity First</h2>
+        <p className="text-gray-500 text-sm mb-2">You need to complete identity verification before listing tools on ToolShare Africa.</p>
+        {kycStatus === 'pending' && <p className="text-yellow-600 text-sm mb-4 bg-yellow-50 rounded-xl p-3">⏳ Your KYC is under review. You can list tools once approved.</p>}
+        {kycStatus === 'rejected' && <p className="text-red-600 text-sm mb-4 bg-red-50 rounded-xl p-3">❌ Your verification was rejected. Please resubmit your documents.</p>}
+        {(!kycStatus || kycStatus === 'not_submitted') && <p className="text-gray-400 text-sm mb-4">It takes less than 2 minutes to complete.</p>}
+        <Link to="/kyc" className="btn-primary w-full block text-center">
+          {kycStatus === 'pending' ? 'View KYC Status →' : 'Complete Verification →'}
+        </Link>
+        <Link to="/dashboard" className="text-sm text-gray-400 hover:text-gray-600 mt-3 block">← Back to Dashboard</Link>
+      </div>
+    </div>
+  );
 
   return (
     <div className="py-8 animate-fade-in">
