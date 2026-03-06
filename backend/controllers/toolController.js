@@ -59,9 +59,16 @@ const createTool = async (req, res, next) => {
 
     const { name, category, description, pricePerDay, location, condition, ownershipNote } = req.body;
 
-    // Cloudinary returns path/secure_url — handle both
-    const images = (req.files?.images || []).map(f => f.path || f.secure_url);
-    const ownershipDocs = (req.files?.ownershipDocs || []).map(f => f.path || f.secure_url);
+    // Cloudinary returns secure_url/path as URL; local disk returns absolute path — convert to relative
+    const getFileUrl = (f) => {
+      if (f.secure_url) return f.secure_url;
+      if (f.path && f.path.startsWith('http')) return f.path;
+      // Local disk — return just the filename so frontend can request /uploads/...
+      return `/uploads/${f.fieldname === 'ownershipDocs' ? 'docs' : 'tools'}/${f.filename}`;
+    };
+
+    const images       = (req.files?.images        || []).map(getFileUrl);
+    const ownershipDocs = (req.files?.ownershipDocs || []).map(getFileUrl);
 
     if (ownershipDocs.length === 0) {
       return res.status(400).json({
@@ -83,7 +90,7 @@ const createTool = async (req, res, next) => {
       message: "Tool submitted for admin review! You'll be notified when it goes live.",
       tool,
     });
-  } catch (error) { next(error); }
+  } catch (error) { console.error('createTool error:', error.message, error); next(error); }
 };
 
 const updateTool = async (req, res, next) => {

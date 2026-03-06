@@ -11,8 +11,8 @@ const toolSchema = new mongoose.Schema({
   pricePerDay: { type: Number, required: true, min: 0 },
   images: { type: [String], default: [] },
   coordinates: {
-    type: { type: String, enum: ['Point'], default: 'Point' },
-    coordinates: { type: [Number], default: null }, // [longitude, latitude]
+    type: { type: String, enum: ['Point'] },
+    coordinates: { type: [Number] },
   },
   location: { type: String, required: true, trim: true },
   available:     { type: Boolean, default: true },
