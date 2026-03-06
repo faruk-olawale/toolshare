@@ -5,6 +5,12 @@ import { CheckCircle, XCircle, Users, Package, BookOpen, TrendingUp, Eye, AlertT
 
 const BASE_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || '';
 const PLACEHOLDER = 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400&q=80';
+const getImgUrl = (url) => {
+  if (!url) return PLACEHOLDER;
+  if (url.startsWith('http')) return url;
+  // local relative path like /uploads/tools/file.jpg
+  return `${BASE_URL}${url}`;
+};
 
 export default function AdminDashboard() {
   const [tab, setTab] = useState('pending');
@@ -27,6 +33,8 @@ export default function AdminDashboard() {
   const [checklist, setChecklist] = useState({});
   const [resolveModal, setResolveModal] = useState(null);
   const [resolveForm, setResolveForm] = useState({ resolution: '', action: '' });
+  const [previewTool, setPreviewTool] = useState(null);
+  const [previewImgIdx, setPreviewImgIdx] = useState(0);
 
   useEffect(() => { fetchAll(); }, []);
 
@@ -153,7 +161,7 @@ export default function AdminDashboard() {
               <div key={tool._id} className="card p-4">
                 <div className="flex gap-3 mb-3">
                   <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-earth-100">
-                    <img src={tool.images?.[0] ? (tool.images[0].startsWith("http") ? tool.images[0] : tool.images[0].startsWith("http") ? tool.images[0] : `${BASE_URL}${tool.images[0]}`) : PLACEHOLDER} className="w-full h-full object-cover" onError={e => { e.target.src = PLACEHOLDER; }} />
+                    <img src={getImgUrl(tool.images?.[0])} className="w-full h-full object-cover" onError={e => { e.target.src = PLACEHOLDER; }} />
                   </div>
                   <div className="flex-1 min-w-0">
                     <h3 className="font-bold text-gray-900 truncate">{tool.name}</h3>
@@ -191,9 +199,9 @@ export default function AdminDashboard() {
                   </div>
                 )}
                 <div className="flex flex-col sm:flex-row gap-2">
-                  <a href={`/tools/${tool._id}`} target="_blank" className="btn-secondary py-2 px-3 text-sm flex items-center justify-center gap-1">
+                  <button onClick={() => { setPreviewTool(tool); setPreviewImgIdx(0); }} className="btn-secondary py-2 px-3 text-sm flex items-center justify-center gap-1">
                     <Eye size={13} /> Preview
-                  </a>
+                  </button>
                   <button onClick={() => { setModal({ type: 'rejectTool', id: tool._id }); setReason(''); }}
                     disabled={processing === tool._id}
                     className="btn-secondary py-2 px-4 text-sm text-red-500 border-red-100 hover:bg-red-50 flex items-center justify-center gap-1">
@@ -377,6 +385,87 @@ export default function AdminDashboard() {
                 className="flex-1 bg-red-500 hover:bg-red-600 text-white font-medium px-6 py-3 rounded-xl transition-colors disabled:opacity-50">
                 {processing === deleteModal._id ? 'Deleting...' : '🗑️ Delete Account'}
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Tool Preview Modal */}
+      {previewTool && (
+        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onClick={() => setPreviewTool(null)}>
+          <div className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
+            {/* Images */}
+            <div className="relative bg-gray-100 rounded-t-2xl overflow-hidden" style={{height: '260px'}}>
+              <img
+                src={previewTool.images?.length ? getImgUrl(previewTool.images[previewImgIdx]) : PLACEHOLDER}
+                className="w-full h-full object-cover"
+                onError={e => { e.target.src = PLACEHOLDER; }}
+              />
+              {previewTool.images?.length > 1 && (
+                <>
+                  <button onClick={() => setPreviewImgIdx(i => (i - 1 + previewTool.images.length) % previewTool.images.length)}
+                    className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/40 hover:bg-black/60 text-white rounded-full flex items-center justify-center text-lg">‹</button>
+                  <button onClick={() => setPreviewImgIdx(i => (i + 1) % previewTool.images.length)}
+                    className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/40 hover:bg-black/60 text-white rounded-full flex items-center justify-center text-lg">›</button>
+                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
+                    {previewTool.images.map((_, i) => (
+                      <button key={i} onClick={() => setPreviewImgIdx(i)}
+                        className={`w-2 h-2 rounded-full transition-all ${i === previewImgIdx ? 'bg-white' : 'bg-white/50'}`} />
+                    ))}
+                  </div>
+                </>
+              )}
+              <button onClick={() => setPreviewTool(null)}
+                className="absolute top-3 right-3 w-8 h-8 bg-black/40 hover:bg-black/60 text-white rounded-full flex items-center justify-center text-lg">✕</button>
+              <span className="absolute top-3 left-3 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded-full">Pending Review</span>
+            </div>
+
+            {/* Details */}
+            <div className="p-5 space-y-3">
+              <div className="flex items-start justify-between gap-2">
+                <h2 className="font-display font-bold text-gray-900 text-lg">{previewTool.name}</h2>
+                <span className="text-brand-600 font-bold text-lg whitespace-nowrap">₦{previewTool.pricePerDay?.toLocaleString()}/day</span>
+              </div>
+              <div className="flex flex-wrap gap-2">
+                <span className="badge bg-purple-50 text-purple-700 border-purple-100 text-xs">{previewTool.category}</span>
+                <span className="badge bg-gray-50 text-gray-600 border-gray-100 text-xs">📍 {previewTool.location}</span>
+                <span className="badge bg-blue-50 text-blue-600 border-blue-100 text-xs">{previewTool.condition}</span>
+              </div>
+              <p className="text-sm text-gray-600">{previewTool.description}</p>
+
+              {/* Owner info */}
+              <div className="bg-gray-50 rounded-xl p-3">
+                <p className="text-xs font-semibold text-gray-500 mb-1">Listed by</p>
+                <p className="text-sm font-medium text-gray-800">{previewTool.ownerId?.name}</p>
+                <p className="text-xs text-gray-400">{previewTool.ownerId?.email}</p>
+              </div>
+
+              {/* Ownership docs */}
+              {previewTool.ownershipDocs?.length > 0 && (
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 mb-2">Proof of Ownership ({previewTool.ownershipDocs.length} file{previewTool.ownershipDocs.length > 1 ? 's' : ''})</p>
+                  <div className="flex flex-wrap gap-2">
+                    {previewTool.ownershipDocs.map((doc, i) => (
+                      <a key={i} href={getImgUrl(doc)} target="_blank" rel="noreferrer"
+                        className="flex items-center gap-1 bg-blue-50 border border-blue-100 rounded-lg px-3 py-1.5 text-xs text-blue-700 hover:bg-blue-100">
+                        📄 Document {i + 1} ↗
+                      </a>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Actions */}
+              <div className="flex gap-2 pt-2">
+                <button onClick={() => { setModal({ type: 'rejectTool', id: previewTool._id }); setPreviewTool(null); setReason(''); }}
+                  className="btn-secondary flex-1 py-2.5 text-sm text-red-500 border-red-100 hover:bg-red-50 flex items-center justify-center gap-1">
+                  <XCircle size={14} /> Reject
+                </button>
+                <button onClick={() => { verifyTool(previewTool._id); setPreviewTool(null); }}
+                  className="btn-primary flex-1 py-2.5 text-sm flex items-center justify-center gap-1">
+                  <CheckCircle size={14} /> Approve & Go Live
+                </button>
+              </div>
             </div>
           </div>
         </div>
