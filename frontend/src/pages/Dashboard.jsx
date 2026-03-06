@@ -25,14 +25,46 @@ export default function Dashboard() {
             api.get('/bookings/owner-bookings'),
           ]);
           const bookings = bookingsRes.data.bookings;
+          const tools = toolsRes.data.tools || [];
+
+          // Build unified activity feed: tool status events + booking events
+          const toolEvents = tools
+            .filter(t => t.adminVerified || t.adminNote)
+            .map(t => ({
+              _id: `tool-${t._id}`,
+              type: 'tool',
+              toolName: t.name,
+              status: t.adminVerified ? 'approved' : 'rejected',
+              adminNote: t.adminNote,
+              date: t.updatedAt,
+            }));
+
+          const bookingEvents = bookings.map(b => ({
+            _id: b._id,
+            type: 'booking',
+            toolName: b.toolId?.name || 'Tool',
+            status: b.status,
+            totalAmount: b.totalAmount,
+            startDate: b.startDate,
+            date: b.updatedAt,
+          }));
+
+          const allActivity = [...toolEvents, ...bookingEvents]
+            .sort((a, b) => new Date(b.date) - new Date(a.date))
+            .slice(0, 8);
+
           setStats({
             totalTools: toolsRes.data.count,
+            pendingTools: tools.filter(t => !t.adminVerified && !t.adminNote).length,
+            approvedTools: tools.filter(t => t.adminVerified).length,
+            rejectedTools: tools.filter(t => !t.adminVerified && t.adminNote).length,
             totalBookings: bookings.length,
             pending: bookings.filter(b => b.status === 'pending').length,
             approved: bookings.filter(b => b.status === 'approved').length,
             completed: bookings.filter(b => b.status === 'completed').length,
             earnings: bookings.filter(b => b.paymentStatus === 'paid').reduce((sum, b) => sum + b.totalAmount, 0),
             recentBookings: bookings.slice(0, 5),
+            recentActivity: allActivity,
           });
         } else {
           const { data } = await api.get('/bookings/my-bookings');
