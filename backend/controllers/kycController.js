@@ -15,9 +15,19 @@ const submitKyc = async (req, res, next) => {
     if (!req.files?.selfie?.[0])
       return res.status(400).json({ success: false, message: 'Selfie photo is required.' });
 
-    // Cloudinary returns path or secure_url
-    const idDocUrl = req.files.idDocument[0].path || req.files.idDocument[0].secure_url;
-    const selfieUrl = req.files.selfie[0].path || req.files.selfie[0].secure_url;
+    const idFile  = req.files.idDocument[0];
+    const selfFile = req.files.selfie[0];
+
+    // Handle both Cloudinary (has .path or .secure_url) and local disk (has .filename)
+    const getFileUrl = (file) => {
+      if (file.path && file.path.startsWith('http')) return file.path;   // Cloudinary URL
+      if (file.secure_url) return file.secure_url;                         // Cloudinary secure_url
+      if (file.path) return `/uploads/kyc/${file.filename}`;              // local path
+      return `/uploads/kyc/${file.filename}`;                              // fallback
+    };
+
+    const idDocUrl  = getFileUrl(idFile);
+    const selfieUrl = getFileUrl(selfFile);
 
     const user = await User.findByIdAndUpdate(req.user._id, {
       kyc: {
@@ -43,7 +53,10 @@ const submitKyc = async (req, res, next) => {
       message: 'KYC submitted! Our team will review within 24 hours.',
       kyc: user.kyc,
     });
-  } catch (error) { next(error); }
+  } catch (error) {
+    console.error('KYC submit error:', error);
+    next(error);
+  }
 };
 
 // GET /api/kyc/status

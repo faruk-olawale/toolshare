@@ -23,8 +23,11 @@ router.post(
   createBooking
 );
 
-router.get('/user', protect, authorize('renter'), getRenterBookings);
-router.get('/owner', protect, authorize('owner'), getOwnerBookings);
+router.get('/my-bookings',    protect, getRenterBookings);
+router.get('/owner-bookings', protect, getOwnerBookings);
+// Legacy aliases
+router.get('/user',  protect, getRenterBookings);
+router.get('/owner', protect, getOwnerBookings);
 
 router.put('/:id/approve', protect, authorize('owner'), approveBooking);
 router.put('/:id/reject', protect, authorize('owner'), rejectBooking);
