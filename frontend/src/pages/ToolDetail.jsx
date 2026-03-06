@@ -9,6 +9,7 @@ import ReviewList from '../components/reviews/ReviewList';
 
 const PLACEHOLDER = 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=800&q=80';
 const BASE_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || '';
+const getImgUrl = (url) => !url ? PLACEHOLDER : url.startsWith('http') ? url : `${BASE_URL}${url}`;
 
 export default function ToolDetail() {
   const { id } = useParams();
@@ -107,7 +108,7 @@ export default function ToolDetail() {
             <div className="card overflow-hidden">
               <div className="h-80 sm:h-96 bg-earth-100">
                 <img
-                  src={images[activeImg] ? `${BASE_URL}${images[activeImg]}` : PLACEHOLDER}
+                  src={getImgUrl(images[activeImg])}
                   alt={tool.name}
                   className="w-full h-full object-cover"
                   onError={(e) => { e.target.src = PLACEHOLDER; }}
@@ -123,7 +124,7 @@ export default function ToolDetail() {
                         i === activeImg ? 'border-brand-500' : 'border-transparent'
                       }`}
                     >
-                      <img src={img ? `${BASE_URL}${img}` : PLACEHOLDER} className="w-full h-full object-cover" onError={(e) => { e.target.src = PLACEHOLDER; }} />
+                      <img src={getImgUrl(img)} className="w-full h-full object-cover" onError={(e) => { e.target.src = PLACEHOLDER; }} />
                     </button>
                   ))}
                 </div>
