@@ -134,7 +134,18 @@ const replyToTicket = async (req, res, next) => {
         adminMessage: message,
         clientUrl: process.env.CLIENT_URL,
       },
-    });
+    }).catch(() => {});
+
+    // In-app notification to user (if they have an account)
+    if (ticket.userId) {
+      notify({
+        userId: ticket.userId,
+        title: `💬 Support Reply — Ticket #${ticket.ticketNumber}`,
+        message: `We've replied to your support ticket: "${ticket.subject}"`,
+        type: 'system',
+        link: '/help',
+      }).catch(() => {});
+    }
 
     res.status(200).json({ success: true, message: 'Reply sent!', ticket });
   } catch (error) { next(error); }
@@ -162,7 +173,18 @@ const updateTicketStatus = async (req, res, next) => {
         subject: `✅ Ticket #${ticket.ticketNumber} Resolved`,
         template: 'ticketResolved',
         data: { name: ticket.name, ticketNumber: ticket.ticketNumber, subject: ticket.subject, clientUrl: process.env.CLIENT_URL },
-      });
+      }).catch(() => {});
+
+      // In-app notification to user (if they have an account)
+      if (ticket.userId) {
+        notify({
+          userId: ticket.userId,
+          title: `✅ Support Ticket #${ticket.ticketNumber} Resolved`,
+          message: `Your support ticket "${ticket.subject}" has been resolved. Check your email for details.`,
+          type: 'system',
+          link: '/help',
+        }).catch(() => {});
+      }
     }
 
     res.status(200).json({ success: true, message: `Ticket marked as ${status}.`, ticket });
