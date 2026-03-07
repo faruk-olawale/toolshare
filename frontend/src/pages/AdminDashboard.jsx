@@ -348,7 +348,10 @@ export default function AdminDashboard() {
                     <p className="font-semibold text-gray-800 text-sm">{ticket.subject}</p>
                     <p className="text-xs text-gray-400 mt-0.5">{ticket.name} · {ticket.email} · {new Date(ticket.createdAt).toLocaleDateString()}</p>
                   </div>
-                  <button onClick={() => setSelectedTicket(selectedTicket?._id === ticket._id ? null : ticket)}
+                  <button onClick={() => {
+                    setSelectedTicket(selectedTicket?._id === ticket._id ? null : ticket);
+                    setReplyText(''); // clear reply text when switching tickets
+                  }}
                     className="btn-secondary text-xs px-3 py-1.5 shrink-0">
                     {selectedTicket?._id === ticket._id ? 'Close' : 'View & Reply'}
                   </button>
@@ -356,9 +359,9 @@ export default function AdminDashboard() {
 
                 {selectedTicket?._id === ticket._id && (
                   <div className="mt-4 border-t border-gray-100 pt-4 space-y-3">
-                    {/* Message thread */}
+                    {/* Message thread - use selectedTicket to always show latest */}
                     <div className="space-y-2 max-h-64 overflow-y-auto">
-                      {ticket.messages.map((msg, i) => (
+                      {selectedTicket.messages.map((msg, i) => (
                         <div key={i} className={`rounded-xl px-4 py-3 text-sm ${msg.sender === 'admin' ? 'bg-brand-50 text-brand-900 ml-8' : 'bg-gray-50 text-gray-700 mr-8'}`}>
                           <p className="text-xs font-semibold mb-1 text-gray-400">{msg.sender === 'admin' ? '👤 You (Admin)' : `🙋 ${ticket.name}`}</p>
                           {msg.message}
@@ -367,7 +370,7 @@ export default function AdminDashboard() {
                     </div>
 
                     {/* Reply box */}
-                    {ticket.status !== 'resolved' && (
+                    {selectedTicket.status !== 'resolved' && (
                       <div className="space-y-2">
                         <textarea rows={3} className="input-field resize-none text-sm"
                           placeholder="Type your reply..." value={replyText}

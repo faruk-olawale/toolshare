@@ -92,16 +92,17 @@ const getAllTickets = async (req, res, next) => {
     if (category) query.category = category;
     if (priority) query.priority = priority;
 
-    const tickets = await SupportTicket.find(query)
-      .populate('userId', 'name email role')
-      .sort({ createdAt: -1 });
+    const [tickets, allTickets] = await Promise.all([
+      SupportTicket.find(query).populate('userId', 'name email role').sort({ createdAt: -1 }),
+      SupportTicket.find({}),
+    ]);
 
     const counts = {
-      total: tickets.length,
-      open: tickets.filter(t => t.status === 'open').length,
-      in_progress: tickets.filter(t => t.status === 'in_progress').length,
-      resolved: tickets.filter(t => t.status === 'resolved').length,
-      high: tickets.filter(t => t.priority === 'high').length,
+      total: allTickets.length,
+      open: allTickets.filter(t => t.status === 'open').length,
+      in_progress: allTickets.filter(t => t.status === 'in_progress').length,
+      resolved: allTickets.filter(t => t.status === 'resolved').length,
+      high: allTickets.filter(t => t.priority === 'high').length,
     };
 
     res.status(200).json({ success: true, counts, tickets });
