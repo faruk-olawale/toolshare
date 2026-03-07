@@ -110,7 +110,7 @@ export default function AdminDashboard() {
   if (loading) return (
     <div className="py-8 page-container"><div className="animate-pulse space-y-6">
       <div className="h-8 bg-gray-100 rounded w-48" />
-      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">{[...Array(6)].map((_, i) => <div key={i} className="h-24 bg-gray-100 rounded-2xl" />)}</div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">{[...Array(8)].map((_, i) => <div key={i} className="h-24 bg-gray-100 rounded-2xl" />)}</div>
     </div></div>
   );
 
@@ -132,14 +132,16 @@ export default function AdminDashboard() {
 
         {/* Stats */}
         {stats && (
-          <div className="grid grid-cols-2 md:grid-cols-6 gap-3 mb-6">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
             {[
               { label: 'Users', value: stats.totalUsers, icon: <Users size={15} />, color: 'bg-blue-50 text-blue-600' },
               { label: 'Tools', value: stats.totalTools, icon: <Package size={15} />, color: 'bg-purple-50 text-purple-600' },
               { label: 'Bookings', value: stats.totalBookings, icon: <BookOpen size={15} />, color: 'bg-green-50 text-green-600' },
               { label: 'Pending Tools', value: stats.pendingTools, icon: <AlertTriangle size={15} />, color: 'bg-yellow-50 text-yellow-600' },
               { label: 'Pending KYC', value: stats.pendingKyc, icon: <Shield size={15} />, color: 'bg-orange-50 text-orange-600' },
-              { label: 'Revenue', value: `₦${(stats.totalRevenue || 0).toLocaleString()}`, icon: <TrendingUp size={15} />, color: 'bg-brand-50 text-brand-600' },
+              { label: 'Platform Revenue', value: `₦${Math.round(stats.totalRevenue || 0).toLocaleString()}`, icon: <TrendingUp size={15} />, color: 'bg-brand-50 text-brand-600' },
+              { label: 'Gross Volume', value: `₦${Math.round(stats.grossVolume || 0).toLocaleString()}`, icon: <TrendingUp size={15} />, color: 'bg-green-50 text-green-700' },
+              { label: 'Paid Bookings', value: stats.paidBookings || 0, icon: <BookOpen size={15} />, color: 'bg-teal-50 text-teal-600' },
             ].map(({ label, value, icon, color }) => (
               <div key={label} className="card p-4">
                 <div className={`w-8 h-8 ${color} rounded-xl flex items-center justify-center mb-2`}>{icon}</div>
@@ -326,6 +328,100 @@ export default function AdminDashboard() {
         )}
 
         {/* Bookings */}
+        {tab === 'support' && (
+          <div className="space-y-4">
+            {tickets.length === 0 ? (
+              <div className="card text-center py-16 text-gray-400">
+                <p className="text-4xl mb-3">🎫</p>
+                <p className="font-medium">No support tickets yet</p>
+              </div>
+            ) : tickets.map(ticket => (
+              <div key={ticket._id} className={`card border-l-4 ${ticket.status === 'open' ? 'border-l-red-400' : ticket.status === 'in_progress' ? 'border-l-yellow-400' : 'border-l-green-400'}`}>
+                <div className="flex items-start justify-between gap-4 flex-wrap">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex items-center gap-2 flex-wrap mb-1">
+                      <span className="font-bold text-gray-900 text-sm">#{ticket.ticketNumber}</span>
+                      <span className={`badge text-xs ${ticket.priority === 'high' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200'}`}>{ticket.priority}</span>
+                      <span className={`badge text-xs ${ticket.status === 'open' ? 'bg-red-50 text-red-700 border-red-200' : ticket.status === 'in_progress' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : 'bg-green-50 text-green-700 border-green-200'}`}>{ticket.status.replace('_', ' ')}</span>
+                      <span className="badge text-xs bg-gray-50 text-gray-500 border-gray-200 capitalize">{ticket.category}</span>
+                    </div>
+                    <p className="font-semibold text-gray-800 text-sm">{ticket.subject}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{ticket.name} · {ticket.email} · {new Date(ticket.createdAt).toLocaleDateString()}</p>
+                  </div>
+                  <button onClick={() => setSelectedTicket(selectedTicket?._id === ticket._id ? null : ticket)}
+                    className="btn-secondary text-xs px-3 py-1.5 shrink-0">
+                    {selectedTicket?._id === ticket._id ? 'Close' : 'View & Reply'}
+                  </button>
+                </div>
+
+                {selectedTicket?._id === ticket._id && (
+                  <div className="mt-4 border-t border-gray-100 pt-4 space-y-3">
+                    {/* Message thread */}
+                    <div className="space-y-2 max-h-64 overflow-y-auto">
+                      {ticket.messages.map((msg, i) => (
+                        <div key={i} className={`rounded-xl px-4 py-3 text-sm ${msg.sender === 'admin' ? 'bg-brand-50 text-brand-900 ml-8' : 'bg-gray-50 text-gray-700 mr-8'}`}>
+                          <p className="text-xs font-semibold mb-1 text-gray-400">{msg.sender === 'admin' ? '👤 You (Admin)' : `🙋 ${ticket.name}`}</p>
+                          {msg.message}
+                        </div>
+                      ))}
+                    </div>
+
+                    {/* Reply box */}
+                    {ticket.status !== 'resolved' && (
+                      <div className="space-y-2">
+                        <textarea rows={3} className="input-field resize-none text-sm"
+                          placeholder="Type your reply..." value={replyText}
+                          onChange={e => setReplyText(e.target.value)} />
+                        <div className="flex gap-2 flex-wrap">
+                          <button disabled={!replyText.trim() || replyLoading}
+                            onClick={async () => {
+                              setReplyLoading(true);
+                              try {
+                                const { data } = await api.post(`/support/admin/tickets/${ticket._id}/reply`, { message: replyText });
+                                setTickets(prev => prev.map(t => t._id === ticket._id ? data.ticket : t));
+                                setSelectedTicket(data.ticket);
+                                setReplyText('');
+                                toast.success('Reply sent!');
+                              } catch { toast.error('Failed to send reply'); }
+                              setReplyLoading(false);
+                            }}
+                            className="btn-primary text-sm px-4 py-2 disabled:opacity-50">
+                            {replyLoading ? 'Sending...' : '📤 Send Reply'}
+                          </button>
+                          <button onClick={async () => {
+                            try {
+                              await api.put(`/support/admin/tickets/${ticket._id}/status`, { status: 'resolved' });
+                              setTickets(prev => prev.map(t => t._id === ticket._id ? { ...t, status: 'resolved' } : t));
+                              setSelectedTicket(null);
+                              toast.success('Ticket resolved!');
+                            } catch { toast.error('Failed to resolve'); }
+                          }} className="bg-green-500 hover:bg-green-600 text-white text-sm px-4 py-2 rounded-xl font-medium transition-colors">
+                            ✅ Mark Resolved
+                          </button>
+                          <button onClick={async () => {
+                            if (!confirm('Delete this ticket?')) return;
+                            try {
+                              await api.delete(`/support/admin/tickets/${ticket._id}`);
+                              setTickets(prev => prev.filter(t => t._id !== ticket._id));
+                              setSelectedTicket(null);
+                              toast.success('Ticket deleted');
+                            } catch { toast.error('Failed to delete'); }
+                          }} className="bg-red-50 hover:bg-red-100 text-red-600 text-sm px-4 py-2 rounded-xl font-medium transition-colors">
+                            🗑 Delete
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                    {ticket.status === 'resolved' && (
+                      <p className="text-xs text-green-600 font-medium">✅ This ticket has been resolved.</p>
+                    )}
+                  </div>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+
         {tab === 'bookings' && (
           <div className="card overflow-hidden">
             <div className="overflow-x-auto">

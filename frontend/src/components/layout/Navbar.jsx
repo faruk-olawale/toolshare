@@ -1,7 +1,8 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
-import { Menu, X, Wrench, ChevronDown, LogOut, User, Package, BookOpen, PlusCircle, Landmark, MessageSquare } from 'lucide-react';
+import { Menu, X, Wrench, ChevronDown, LogOut, User, Package, BookOpen, PlusCircle, Landmark, MessageSquare, Shield } from 'lucide-react';
+import api from '../../services/api';
 
 export default function Navbar() {
   const { user, logout } = useAuth();
@@ -9,6 +10,20 @@ export default function Navbar() {
   const location = useLocation();
   const [mobileOpen, setMobileOpen]     = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
+  const [openTickets, setOpenTickets]   = useState(0);
+
+  // Poll for open support tickets every 60s when logged in as admin
+  useEffect(() => {
+    if (user?.role !== 'admin') return;
+    const fetchTickets = () => {
+      api.get('/support/admin/tickets?status=open')
+        .then(({ data }) => setOpenTickets(data.counts?.open || 0))
+        .catch(() => {});
+    };
+    fetchTickets();
+    const interval = setInterval(fetchTickets, 60000);
+    return () => clearInterval(interval);
+  }, [user]);
 
   const handleLogout = () => { logout(); navigate('/'); setDropdownOpen(false); };
   const isActive = (path) => location.pathname === path;
@@ -82,6 +97,17 @@ export default function Navbar() {
                       {user.role === 'renter' && (
                         <Link to="/bookings" onClick={close} className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
                           <BookOpen size={15} className="text-gray-400" /> My Bookings
+                        </Link>
+                      )}
+                      {user.role === 'admin' && (
+                        <Link to="/admin" onClick={close} className="flex items-center gap-3 px-4 py-2.5 text-sm text-brand-600 hover:bg-brand-50 font-medium">
+                          <Shield size={15} />
+                          Admin Dashboard
+                          {openTickets > 0 && (
+                            <span className="ml-auto bg-red-500 text-white text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+                              {openTickets > 9 ? '9+' : openTickets}
+                            </span>
+                          )}
                         </Link>
                       )}
                       <hr className="my-1 border-gray-100" />

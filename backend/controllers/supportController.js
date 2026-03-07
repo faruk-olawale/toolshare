@@ -1,5 +1,17 @@
 const SupportTicket = require('../models/SupportTicket');
+const User = require('../models/User');
 const { sendEmail } = require('../utils/sendEmail');
+const notify = require('../utils/notify');
+
+// Helper: notify all admin accounts in-app
+const notifyAdmins = async ({ title, message, type, link }) => {
+  try {
+    const admins = await User.find({ role: 'admin' }).select('_id');
+    await Promise.all(admins.map(admin =>
+      notify({ userId: admin._id, title, message, type, link }).catch(() => {})
+    ));
+  } catch {}
+};
 
 // ── USER: Submit ticket ───────────────────────────────────────────────────────
 // POST /api/support/tickets
@@ -27,14 +39,24 @@ const createTicket = async (req, res, next) => {
       subject: `✅ Support Ticket #${ticket.ticketNumber} Received`,
       template: 'ticketCreated',
       data: { name, ticketNumber: ticket.ticketNumber, subject, message, clientUrl: process.env.CLIENT_URL },
-    });
+    }).catch(() => {});
 
-    // Email alert to admin
+    // Email alert to admin (use ADMIN_EMAIL if set, fallback to EMAIL_USER)
+    const adminEmail = process.env.ADMIN_EMAIL || process.env.EMAIL_USER;
     sendEmail({
-      to: process.env.EMAIL_USER,
+      to: adminEmail,
       subject: `🎫 New Support Ticket #${ticket.ticketNumber} — ${subject}`,
       template: 'ticketAlert',
       data: { name, email, subject, message, category, ticketNumber: ticket.ticketNumber, adminUrl: `${process.env.CLIENT_URL}/admin` },
+    }).catch(() => {});
+
+    // ── In-app notification to all admins ────────────────────────────────────
+    const priorityIcon = priority === 'high' ? '🚨' : '🎫';
+    await notifyAdmins({
+      title: `${priorityIcon} New Support Ticket #${ticket.ticketNumber}`,
+      message: `${name} submitted a ${priority} priority ticket: "${subject}"`,
+      type: 'system',
+      link: '/admin',
     });
 
     res.status(201).json({

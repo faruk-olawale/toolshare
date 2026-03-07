@@ -7,16 +7,38 @@ const notify      = require('../utils/notify');
 
 const getStats = async (req, res, next) => {
   try {
-    const [totalUsers, totalTools, totalBookings, pendingTools, pendingKyc, payments] = await Promise.all([
+    const [totalUsers, totalTools, totalBookings, pendingTools, pendingKyc, payments, paidBookings] = await Promise.all([
       User.countDocuments(),
       Tool.countDocuments(),
       Booking.countDocuments(),
       Tool.countDocuments({ adminVerified: false }),
       User.countDocuments({ 'kyc.status': 'pending' }),
       Payment.find({ status: 'success' }),
+      Booking.find({ paymentStatus: { $in: ['paid', 'partially_released', 'fully_released'] } }),
     ]);
-    const totalRevenue = payments.reduce((sum, p) => sum + (p.platformFee || 0), 0) / 100;
-    res.status(200).json({ success: true, stats: { totalUsers, totalTools, totalBookings, pendingTools, pendingKyc, totalRevenue } });
+
+    // Revenue from completed Paystack payments (platform fee in kobo → naira)
+    const revenueFromPayments = payments.reduce((sum, p) => sum + (p.platformFee || 0), 0) / 100;
+
+    // Fallback: estimate from paid bookings if no payment records yet (10% platform fee)
+    const revenueFromBookings = paidBookings.reduce((sum, b) => sum + (b.totalAmount || 0), 0) * 0.10;
+
+    // Use whichever is higher (payments are authoritative once Paystack is live)
+    const totalRevenue = revenueFromPayments > 0 ? revenueFromPayments : revenueFromBookings;
+
+    // Gross transaction volume
+    const grossVolume = paidBookings.reduce((sum, b) => sum + (b.totalAmount || 0), 0);
+
+    res.status(200).json({
+      success: true,
+      stats: {
+        totalUsers, totalTools, totalBookings, pendingTools, pendingKyc,
+        totalRevenue,
+        grossVolume,
+        paidBookings: paidBookings.length,
+        successfulPayments: payments.length,
+      }
+    });
   } catch (error) { next(error); }
 };
 
