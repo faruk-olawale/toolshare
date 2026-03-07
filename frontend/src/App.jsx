@@ -26,12 +26,13 @@ import BankDetails from './pages/BankDetails';
 import KYCVerification from './pages/KYCVerification';
 import AdminDashboard from './pages/AdminDashboard';
 import MessageCenter from './pages/MessageCenter';
+import PaymentPage from './pages/PaymentPage';
 
 function PrivateRoute({ children, role }) {
   const { user, loading } = useAuth();
   if (loading) return <LoadingScreen />;
   if (!user) return <Navigate to="/login" replace />;
-  if (role && user.role !== role) return <Navigate to="/dashboard" replace />;
+  if (role && user.role !== role && user.role !== 'admin') return <Navigate to="/dashboard" replace />;
   return children;
 }
 
@@ -72,6 +73,7 @@ export default function App() {
           <Route path="/bank-details" element={<PrivateRoute role="owner"><BankDetails /></PrivateRoute>} />
           <Route path="/booking-requests" element={<PrivateRoute role="owner"><OwnerBookings /></PrivateRoute>} />
           <Route path="/bookings" element={<PrivateRoute role="renter"><MyBookings /></PrivateRoute>} />
+          <Route path="/bookings/:id/pay" element={<PrivateRoute><PaymentPage /></PrivateRoute>} />
           <Route path="/admin" element={<PrivateRoute role="admin"><AdminDashboard /></PrivateRoute>} />
           <Route path="*" element={<NotFound />} />
         </Routes>

@@ -20,10 +20,10 @@ const submitKyc = async (req, res, next) => {
 
     // Handle both Cloudinary (has .path or .secure_url) and local disk (has .filename)
     const getFileUrl = (file) => {
-      if (file.path && file.path.startsWith('http')) return file.path;   // Cloudinary URL
-      if (file.secure_url) return file.secure_url;                         // Cloudinary secure_url
-      if (file.path) return `/uploads/kyc/${file.filename}`;              // local path
-      return `/uploads/kyc/${file.filename}`;                              // fallback
+      if (file.path && file.path.startsWith('http')) return file.path.trim();   // Cloudinary URL
+      if (file.secure_url) return file.secure_url.trim();                        // Cloudinary secure_url
+      if (file.path) return `/uploads/kyc/${file.filename}`;                     // local path
+      return `/uploads/kyc/${file.filename}`;                                    // fallback
     };
 
     const idDocUrl  = getFileUrl(idFile);

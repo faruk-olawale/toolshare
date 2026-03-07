@@ -1,15 +1,9 @@
 import { Link } from 'react-router-dom';
 import { MapPin, Star, Clock } from 'lucide-react';
-
-const PLACEHOLDER = 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400&q=80';
+import { getImgUrl, PLACEHOLDER } from '../../utils/imgUrl';
 
 export default function ToolCard({ tool }) {
-  const raw = tool.images?.[0];
-  const imgSrc = !raw
-    ? PLACEHOLDER
-    : raw.startsWith('http')
-      ? raw
-      : `${import.meta.env.VITE_API_URL?.replace('/api', '') || ''}${raw}`;
+  const imgSrc = getImgUrl(tool.images?.[0]);
 
   return (
     <Link to={`/tools/${tool._id}`} className="card group hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 block">

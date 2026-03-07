@@ -9,9 +9,7 @@ import ReviewList from '../components/reviews/ReviewList';
 
 import AvailabilityCalendar from '../components/tools/AvailabilityCalendar';
 
-const PLACEHOLDER = 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=800&q=80';
-const BASE_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || '';
-const getImgUrl = (url) => !url ? PLACEHOLDER : url.startsWith('http') ? url : `${BASE_URL}${url}`;
+import { getImgUrl, PLACEHOLDER } from '../utils/imgUrl';
 
 export default function ToolDetail() {
   const { id } = useParams();

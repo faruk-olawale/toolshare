@@ -61,8 +61,9 @@ const createTool = async (req, res, next) => {
 
     // Cloudinary returns secure_url/path as URL; local disk returns absolute path — convert to relative
     const getFileUrl = (f) => {
-      if (f.secure_url) return f.secure_url;
-      if (f.path && f.path.startsWith('http')) return f.path;
+      // Always trim whitespace/newlines from URLs (multer-storage-cloudinary can include them)
+      if (f.secure_url) return f.secure_url.trim();
+      if (f.path && f.path.startsWith('http')) return f.path.trim();
       // Local disk — return just the filename so frontend can request /uploads/...
       return `/uploads/${f.fieldname === 'ownershipDocs' ? 'docs' : 'tools'}/${f.filename}`;
     };

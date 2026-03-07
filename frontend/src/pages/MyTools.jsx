@@ -3,9 +3,7 @@ import { Link, useNavigate } from 'react-router-dom';
 import api from '../services/api';
 import toast from 'react-hot-toast';
 import { PlusCircle, Edit, Trash2, MapPin, ToggleLeft, ToggleRight } from 'lucide-react';
-
-const BASE_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || '';
-const PLACEHOLDER = 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400&q=80';
+import { getImgUrl, PLACEHOLDER } from '../utils/imgUrl';
 
 export default function MyTools() {
   const [tools, setTools] = useState([]);
@@ -73,7 +71,7 @@ export default function MyTools() {
               <div key={tool._id} className="card group">
                 <div className="relative h-48 bg-earth-100 overflow-hidden">
                   <img
-                    src={tool.images?.[0] ? (tool.images[0].startsWith("http") ? tool.images[0] : tool.images[0].startsWith("http") ? tool.images[0] : `${BASE_URL}${tool.images[0]}`) : PLACEHOLDER}
+                    src={getImgUrl(tool.images?.[0])}
                     alt={tool.name}
                     className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
                     onError={(e) => { e.target.src = PLACEHOLDER; }}

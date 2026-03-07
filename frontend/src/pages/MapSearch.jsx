@@ -4,9 +4,7 @@ import api from '../services/api';
 import toast from 'react-hot-toast';
 import StarRating from '../components/reviews/StarRating';
 import { MapPin, Loader, Navigation } from 'lucide-react';
-
-const BASE_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || '';
-const PLACEHOLDER = 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400&q=80';
+import { getImgUrl, PLACEHOLDER } from '../utils/imgUrl';
 
 const RADIUS_OPTIONS = [
   { label: '5 km',  value: 5000  },
@@ -145,7 +143,7 @@ export default function MapSearch() {
               className={`card p-3 cursor-pointer transition-all hover:border-brand-200 ${selected?._id === tool._id ? 'border-brand-300 bg-brand-50' : ''}`}>
               <div className="flex gap-2">
                 <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-earth-100">
-                  <img src={tool.images?.[0]?.startsWith('http') ? tool.images[0] : `${BASE_URL}${tool.images?.[0]}`}
+                  <img src={getImgUrl(tool.images?.[0])}
                     className="w-full h-full object-cover" onError={e => { e.target.src = PLACEHOLDER; }} />
                 </div>
                 <div className="flex-1 min-w-0">
@@ -175,7 +173,7 @@ export default function MapSearch() {
               <button onClick={() => setSelected(null)} className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-lg">×</button>
               <div className="flex gap-3 mb-3">
                 <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-earth-100">
-                  <img src={selected.images?.[0]?.startsWith('http') ? selected.images[0] : `${BASE_URL}${selected.images?.[0]}`}
+                  <img src={getImgUrl(selected.images?.[0])}
                     className="w-full h-full object-cover" onError={e => { e.target.src = PLACEHOLDER; }} />
                 </div>
                 <div>

@@ -3,14 +3,7 @@ import api from '../services/api';
 import toast from 'react-hot-toast';
 import { CheckCircle, XCircle, Users, Package, BookOpen, TrendingUp, Eye, AlertTriangle, Shield } from 'lucide-react';
 
-const BASE_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || '';
-const PLACEHOLDER = 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=400&q=80';
-const getImgUrl = (url) => {
-  if (!url) return PLACEHOLDER;
-  if (url.startsWith('http')) return url;
-  // local relative path like /uploads/tools/file.jpg
-  return `${BASE_URL}${url}`;
-};
+import { getImgUrl, PLACEHOLDER } from '../utils/imgUrl';
 
 export default function AdminDashboard() {
   const [tab, setTab] = useState('pending');
@@ -97,6 +90,22 @@ export default function AdminDashboard() {
     } catch (err) { toast.error(err.response?.data?.message || 'Failed.'); }
     setProcessing(null);
   };
+
+  const handleDeleteUser = async () => {
+    if (!deleteModal) return;
+    setProcessing(deleteModal._id);
+    try {
+      await api.delete(`/admin/users/${deleteModal._id}`);
+      setAllUsers(prev => prev.filter(u => u._id !== deleteModal._id));
+      setPendingKyc(prev => prev.filter(u => u._id !== deleteModal._id));
+      toast.success(`${deleteModal.name}'s account has been deleted.`);
+      setDeleteModal(null);
+    } catch (err) {
+      toast.error(err.response?.data?.message || 'Failed to delete user.');
+    }
+    setProcessing(null);
+  };
+
 
   if (loading) return (
     <div className="py-8 page-container"><div className="animate-pulse space-y-6">
@@ -190,7 +199,7 @@ export default function AdminDashboard() {
                     <p className="text-xs font-medium text-gray-500 mb-2">Proof of Ownership Documents:</p>
                     <div className="flex flex-wrap gap-2">
                       {tool.ownershipDocs.map((doc, i) => (
-                        <a key={i} href={doc.startsWith("http") ? doc : `${BASE_URL}${doc}`} target="_blank" rel="noreferrer"
+                        <a key={i} href={getImgUrl(doc)} target="_blank" rel="noreferrer"
                           className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">
                           📄 Document {i + 1}
                         </a>
@@ -251,16 +260,16 @@ export default function AdminDashboard() {
                   {user.kyc?.idDocument && (
                     <div>
                       <p className="text-xs text-gray-500 mb-1 font-medium">ID Document</p>
-                      <a href={user.kyc.idDocument.startsWith("http") ? user.kyc.idDocument : `${BASE_URL}${user.kyc.idDocument}`} target="_blank" rel="noreferrer">
-                        <img src={user.kyc.idDocument.startsWith("http") ? user.kyc.idDocument : `${BASE_URL}${user.kyc.idDocument}`} className="w-full h-32 object-cover rounded-xl border border-gray-200 hover:opacity-90 transition" />
+                      <a href={getImgUrl(user.kyc.idDocument)} target="_blank" rel="noreferrer">
+                        <img src={getImgUrl(user.kyc.idDocument)} className="w-full h-32 object-cover rounded-xl border border-gray-200 hover:opacity-90 transition" />
                       </a>
                     </div>
                   )}
                   {user.kyc?.selfie && (
                     <div>
                       <p className="text-xs text-gray-500 mb-1 font-medium">Selfie with ID</p>
-                      <a href={user.kyc.selfie.startsWith("http") ? user.kyc.selfie : `${BASE_URL}${user.kyc.selfie}`} target="_blank" rel="noreferrer">
-                        <img src={user.kyc.selfie.startsWith("http") ? user.kyc.selfie : `${BASE_URL}${user.kyc.selfie}`} className="w-full h-32 object-cover rounded-xl border border-gray-200 hover:opacity-90 transition" />
+                      <a href={getImgUrl(user.kyc.selfie)} target="_blank" rel="noreferrer">
+                        <img src={getImgUrl(user.kyc.selfie)} className="w-full h-32 object-cover rounded-xl border border-gray-200 hover:opacity-90 transition" />
                       </a>
                     </div>
                   )}
