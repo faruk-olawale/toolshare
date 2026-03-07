@@ -7,46 +7,38 @@ import { PlusCircle, Package, BookOpen, TrendingUp, Clock, CheckCircle, ArrowRig
 
 export default function Dashboard() {
   const { user } = useAuth();
-  const [stats, setStats] = useState(null);
+  const [stats, setStats]       = useState(null);
   const [kycStatus, setKycStatus] = useState(null);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading]   = useState(true);
 
   useEffect(() => {
     const fetchAll = async () => {
       try {
-        // Fetch KYC status
         const kycRes = await api.get('/kyc/status');
         setKycStatus(kycRes.data.kyc);
 
-        // Fetch dashboard stats
         if (user.role === 'owner') {
           const [toolsRes, bookingsRes] = await Promise.all([
             api.get('/tools/my-tools'),
             api.get('/bookings/owner-bookings'),
           ]);
           const bookings = bookingsRes.data.bookings;
-          const tools = toolsRes.data.tools || [];
+          const tools    = toolsRes.data.tools || [];
 
-          // Build unified activity feed: tool status events + booking events
           const toolEvents = tools
             .filter(t => t.adminVerified || t.adminNote)
             .map(t => ({
-              _id: `tool-${t._id}`,
-              type: 'tool',
+              _id: `tool-${t._id}`, type: 'tool',
               toolName: t.name,
               status: t.adminVerified ? 'approved' : 'rejected',
-              adminNote: t.adminNote,
-              date: t.updatedAt,
+              adminNote: t.adminNote, date: t.updatedAt,
             }));
 
           const bookingEvents = bookings.map(b => ({
-            _id: b._id,
-            type: 'booking',
+            _id: b._id, type: 'booking',
             toolName: b.toolId?.name || 'Tool',
-            status: b.status,
-            totalAmount: b.totalAmount,
-            startDate: b.startDate,
-            date: b.updatedAt,
+            status: b.status, totalAmount: b.totalAmount,
+            startDate: b.startDate, date: b.updatedAt,
           }));
 
           const allActivity = [...toolEvents, ...bookingEvents]
@@ -54,15 +46,15 @@ export default function Dashboard() {
             .slice(0, 8);
 
           setStats({
-            totalTools: toolsRes.data.count,
-            pendingTools: tools.filter(t => !t.adminVerified && !t.adminNote).length,
+            totalTools:    toolsRes.data.count,
+            pendingTools:  tools.filter(t => !t.adminVerified && !t.adminNote).length,
             approvedTools: tools.filter(t => t.adminVerified).length,
             rejectedTools: tools.filter(t => !t.adminVerified && t.adminNote).length,
             totalBookings: bookings.length,
-            pending: bookings.filter(b => b.status === 'pending').length,
-            approved: bookings.filter(b => b.status === 'approved').length,
-            completed: bookings.filter(b => b.status === 'completed').length,
-            earnings: bookings.filter(b => b.paymentStatus === 'paid').reduce((sum, b) => sum + b.totalAmount, 0),
+            pending:       bookings.filter(b => b.status === 'pending').length,
+            approved:      bookings.filter(b => b.status === 'approved').length,
+            completed:     bookings.filter(b => b.status === 'completed').length,
+            earnings:      bookings.filter(b => b.paymentStatus === 'paid').reduce((s, b) => s + b.totalAmount, 0),
             recentBookings: bookings.slice(0, 5),
             recentActivity: allActivity,
           });
@@ -71,10 +63,10 @@ export default function Dashboard() {
           const bookings = data.bookings;
           setStats({
             totalBookings: bookings.length,
-            pending: bookings.filter(b => b.status === 'pending').length,
-            approved: bookings.filter(b => b.status === 'approved').length,
-            completed: bookings.filter(b => b.status === 'completed').length,
-            spent: bookings.filter(b => b.paymentStatus === 'paid').reduce((sum, b) => sum + b.totalAmount, 0),
+            pending:       bookings.filter(b => b.status === 'pending').length,
+            approved:      bookings.filter(b => b.status === 'approved').length,
+            completed:     bookings.filter(b => b.status === 'completed').length,
+            spent:         bookings.filter(b => b.paymentStatus === 'paid').reduce((s, b) => s + b.totalAmount, 0),
             recentBookings: bookings.slice(0, 5),
           });
         }
@@ -96,48 +88,63 @@ export default function Dashboard() {
     </div>
   );
 
-  const isOwner = user.role === 'owner';
+  const isOwner    = user.role === 'owner';
   const kycApproved = kycStatus?.status === 'approved';
 
   const statCards = isOwner ? [
-    { label: 'My Tools', value: stats?.totalTools || 0, icon: <Package size={20} />, color: 'bg-blue-50 text-blue-600', link: '/my-tools' },
-    { label: 'Total Bookings', value: stats?.totalBookings || 0, icon: <BookOpen size={20} />, color: 'bg-purple-50 text-purple-600', link: '/booking-requests' },
-    { label: 'Pending Requests', value: stats?.pending || 0, icon: <Clock size={20} />, color: 'bg-yellow-50 text-yellow-600', link: '/booking-requests' },
-    { label: 'Total Earnings', value: `₦${(stats?.earnings || 0).toLocaleString()}`, icon: <TrendingUp size={20} />, color: 'bg-green-50 text-green-600', link: '/booking-requests' },
+    { label: 'My Tools',         value: stats?.totalTools || 0,                          icon: <Package size={20} />,     color: 'bg-blue-50 text-blue-600',   link: '/my-tools' },
+    { label: 'Total Bookings',   value: stats?.totalBookings || 0,                        icon: <BookOpen size={20} />,    color: 'bg-purple-50 text-purple-600', link: '/booking-requests' },
+    { label: 'Pending Requests', value: stats?.pending || 0,                              icon: <Clock size={20} />,       color: 'bg-yellow-50 text-yellow-600', link: '/booking-requests' },
+    { label: 'Total Earnings',   value: `₦${(stats?.earnings || 0).toLocaleString()}`,   icon: <TrendingUp size={20} />,  color: 'bg-green-50 text-green-600',  link: '/booking-requests' },
   ] : [
-    { label: 'My Bookings', value: stats?.totalBookings || 0, icon: <BookOpen size={20} />, color: 'bg-blue-50 text-blue-600', link: '/bookings' },
-    { label: 'Pending', value: stats?.pending || 0, icon: <Clock size={20} />, color: 'bg-yellow-50 text-yellow-600', link: '/bookings' },
-    { label: 'Active', value: stats?.approved || 0, icon: <CheckCircle size={20} />, color: 'bg-green-50 text-green-600', link: '/bookings' },
-    { label: 'Total Spent', value: `₦${(stats?.spent || 0).toLocaleString()}`, icon: <TrendingUp size={20} />, color: 'bg-purple-50 text-purple-600', link: '/bookings' },
+    { label: 'My Bookings', value: stats?.totalBookings || 0,                           icon: <BookOpen size={20} />,    color: 'bg-blue-50 text-blue-600',   link: '/bookings' },
+    { label: 'Pending',     value: stats?.pending || 0,                                  icon: <Clock size={20} />,       color: 'bg-yellow-50 text-yellow-600', link: '/bookings' },
+    { label: 'Active',      value: stats?.approved || 0,                                 icon: <CheckCircle size={20} />, color: 'bg-green-50 text-green-600',  link: '/bookings' },
+    { label: 'Total Spent', value: `₦${(stats?.spent || 0).toLocaleString()}`,          icon: <TrendingUp size={20} />,  color: 'bg-purple-50 text-purple-600', link: '/bookings' },
+  ];
+
+  const quickActions = isOwner ? [
+    { label: kycApproved ? 'List a new tool' : 'Complete KYC to list tools', to: kycApproved ? '/tools/new' : '/kyc', icon: kycApproved ? '➕' : '🪪' },
+    { label: 'View my tools',          to: '/my-tools',        icon: '🔧' },
+    { label: 'Check booking requests', to: '/booking-requests', icon: '📋' },
+    { label: 'Update bank details',    to: '/bank-details',    icon: '🏦' },
+  ] : [
+    { label: kycApproved ? 'Browse available tools' : 'Complete KYC to book tools', to: kycApproved ? '/tools' : '/kyc', icon: kycApproved ? '🔍' : '🪪' },
+    { label: 'View my bookings',  to: '/bookings', icon: '📋' },
+    { label: 'Explore categories', to: '/tools',   icon: '📂' },
+    { label: 'Help center',        to: '/help',    icon: '❓' },
   ];
 
   return (
     <div className="py-8 animate-fade-in">
       <div className="page-container">
+
         {/* Header */}
         <div className="flex items-center justify-between mb-6">
           <div>
             <h1 className="section-title">Welcome back, {user.name?.split(' ')[0]}! 👋</h1>
             <p className="text-gray-500 mt-1 capitalize">{user.role} Account · {user.location || 'Nigeria'}</p>
           </div>
-          {isOwner ? (
-            kycApproved ? (
-              <Link to="/tools/new" className="btn-primary flex items-center gap-2">
-                <PlusCircle size={18} /> List Tool
-              </Link>
+          <div className="flex items-center gap-2">
+            {isOwner ? (
+              kycApproved ? (
+                <Link to="/tools/new" className="btn-primary flex items-center gap-2">
+                  <PlusCircle size={18} /> List Tool
+                </Link>
+              ) : (
+                <Link to="/kyc" className="btn-primary flex items-center gap-2 bg-orange-500 hover:bg-orange-600">
+                  🪪 Verify Identity
+                </Link>
+              )
             ) : (
-              <Link to="/kyc" className="btn-primary flex items-center gap-2 bg-orange-500 hover:bg-orange-600">
-                🪪 Verify Identity
+              <Link to="/tools" className="btn-primary flex items-center gap-2">
+                Browse Tools <ArrowRight size={18} />
               </Link>
-            )
-          ) : (
-            <Link to="/tools" className="btn-primary flex items-center gap-2">
-              Browse Tools <ArrowRight size={18} />
-            </Link>
-          )}
+            )}
+          </div>
         </div>
 
-        {/* KYC Banner — shown prominently when not approved */}
+        {/* KYC Banner */}
         <KYCBanner kyc={kycStatus} />
 
         {/* Stats */}
@@ -151,22 +158,12 @@ export default function Dashboard() {
           ))}
         </div>
 
-        {/* Quick Actions */}
+        {/* Quick Actions + Recent Activity */}
         <div className="grid md:grid-cols-2 gap-6 mb-8">
           <div className="card p-6">
             <h3 className="font-display font-semibold text-lg text-gray-900 mb-4">Quick Actions</h3>
             <div className="space-y-2">
-              {(isOwner ? [
-                { label: kycApproved ? 'List a new tool' : 'Complete KYC to list tools', to: kycApproved ? '/tools/new' : '/kyc', icon: kycApproved ? '➕' : '🪪' },
-                { label: 'View my tools', to: '/my-tools', icon: '🔧' },
-                { label: 'Check booking requests', to: '/booking-requests', icon: '📋' },
-                { label: 'Update bank details', to: '/bank-details', icon: '🏦' },
-              ] : [
-                { label: kycApproved ? 'Browse available tools' : 'Complete KYC to book tools', to: kycApproved ? '/tools' : '/kyc', icon: kycApproved ? '🔍' : '🪪' },
-                { label: 'View my bookings', to: '/bookings', icon: '📋' },
-                { label: 'Explore categories', to: '/tools', icon: '📂' },
-                { label: 'Help center', to: '/help', icon: '❓' },
-              ]).map(({ label, to, icon }) => (
+              {quickActions.map(({ label, to, icon }) => (
                 <Link key={label} to={to} className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors group">
                   <span className="text-xl">{icon}</span>
                   <span className="text-sm font-medium text-gray-700 group-hover:text-brand-600">{label}</span>
@@ -182,15 +179,42 @@ export default function Dashboard() {
               <h3 className="font-display font-semibold text-lg text-gray-900">Recent Activity</h3>
               <Link to={isOwner ? '/booking-requests' : '/bookings'} className="text-sm text-brand-600 hover:underline">View all</Link>
             </div>
-            {stats?.recentBookings?.length === 0 ? (
+
+            {/* Tool status alerts for owners */}
+            {isOwner && stats?.recentActivity?.filter(a => a.type === 'tool').map(event => (
+              <div key={event._id} className={`flex items-start gap-3 p-3 rounded-xl mb-2 border ${event.status === 'approved' ? 'bg-green-50 border-green-100' : 'bg-red-50 border-red-100'}`}>
+                <div className={`w-9 h-9 rounded-xl flex items-center justify-center flex-shrink-0 ${event.status === 'approved' ? 'bg-green-100' : 'bg-red-100'}`}>
+                  <span className="text-sm">{event.status === 'approved' ? '✅' : '❌'}</span>
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold text-gray-800 truncate">{event.toolName}</p>
+                  <p className={`text-xs font-medium ${event.status === 'approved' ? 'text-green-700' : 'text-red-700'}`}>
+                    {event.status === 'approved' ? '🎉 Listing approved and now live!' : '⚠️ Listing rejected by admin'}
+                  </p>
+                  {event.status === 'rejected' && event.adminNote && (
+                    <p className="text-xs text-red-600 mt-0.5">Reason: {event.adminNote}</p>
+                  )}
+                  {event.status === 'rejected' && (
+                    <Link to="/my-tools" className="text-xs text-red-600 underline mt-0.5 block">Update listing →</Link>
+                  )}
+                </div>
+                <span className={`badge text-xs whitespace-nowrap ${event.status === 'approved' ? 'bg-green-100 text-green-700 border-green-200' : 'bg-red-100 text-red-700 border-red-200'}`}>
+                  {event.status}
+                </span>
+              </div>
+            ))}
+
+            {/* Booking activity */}
+            {(isOwner ? stats?.recentActivity?.filter(a => a.type === 'booking') : stats?.recentBookings)?.length === 0 &&
+             !stats?.recentActivity?.filter(a => a.type === 'tool')?.length ? (
               <div className="text-center py-8">
                 <div className="text-4xl mb-2">📭</div>
                 <p className="text-gray-500 text-sm">No activity yet.</p>
                 {!kycApproved && <Link to="/kyc" className="text-sm text-brand-600 hover:underline mt-2 block">Complete KYC to get started →</Link>}
               </div>
             ) : (
-              <div className="space-y-3">
-                {stats?.recentBookings?.map(booking => (
+              <div className="space-y-2">
+                {(isOwner ? stats?.recentActivity?.filter(a => a.type === 'booking') : stats?.recentBookings)?.map(booking => (
                   <div key={booking._id} className="flex items-start gap-3 p-3 bg-gray-50 rounded-xl">
                     <div className="w-9 h-9 bg-white rounded-xl border border-gray-100 flex items-center justify-center flex-shrink-0">
                       <span className="text-sm">
@@ -198,14 +222,14 @@ export default function Dashboard() {
                       </span>
                     </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-800 truncate">{booking.toolId?.name || 'Tool'}</p>
-                      <p className="text-xs text-gray-500">₦{booking.totalAmount?.toLocaleString()} · {new Date(booking.startDate).toLocaleDateString()}</p>
+                      <p className="text-sm font-medium text-gray-800 truncate">{booking.toolName || booking.toolId?.name || 'Tool'}</p>
+                      <p className="text-xs text-gray-500">{booking.totalAmount ? `₦${booking.totalAmount?.toLocaleString()} · ` : ''}{booking.startDate ? new Date(booking.startDate).toLocaleDateString() : ''}</p>
                     </div>
                     <span className={`badge text-xs ${
-                      booking.status === 'pending' ? 'bg-yellow-50 text-yellow-700 border-yellow-100' :
-                      booking.status === 'approved' ? 'bg-green-50 text-green-700 border-green-100' :
+                      booking.status === 'pending'   ? 'bg-yellow-50 text-yellow-700 border-yellow-100' :
+                      booking.status === 'approved'  ? 'bg-green-50 text-green-700 border-green-100' :
                       booking.status === 'completed' ? 'bg-blue-50 text-blue-700 border-blue-100' :
-                      booking.status === 'disputed' ? 'bg-red-50 text-red-700 border-red-100' :
+                      booking.status === 'disputed'  ? 'bg-red-50 text-red-700 border-red-100' :
                       'bg-gray-50 text-gray-500 border-gray-100'
                     }`}>{booking.status}</span>
                   </div>
@@ -214,6 +238,7 @@ export default function Dashboard() {
             )}
           </div>
         </div>
+
       </div>
     </div>
   );

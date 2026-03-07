@@ -23,8 +23,9 @@ app.use('/api/payments', require('./routes/paymentRoutes'));
 app.use('/api/admin',    require('./routes/adminRoutes'));
 app.use('/api/kyc',      require('./routes/kycRoutes'));
 app.use('/api/escrow',   require('./routes/escrowRoutes'));
-app.use('/api/support',  require('./routes/supportRoutes'));
-app.use('/api/reviews',  require('./routes/reviewRoutes'));
+app.use('/api/support',        require('./routes/supportRoutes'));
+app.use('/api/reviews',        require('./routes/reviewRoutes'));
+app.use('/api/notifications',  require('./routes/notificationRoutes'));
 
 app.use((req, res) => res.status(404).json({ success: false, message: `Route ${req.originalUrl} not found.` }));
 app.use(errorHandler);

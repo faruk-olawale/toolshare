@@ -3,6 +3,7 @@ const Booking = require('../models/Booking');
 const Tool = require('../models/Tool');
 const User = require('../models/User');
 const { sendEmail } = require('../utils/sendEmail');
+const notify      = require('../utils/notify');
 
 const fmt = (date) => new Date(date).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' });
 
@@ -55,6 +56,15 @@ const createBooking = async (req, res, next) => {
         totalAmount,
         dashboardUrl: `${process.env.CLIENT_URL}/booking-requests`,
       },
+    });
+
+    notify({
+      userId: tool.ownerId,
+      title: '📥 New Booking Request',
+      message: `${req.user.name} wants to rent "${tool.name}" from ${new Date(startDate).toLocaleDateString()} to ${new Date(endDate).toLocaleDateString()}.`,
+      type: 'booking_new',
+      link: '/booking-requests',
+      meta: { bookingId: booking._id },
     });
 
     res.status(201).json({ success: true, message: 'Booking request sent!', booking });
@@ -112,6 +122,15 @@ const approveBooking = async (req, res, next) => {
       },
     });
 
+    notify({
+      userId: booking.renterId,
+      title: '✅ Booking Approved!',
+      message: `Your booking for "${booking.toolId?.name || 'a tool'}" has been approved. Proceed to payment to confirm.`,
+      type: 'booking_approved',
+      link: '/bookings',
+      meta: { bookingId: booking._id },
+    });
+
     res.status(200).json({ success: true, message: 'Booking approved!', booking });
   } catch (error) { next(error); }
 };
@@ -137,6 +156,15 @@ const rejectBooking = async (req, res, next) => {
       },
     });
 
+    notify({
+      userId: booking.renterId,
+      title: '❌ Booking Rejected',
+      message: `Your booking request for "${booking.toolId?.name || 'a tool'}" was declined by the owner.`,
+      type: 'booking_rejected',
+      link: '/bookings',
+      meta: { bookingId: booking._id },
+    });
+
     res.status(200).json({ success: true, message: 'Booking rejected.', booking });
   } catch (error) { next(error); }
 };
@@ -156,4 +184,16 @@ const completeBooking = async (req, res, next) => {
   } catch (error) { next(error); }
 };
 
-module.exports = { createBooking, getRenterBookings, getOwnerBookings, approveBooking, rejectBooking, completeBooking };
+// GET /api/bookings/tool-bookings/:toolId — get approved+pending bookings for a tool (for calendar)
+const getToolBookings = async (req, res, next) => {
+  try {
+    const bookings = await Booking.find({
+      toolId: req.params.toolId,
+      status: { $in: ['approved', 'pending'] },
+    }).select('startDate endDate status');
+    res.status(200).json({ success: true, bookings });
+  } catch (error) { next(error); }
+};
+
+module.exports = {
+  getToolBookings, createBooking, getRenterBookings, getOwnerBookings, approveBooking, rejectBooking, completeBooking };

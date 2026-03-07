@@ -3,6 +3,7 @@ const Tool = require('../models/Tool');
 const Booking = require('../models/Booking');
 const Payment = require('../models/Payment');
 const { sendEmail } = require('../utils/sendEmail');
+const notify      = require('../utils/notify');
 
 const getStats = async (req, res, next) => {
   try {
@@ -75,6 +76,15 @@ const rejectTool = async (req, res, next) => {
       data: { ownerName: tool.ownerId.name, toolName: tool.name, reason, dashboardUrl: `${process.env.CLIENT_URL}/my-tools` },
     });
 
+    notify({
+      userId: tool.ownerId._id,
+      title: '⚠️ Tool Listing Rejected',
+      message: `Your tool "${tool.name}" was not approved. Reason: ${reason || 'Did not meet listing standards.'}`,
+      type: 'tool_rejected',
+      link: '/my-tools',
+      meta: { reason },
+    });
+
     res.status(200).json({ success: true, message: 'Tool rejected.', tool });
   } catch (error) { next(error); }
 };
@@ -126,6 +136,15 @@ const rejectKyc = async (req, res, next) => {
       subject: '⚠️ Identity Verification — Action Required',
       template: 'kycRejected',
       data: { name: user.name, reason, clientUrl: process.env.CLIENT_URL },
+    });
+
+    notify({
+      userId: user._id,
+      title: '❌ KYC Verification Failed',
+      message: `Your identity verification was rejected. Reason: ${reason || 'Documents did not meet requirements.'}`,
+      type: 'kyc_rejected',
+      link: '/kyc',
+      meta: { reason },
     });
 
     res.status(200).json({ success: true, message: 'KYC rejected.', user });

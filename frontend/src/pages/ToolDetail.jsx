@@ -7,6 +7,8 @@ import { MapPin, Phone, Mail, Calendar, AlertCircle, ChevronLeft, CheckCircle } 
 import StarRating from '../components/reviews/StarRating';
 import ReviewList from '../components/reviews/ReviewList';
 
+import AvailabilityCalendar from '../components/tools/AvailabilityCalendar';
+
 const PLACEHOLDER = 'https://images.unsplash.com/photo-1504148455328-c376907d081c?w=800&q=80';
 const BASE_URL = import.meta.env.VITE_API_URL?.replace('/api', '') || '';
 const getImgUrl = (url) => !url ? PLACEHOLDER : url.startsWith('http') ? url : `${BASE_URL}${url}`;
@@ -23,12 +25,18 @@ export default function ToolDetail() {
   const [reviews, setReviews]     = useState([]);
   const [avgRating, setAvgRating] = useState(null);
   const [kycStatus, setKycStatus] = useState(null);
+  const [bookedRanges, setBookedRanges] = useState([]);
+  const [showCalendar, setShowCalendar] = useState(false);
 
   useEffect(() => {
     api.get(`/tools/${id}`)
       .then(({ data }) => setTool(data.tool))
       .catch(() => toast.error('Tool not found.'))
       .finally(() => setLoading(false));
+    // Fetch booked date ranges for this tool
+    api.get(`/bookings/tool-bookings/${id}`)
+      .then(({ data }) => setBookedRanges(data.bookings || []))
+      .catch(() => {});
     api.get(`/reviews/tool/${id}`)
       .then(({ data }) => { setReviews(data.reviews || []); setAvgRating(data.averageRating); })
       .catch(() => {});
@@ -230,31 +238,49 @@ export default function ToolDetail() {
                 )}
                 <form onSubmit={handleBook} className="space-y-4">
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                      <Calendar size={14} className="inline mr-1" />Start Date
-                    </label>
-                    <input
-                      type="date"
-                      className="input-field"
-                      min={new Date().toISOString().split('T')[0]}
-                      value={booking.startDate}
-                      onChange={(e) => setBooking({ ...booking, startDate: e.target.value })}
-                      required
-                    />
-                  </div>
+                    <div className="flex items-center justify-between mb-2">
+                      <label className="block text-sm font-medium text-gray-700">
+                        <Calendar size={14} className="inline mr-1" />Select Dates
+                      </label>
+                      <button type="button" onClick={() => setShowCalendar(v => !v)}
+                        className="text-xs text-brand-600 hover:underline">
+                        {showCalendar ? 'Hide calendar' : 'Show calendar'}
+                      </button>
+                    </div>
 
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                      <Calendar size={14} className="inline mr-1" />End Date
-                    </label>
-                    <input
-                      type="date"
-                      className="input-field"
-                      min={booking.startDate || new Date().toISOString().split('T')[0]}
-                      value={booking.endDate}
-                      onChange={(e) => setBooking({ ...booking, endDate: e.target.value })}
-                      required
-                    />
+                    {showCalendar && (
+                      <div className="mb-3">
+                        <AvailabilityCalendar
+                          bookedRanges={bookedRanges}
+                          onRangeSelect={(start, end) => {
+                            setBooking({
+                              ...booking,
+                              startDate: start.toISOString().split('T')[0],
+                              endDate:   end.toISOString().split('T')[0],
+                            });
+                          }}
+                        />
+                      </div>
+                    )}
+
+                    <div className="grid grid-cols-2 gap-3">
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">Start Date</label>
+                        <input type="date" className="input-field text-sm"
+                          min={new Date().toISOString().split('T')[0]}
+                          value={booking.startDate}
+                          onChange={(e) => setBooking({ ...booking, startDate: e.target.value })}
+                          required />
+                      </div>
+                      <div>
+                        <label className="block text-xs text-gray-500 mb-1">End Date</label>
+                        <input type="date" className="input-field text-sm"
+                          min={booking.startDate || new Date().toISOString().split('T')[0]}
+                          value={booking.endDate}
+                          onChange={(e) => setBooking({ ...booking, endDate: e.target.value })}
+                          required />
+                      </div>
+                    </div>
                   </div>
 
                   <div>
