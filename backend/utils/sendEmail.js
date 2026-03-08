@@ -250,6 +250,42 @@ const templates = {
     <p style="${p}">Please remember to return the tool by <strong>${endDate}</strong>.</p>
   `),
 
+
+  rentalStartsReminder: ({ name, toolName, startDate, endDate, ownerPhone, bookingsUrl }) => base(`
+    <h2 style="${h2}">⏰ Your Rental Starts Tomorrow!</h2>
+    <p style="${p}">Hi <strong>${name}</strong>, this is a reminder that your rental starts tomorrow.</p>
+    <div style="${box}">
+      <p style="margin:0 0 8px;font-weight:600;color:#1a1a1a;">${toolName}</p>
+      <p style="margin:4px 0;${p}">📅 Start: <strong>${startDate}</strong></p>
+      <p style="margin:4px 0;${p}">📅 End: <strong>${endDate}</strong></p>
+      <p style="margin:4px 0;${p}">📞 Owner Contact: <strong>${ownerPhone}</strong></p>
+    </div>
+    <p style="${p}">Make sure you've arranged pickup with the owner and have your payment ready.</p>
+    <a href="${bookingsUrl}" style="${btn}">View Booking →</a>
+  `),
+
+  ownerHandoverReminder: ({ name, toolName, renterName, renterPhone, startDate, dashboardUrl }) => base(`
+    <h2 style="${h2}">⏰ Tool Handover Tomorrow</h2>
+    <p style="${p}">Hi <strong>${name}</strong>, <strong>${renterName}</strong> is picking up <strong>${toolName}</strong> tomorrow.</p>
+    <div style="${box}">
+      <p style="margin:4px 0;${p}">📅 Pickup Date: <strong>${startDate}</strong></p>
+      <p style="margin:4px 0;${p}">📞 Renter Contact: <strong>${renterPhone}</strong></p>
+    </div>
+    <p style="${p}">Please ensure the tool is ready and in good condition for handover. We recommend taking photos of the tool's condition before handover.</p>
+    <a href="${dashboardUrl}" style="${btn}">View Dashboard →</a>
+  `),
+
+  returnDueReminder: ({ name, toolName, endDate, ownerPhone, bookingsUrl }) => base(`
+    <h2 style="${h2}">📦 Tool Return Due Today</h2>
+    <p style="${p}">Hi <strong>${name}</strong>, your rental of <strong>${toolName}</strong> ends today.</p>
+    <div style="${box}">
+      <p style="margin:0 0 8px;color:#dc2626;font-weight:600;">⚠️ Please return the tool today</p>
+      <p style="margin:4px 0;${p}">📅 Return By: <strong>${endDate}</strong></p>
+      <p style="margin:4px 0;${p}">📞 Owner Contact: <strong>${ownerPhone}</strong></p>
+    </div>
+    <p style="${p}">Returning the tool on time ensures you receive your security deposit back promptly.</p>
+    <a href="${bookingsUrl}" style="${btn}">View Booking →</a>
+  `),
   autoReturnConfirmed: ({ ownerName, toolName }) => base(`
     <h2 style="${h2}">⏰ Return Auto-Confirmed — Payment Released</h2>
     <p style="${p}">Hi <strong>${ownerName}</strong>, since the return was not confirmed within 2 days of the rental end date, the system has auto-confirmed the return of <strong>${toolName}</strong> and released your final payment.</p>
@@ -260,6 +296,122 @@ const templates = {
     <p style="${p}">Hi <strong>${ownerName}</strong>, your tool <strong>${toolName}</strong> was not approved.</p>
     ${reason ? `<div style="${box}"><p style="margin:0;color:#dc2626;"><strong>Reason:</strong> ${reason}</p></div>` : ''}
     <a href="${dashboardUrl}" style="${btn}">Update Listing →</a>
+  `),
+
+
+  depositRequired: ({ renterName, toolName, depositAmount, totalAmount, startDate, endDate, payUrl }) => base(`
+    <h2 style="${h2}">🔐 Security Deposit Required</h2>
+    <p style="${p}">Hi <strong>${renterName}</strong>, your booking request for <strong>${toolName}</strong> is pending payment of a security deposit.</p>
+    <div style="${box}">
+      <p style="${p}"><strong>Rental Period:</strong> ${startDate} → ${endDate}</p>
+      <p style="${p}"><strong>Total Rental:</strong> ₦${Number(totalAmount).toLocaleString()}</p>
+      <p style="${p}"><strong>Security Deposit (20%):</strong> <span style="color:#f2711c;font-size:18px;font-weight:700;">₦${Number(depositAmount).toLocaleString()}</span></p>
+    </div>
+    <p style="${p}">This deposit is fully refundable if the tool is returned in good condition and the booking is completed successfully.</p>
+    <a href="${payUrl}" style="${btn}">Pay Deposit Now →</a>
+  `),
+
+  bookingCancelled: ({ name, toolName, startDate, refundAmount, refundPercent, policy, bookingsUrl }) => base(`
+    <h2 style="${h2}">❌ Booking Cancelled</h2>
+    <p style="${p}">Hi <strong>${name}</strong>, your booking for <strong>${toolName}</strong> starting <strong>${startDate}</strong> has been cancelled.</p>
+    <div style="${box}">
+      <p style="${p}"><strong>Cancellation Policy:</strong> ${policy}</p>
+      <p style="${p}"><strong>Refund:</strong> <span style="color:${refundPercent > 0 ? '#16a34a' : '#dc2626'};font-size:18px;font-weight:700;">${refundPercent > 0 ? '₦' + Number(refundAmount).toLocaleString() : 'No refund'}</span></p>
+      ${refundPercent > 0 ? '<p style="' + p + '">Refund will be processed to your original payment method within 3–5 business days.</p>' : ''}
+    </div>
+    <a href="${bookingsUrl}" style="${btn}">View My Bookings →</a>
+  `),
+
+  bookingCancelledOwner: ({ ownerName, toolName, renterName, startDate, endDate, dashboardUrl }) => base(`
+    <h2 style="${h2}">ℹ️ Booking Cancelled by Renter</h2>
+    <p style="${p}">Hi <strong>${ownerName}</strong>, <strong>${renterName}</strong> has cancelled their booking for <strong>${toolName}</strong>.</p>
+    <div style="${box}">
+      <p style="${p}"><strong>Cancelled Dates:</strong> ${startDate} → ${endDate}</p>
+      <p style="${p}">Your tool is now available for new bookings.</p>
+    </div>
+    <a href="${dashboardUrl}" style="${btn}">View Dashboard →</a>
+  `),
+
+  refundProcessed: ({ name, toolName, refundAmount, refundRef, reason }) => base(`
+    <h2 style="${h2}">💸 Refund Processed</h2>
+    <p style="${p}">Hi <strong>${name}</strong>, your refund for <strong>${toolName}</strong> has been processed.</p>
+    <div style="${box}">
+      <p style="${p}"><strong>Refund Amount:</strong> <span style="color:#16a34a;font-size:20px;font-weight:700;">₦${Number(refundAmount).toLocaleString()}</span></p>
+      <p style="${p}"><strong>Reference:</strong> <code>${refundRef}</code></p>
+      <p style="${p}"><strong>Reason:</strong> ${reason}</p>
+    </div>
+    <p style="${p}">Funds will arrive in your account within 3–5 business days depending on your bank.</p>
+  `),
+
+  bookingReminder: ({ renterName, toolName, startDate, ownerName, ownerPhone, bookingsUrl }) => base(`
+    <h2 style="${h2}">⏰ Rental Starts Tomorrow!</h2>
+    <p style="${p}">Hi <strong>${renterName}</strong>, just a reminder that your rental of <strong>${toolName}</strong> starts tomorrow.</p>
+    <div style="${box}">
+      <p style="${p}"><strong>Start Date:</strong> ${startDate}</p>
+      <p style="${p}"><strong>Owner:</strong> ${ownerName}</p>
+      ${ownerPhone ? '<p style="' + p + '"><strong>Owner Phone:</strong> ' + ownerPhone + '</p>' : ''}
+    </div>
+    <p style="${p}">Make sure to coordinate with the owner for pickup/delivery.</p>
+    <a href="${bookingsUrl}" style="${btn}">View Booking →</a>
+  `),
+
+  returnReminder: ({ renterName, toolName, endDate, ownerName, ownerPhone, bookingsUrl }) => base(`
+    <h2 style="${h2}">📦 Tool Return Due Tomorrow</h2>
+    <p style="${p}">Hi <strong>${renterName}</strong>, your rental of <strong>${toolName}</strong> ends tomorrow. Please arrange return with the owner.</p>
+    <div style="${box}">
+      <p style="${p}"><strong>Return Date:</strong> ${endDate}</p>
+      <p style="${p}"><strong>Owner:</strong> ${ownerName}</p>
+      ${ownerPhone ? '<p style="' + p + '"><strong>Owner Phone:</strong> ' + ownerPhone + '</p>' : ''}
+    </div>
+    <p style="${p}">Late returns may incur additional charges.</p>
+    <a href="${bookingsUrl}" style="${btn}">View Booking →</a>
+  `),
+
+  ownerReminderNewRequest: ({ ownerName, toolName, renterName, startDate, endDate, dashboardUrl }) => base(`
+    <h2 style="${h2}">⚠️ Booking Request Awaiting Response</h2>
+    <p style="${p}">Hi <strong>${ownerName}</strong>, you have a pending booking request for <strong>${toolName}</strong> from <strong>${renterName}</strong> that expires in 24 hours.</p>
+    <div style="${box}">
+      <p style="${p}"><strong>Rental Period:</strong> ${startDate} → ${endDate}</p>
+      <p style="${p}">Please approve or reject to avoid automatic expiry.</p>
+    </div>
+    <a href="${dashboardUrl}" style="${btn}">Respond Now →</a>
+  `),
+
+  nonReturnRenter: ({ renterName, toolName, ownerName, ownerPhone, endDate, depositAmount, bookingsUrl }) => base(`
+    <h2 style="${h2}">🚨 Non-Return Reported — Immediate Action Required</h2>
+    <p style="${p}">Hi <strong>${renterName}</strong>, the owner has reported that you have not returned <strong>${toolName}</strong> after the rental end date.</p>
+    <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:20px;margin:20px 0;">
+      <p style="margin:0 0 8px;color:#dc2626;font-weight:700;font-size:16px;">⚠️ Your security deposit has been forfeited</p>
+      <p style="margin:4px 0;${p}"><strong>Tool:</strong> ${toolName}</p>
+      <p style="margin:4px 0;${p}"><strong>Was due back:</strong> ${endDate}</p>
+      <p style="margin:4px 0;${p}"><strong>Deposit forfeited:</strong> <span style="color:#dc2626;font-weight:700;">₦${Number(depositAmount).toLocaleString()}</span></p>
+    </div>
+    <p style="${p}">Please contact the owner immediately to arrange return of the tool:</p>
+    <div style="${box}">
+      <p style="margin:0;font-size:15px;font-weight:600;">${ownerName}</p>
+      ${ownerPhone ? `<p style="margin:4px 0 0;color:#6b7280;">📞 ${ownerPhone}</p>` : ''}
+    </div>
+    <p style="${p}">Continued failure to return the tool may result in your account being suspended and legal action being taken.</p>
+    <a href="${bookingsUrl}" style="${btn}">View My Bookings →</a>
+  `),
+
+  accountSuspended: ({ name, reason, supportUrl }) => base(`
+    <h2 style="${h2}">⚠️ Your Account Has Been Suspended</h2>
+    <p style="${p}">Hi <strong>${name}</strong>, your ToolShare Africa account has been suspended by our admin team.</p>
+    <div style="background:#fef2f2;border:1px solid #fecaca;border-radius:12px;padding:20px;margin:20px 0;">
+      <p style="margin:0;color:#dc2626;font-weight:700;">Reason for suspension:</p>
+      <p style="margin:8px 0 0;color:#7f1d1d;">${reason}</p>
+    </div>
+    <p style="${p}">While suspended you cannot log in, make bookings, or list tools.</p>
+    <p style="${p}">If you believe this is a mistake, please contact our support team to appeal.</p>
+    <a href="${supportUrl}" style="${btn}">Contact Support →</a>
+  `),
+
+  accountUnsuspended: ({ name, clientUrl }) => base(`
+    <h2 style="${h2}">✅ Your Account Has Been Reinstated</h2>
+    <p style="${p}">Hi <strong>${name}</strong>, great news — your ToolShare Africa account suspension has been lifted.</p>
+    <p style="${p}">You can now log in and use the platform again. Please ensure you follow our community guidelines going forward.</p>
+    <a href="${clientUrl}" style="${btn}">Go to ToolShare Africa →</a>
   `),
 
   forgotPassword: ({ name, resetUrl }) => base(`

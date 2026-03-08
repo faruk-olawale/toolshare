@@ -170,11 +170,12 @@ function RejectModal({ booking, onClose, onRejected }) {
 
 // ── Booking Card ───────────────────────────────────────────────────────────────
 function BookingCard({ booking, onUpdate, reviewedIds, setReviewedIds }) {
-  const [expanded, setExpanded]     = useState(false);
-  const [showReturn, setShowReturn] = useState(false);
-  const [showReject, setShowReject] = useState(false);
-  const [showReview, setShowReview] = useState(false);
-  const [processing, setProcessing] = useState(false);
+  const [expanded, setExpanded]         = useState(false);
+  const [showReturn, setShowReturn]     = useState(false);
+  const [showReject, setShowReject]     = useState(false);
+  const [showReview, setShowReview]     = useState(false);
+  const [showNonReturn, setShowNonReturn] = useState(false);
+  const [processing, setProcessing]     = useState(false);
 
   const handleApprove = async () => {
     setProcessing(true);
@@ -368,6 +369,22 @@ function BookingCard({ booking, onUpdate, reviewedIds, setReviewedIds }) {
               </button>
             )}
 
+            {/* Tool not returned at all — report non-return */}
+            {booking.status === 'approved' && isOverdue && !booking.dispute?.active && (
+              <button onClick={() => setShowNonReturn(true)}
+                className="w-full py-2.5 text-sm font-semibold rounded-xl bg-red-50 hover:bg-red-100 text-red-700 border border-red-200 transition-colors flex items-center justify-center gap-2 mt-1">
+                🚨 Tool Not Returned — Report
+              </button>
+            )}
+
+            {/* Disputed */}
+            {booking.status === 'disputed' && (
+              <div className="bg-red-50 border border-red-200 rounded-xl p-3 text-center">
+                <p className="text-xs text-red-700 font-semibold">🚨 Non-return dispute active — Admin has been notified</p>
+                <p className="text-xs text-red-500 mt-1">Renter's deposit has been forfeited</p>
+              </div>
+            )}
+
             {/* Completed + return confirmed */}
             {booking.status === 'completed' && booking.escrow?.ownerConfirmedReturn && (
               <div className="bg-green-50 border border-green-100 rounded-xl p-3 text-center">
@@ -409,6 +426,47 @@ function BookingCard({ booking, onUpdate, reviewedIds, setReviewedIds }) {
       {showReject && (
         <RejectModal booking={booking} onClose={() => setShowReject(false)}
           onRejected={onUpdate} />
+      )}
+      {showNonReturn && (
+        <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md animate-slide-up">
+            <div className="w-12 h-12 bg-red-100 rounded-xl flex items-center justify-center mb-4">
+              <span className="text-2xl">🚨</span>
+            </div>
+            <h3 className="font-bold text-gray-900 text-lg mb-1">Report Tool Not Returned</h3>
+            <p className="text-sm text-gray-500 mb-4">
+              Only use this if the renter has <strong>not returned the tool</strong> and is not responding.
+              This will <strong className="text-red-600">forfeit their security deposit</strong> and alert the admin team.
+            </p>
+            <div className="bg-red-50 border border-red-200 rounded-xl p-3 mb-5 text-sm text-red-700">
+              <p className="font-semibold mb-1">This will:</p>
+              <p>• Mark the booking as disputed</p>
+              <p>• Forfeit the renter's ₦{booking.deposit?.amount?.toLocaleString() || 0} deposit</p>
+              <p>• Notify the renter by email + SMS</p>
+              <p>• Alert the admin team immediately</p>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => setShowNonReturn(false)} className="btn-secondary flex-1">Cancel</button>
+              <button
+                disabled={processing}
+                onClick={async () => {
+                  setProcessing(true);
+                  try {
+                    await api.put(`/bookings/${booking._id}/non-return`);
+                    toast.success('Non-return reported. Admin notified, deposit forfeited.');
+                    setShowNonReturn(false);
+                    onUpdate();
+                  } catch (err) {
+                    toast.error(err.response?.data?.message || 'Failed to report');
+                  }
+                  setProcessing(false);
+                }}
+                className="flex-1 bg-red-600 hover:bg-red-700 text-white font-semibold px-4 py-3 rounded-xl transition-colors disabled:opacity-50">
+                {processing ? 'Reporting...' : '🚨 Confirm Report'}
+              </button>
+            </div>
+          </div>
+        </div>
       )}
     </>
   );

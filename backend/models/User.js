@@ -27,6 +27,18 @@ const userSchema = new mongoose.Schema({
     reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
   },
 
+  // Account suspension
+  suspended: { type: Boolean, default: false },
+  suspendedAt: { type: Date, default: null },
+  suspendedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
+  suspensionReason: { type: String, default: null },
+  suspensionHistory: [{
+    action: { type: String, enum: ['suspended', 'unsuspended'] },
+    reason: { type: String },
+    by: { type: mongoose.Schema.Types.ObjectId, ref: 'User' },
+    at: { type: Date, default: Date.now },
+  }],
+
   bankDetails: {
     bankName: { type: String, default: null },
     accountNumber: { type: String, default: null },

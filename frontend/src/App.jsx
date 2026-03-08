@@ -27,6 +27,7 @@ import KYCVerification from './pages/KYCVerification';
 import AdminDashboard from './pages/AdminDashboard';
 import MessageCenter from './pages/MessageCenter';
 import PaymentPage from './pages/PaymentPage';
+import Suspended from './pages/Suspended';
 
 function PrivateRoute({ children, role }) {
   const { user, loading } = useAuth();
@@ -75,6 +76,7 @@ export default function App() {
           <Route path="/bookings" element={<PrivateRoute role="renter"><MyBookings /></PrivateRoute>} />
           <Route path="/bookings/:id/pay" element={<PrivateRoute><PaymentPage /></PrivateRoute>} />
           <Route path="/admin" element={<PrivateRoute role="admin"><AdminDashboard /></PrivateRoute>} />
+          <Route path="/suspended" element={<Suspended />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

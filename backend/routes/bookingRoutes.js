@@ -4,7 +4,7 @@ const { body } = require('express-validator');
 const {
   createBooking, getToolBookings, getRenterBookings, getOwnerBookings,
   approveBooking, rejectBooking, completeBooking, cancelBooking,
-  getCancellationPolicyPreview, getBookingById,
+  getCancellationPolicyPreview, getBookingById, reportNonReturn,
 } = require('../controllers/bookingController');
 const { protect, authorize } = require('../middleware/auth');
 
@@ -26,6 +26,7 @@ router.get('/owner',           protect, getOwnerBookings);    // legacy
 
 // /:id routes MUST come after all named routes
 router.get('/:id/cancel-policy',      protect, getCancellationPolicyPreview);
+router.put('/:id/non-return',         protect, authorize('owner'), reportNonReturn);
 router.get('/:id',                    protect, getBookingById);
 router.put('/:id/approve',            protect, authorize('owner'), approveBooking);
 router.put('/:id/reject',             protect, authorize('owner'), rejectBooking);

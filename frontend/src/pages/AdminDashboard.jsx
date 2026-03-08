@@ -22,6 +22,8 @@ export default function AdminDashboard() {
   const [reason, setReason] = useState('');
   const [processing, setProcessing] = useState(null);
   const [deleteModal, setDeleteModal] = useState(null);
+  const [suspendModal, setSuspendModal] = useState(null);
+  const [suspendReason, setSuspendReason] = useState('');
   const [selectedKyc, setSelectedKyc] = useState(null);
   const [checklist, setChecklist] = useState({});
   const [resolveModal, setResolveModal] = useState(null);
@@ -299,24 +301,49 @@ export default function AdminDashboard() {
             <div className="overflow-x-auto">
               <table className="w-full text-sm">
                 <thead className="bg-gray-50 border-b border-gray-100">
-                  <tr>{['Name', 'Email', 'Role', 'KYC', 'Joined', 'Action'].map(h => (
+                  <tr>{['Name', 'Email', 'Role', 'KYC', 'Status', 'Joined', 'Actions'].map(h => (
                     <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
                   ))}</tr>
                 </thead>
                 <tbody className="divide-y divide-gray-50">
                   {allUsers.map(u => (
-                    <tr key={u._id} className="hover:bg-gray-50">
+                    <tr key={u._id} className={`hover:bg-gray-50 ${u.suspended ? 'bg-red-50/30' : ''}`}>
                       <td className="px-4 py-3 font-medium text-gray-800 whitespace-nowrap">{u.name}</td>
                       <td className="px-4 py-3 text-gray-500">{u.email}</td>
                       <td className="px-4 py-3"><span className={`badge text-xs ${u.role === 'owner' ? 'bg-brand-50 text-brand-700 border-brand-100' : u.role === 'admin' ? 'bg-purple-50 text-purple-700 border-purple-100' : 'bg-blue-50 text-blue-700 border-blue-100'}`}>{u.role}</span></td>
                       <td className="px-4 py-3"><span className={`badge text-xs ${u.kyc?.status === 'approved' ? 'bg-green-50 text-green-700 border-green-100' : u.kyc?.status === 'pending' ? 'bg-yellow-50 text-yellow-700 border-yellow-100' : u.kyc?.status === 'rejected' ? 'bg-red-50 text-red-700 border-red-100' : 'bg-gray-50 text-gray-500 border-gray-100'}`}>{u.kyc?.status || 'not submitted'}</span></td>
+                      <td className="px-4 py-3">
+                        {u.suspended
+                          ? <span className="badge text-xs bg-red-50 text-red-700 border-red-200">🚫 Suspended</span>
+                          : <span className="badge text-xs bg-green-50 text-green-700 border-green-100">✅ Active</span>
+                        }
+                      </td>
                       <td className="px-4 py-3 text-gray-400 whitespace-nowrap">{new Date(u.createdAt).toLocaleDateString()}</td>
                       <td className="px-4 py-3">
                         {u.role !== 'admin' && (
-                          <button onClick={() => setDeleteModal(u)}
-                            className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1.5 rounded-lg transition-colors">
-                            🗑️ Delete
-                          </button>
+                          <div className="flex items-center gap-1">
+                            {u.suspended ? (
+                              <button onClick={async () => {
+                                if (!confirm(`Reinstate ${u.name}'s account?`)) return;
+                                try {
+                                  const { data } = await api.put(`/admin/users/${u._id}/unsuspend`);
+                                  setAllUsers(prev => prev.map(x => x._id === u._id ? data.user : x));
+                                  toast.success(`${u.name} reinstated`);
+                                } catch { toast.error('Failed to reinstate'); }
+                              }} className="flex items-center gap-1 text-xs text-green-600 hover:text-green-800 hover:bg-green-50 px-2 py-1.5 rounded-lg transition-colors whitespace-nowrap">
+                                ✅ Reinstate
+                              </button>
+                            ) : (
+                              <button onClick={() => setSuspendModal(u)}
+                                className="flex items-center gap-1 text-xs text-orange-600 hover:text-orange-800 hover:bg-orange-50 px-2 py-1.5 rounded-lg transition-colors whitespace-nowrap">
+                                🚫 Suspend
+                              </button>
+                            )}
+                            <button onClick={() => setDeleteModal(u)}
+                              className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1.5 rounded-lg transition-colors">
+                              🗑️
+                            </button>
+                          </div>
                         )}
                       </td>
                     </tr>
@@ -492,6 +519,48 @@ export default function AdminDashboard() {
               <button onClick={handleDeleteUser} disabled={processing === deleteModal._id}
                 className="flex-1 bg-red-500 hover:bg-red-600 text-white font-medium px-6 py-3 rounded-xl transition-colors disabled:opacity-50">
                 {processing === deleteModal._id ? 'Deleting...' : '🗑️ Delete Account'}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Suspend User Modal */}
+      {suspendModal && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+          <div className="bg-white rounded-2xl p-6 w-full max-w-md animate-slide-up">
+            <div className="w-12 h-12 bg-orange-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+              <span className="text-2xl">🚫</span>
+            </div>
+            <h3 className="font-display font-bold text-lg text-gray-900 mb-1 text-center">Suspend Account</h3>
+            <p className="text-center font-semibold text-gray-800 mb-0.5">{suspendModal.name}</p>
+            <p className="text-center text-sm text-gray-400 mb-4">{suspendModal.email} · {suspendModal.role}</p>
+            <div className="mb-4">
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Reason for suspension <span className="text-red-500">*</span></label>
+              <textarea rows={3} className="input-field resize-none"
+                placeholder="e.g. Tool not returned after multiple reminders, fraudulent activity..."
+                value={suspendReason} onChange={e => setSuspendReason(e.target.value)} />
+            </div>
+            <div className="bg-orange-50 border border-orange-100 rounded-xl p-3 mb-5">
+              <p className="text-xs text-orange-700">The user will be notified by email and will not be able to log in until reinstated.</p>
+            </div>
+            <div className="flex gap-3">
+              <button onClick={() => { setSuspendModal(null); setSuspendReason(''); }} className="btn-secondary flex-1">Cancel</button>
+              <button
+                disabled={!suspendReason.trim() || processing === suspendModal._id}
+                onClick={async () => {
+                  setProcessing(suspendModal._id);
+                  try {
+                    const { data } = await api.put(`/admin/users/${suspendModal._id}/suspend`, { reason: suspendReason });
+                    setAllUsers(prev => prev.map(u => u._id === suspendModal._id ? data.user : u));
+                    toast.success(`${suspendModal.name} has been suspended`);
+                    setSuspendModal(null);
+                    setSuspendReason('');
+                  } catch (err) { toast.error(err.response?.data?.message || 'Failed to suspend'); }
+                  setProcessing(null);
+                }}
+                className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-medium px-6 py-3 rounded-xl transition-colors disabled:opacity-50">
+                {processing === suspendModal._id ? 'Suspending...' : '🚫 Suspend Account'}
               </button>
             </div>
           </div>

@@ -210,8 +210,82 @@ const getAllBookings = async (req, res, next) => {
   } catch (error) { next(error); }
 };
 
+// ── SUSPEND USER ─────────────────────────────────────────────────────────────
+const suspendUser = async (req, res, next) => {
+  try {
+    const { reason } = req.body;
+    if (!reason) return res.status(400).json({ success: false, message: 'Suspension reason is required.' });
+
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found.' });
+    if (user.role === 'admin') return res.status(400).json({ success: false, message: 'Cannot suspend an admin account.' });
+    if (user.suspended) return res.status(400).json({ success: false, message: 'User is already suspended.' });
+
+    user.suspended        = true;
+    user.suspendedAt      = new Date();
+    user.suspendedBy      = req.user._id;
+    user.suspensionReason = reason;
+    user.suspensionHistory.push({ action: 'suspended', reason, by: req.user._id });
+    await user.save();
+
+    // Notify user by email
+    sendEmail({
+      to: user.email,
+      subject: '⚠️ Your ToolShare Africa Account Has Been Suspended',
+      template: 'accountSuspended',
+      data: { name: user.name, reason, supportUrl: `${process.env.CLIENT_URL}/contact` },
+    }).catch(() => {});
+
+    // In-app notify user
+    notify({
+      userId: user._id,
+      title: '⚠️ Account Suspended',
+      message: `Your account has been suspended. Reason: ${reason}. Contact support to appeal.`,
+      type: 'system',
+      link: '/contact',
+    }).catch(() => {});
+
+    res.status(200).json({ success: true, message: `${user.name}'s account has been suspended.`, user });
+  } catch (error) { next(error); }
+};
+
+// ── UNSUSPEND USER ────────────────────────────────────────────────────────────
+const unsuspendUser = async (req, res, next) => {
+  try {
+    const user = await User.findById(req.params.id);
+    if (!user) return res.status(404).json({ success: false, message: 'User not found.' });
+    if (!user.suspended) return res.status(400).json({ success: false, message: 'User is not suspended.' });
+
+    user.suspended        = false;
+    user.suspendedAt      = null;
+    user.suspendedBy      = null;
+    user.suspensionReason = null;
+    user.suspensionHistory.push({ action: 'unsuspended', reason: 'Reinstated by admin', by: req.user._id });
+    await user.save();
+
+    // Notify user
+    sendEmail({
+      to: user.email,
+      subject: '✅ Your ToolShare Africa Account Has Been Reinstated',
+      template: 'accountUnsuspended',
+      data: { name: user.name, clientUrl: process.env.CLIENT_URL },
+    }).catch(() => {});
+
+    notify({
+      userId: user._id,
+      title: '✅ Account Reinstated',
+      message: 'Your account suspension has been lifted. Welcome back!',
+      type: 'system',
+      link: '/dashboard',
+    }).catch(() => {});
+
+    res.status(200).json({ success: true, message: `${user.name}'s account has been reinstated.`, user });
+  } catch (error) { next(error); }
+};
+
 module.exports = {
   getStats, getPendingTools, getAllTools, verifyTool, rejectTool,
   getPendingKyc, approveKyc, rejectKyc,
   getAllUsers, deleteUser, getAllBookings,
+  suspendUser, unsuspendUser,
 };

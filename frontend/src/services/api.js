@@ -23,6 +23,12 @@ api.interceptors.response.use(
       localStorage.removeItem('tsa_user');
       window.location.href = '/login';
     }
+    if (error.response?.status === 403 && error.response?.data?.suspended) {
+      localStorage.removeItem('tsa_token');
+      localStorage.removeItem('tsa_user');
+      const reason = encodeURIComponent(error.response.data.reason || 'Policy violation');
+      window.location.href = `/suspended?reason=${reason}`;
+    }
     return Promise.reject(error);
   }
 );

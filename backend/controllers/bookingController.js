@@ -501,8 +501,109 @@ const getBookingById = async (req, res, next) => {
   } catch (error) { next(error); }
 };
 
+// ─── REPORT NON-RETURN ────────────────────────────────────────────────────────
+// PUT /api/bookings/:id/non-return
+// Owner calls this when renter has not returned the tool past the end date
+const reportNonReturn = async (req, res, next) => {
+  try {
+    const booking = await Booking.findById(req.params.id)
+      .populate('renterId', 'name email phone')
+      .populate('ownerId',  'name email phone')
+      .populate('toolId',   'name');
+
+    if (!booking)
+      return res.status(404).json({ success: false, message: 'Booking not found.' });
+    if (booking.ownerId._id.toString() !== req.user._id.toString())
+      return res.status(403).json({ success: false, message: 'Only the owner can report a non-return.' });
+    if (booking.status !== 'approved')
+      return res.status(400).json({ success: false, message: 'Only active approved bookings can be reported.' });
+    if (new Date() < new Date(booking.endDate))
+      return res.status(400).json({ success: false, message: 'Cannot report non-return before the rental end date.' });
+    if (booking.dispute?.active)
+      return res.status(400).json({ success: false, message: 'A dispute is already active on this booking.' });
+
+    // Activate dispute + forfeit deposit
+    booking.status                = 'disputed';
+    booking.dispute.active        = true;
+    booking.dispute.raisedBy      = req.user._id;
+    booking.dispute.raisedByRole  = 'owner';
+    booking.dispute.reason        = 'Tool not returned by renter after rental end date';
+    booking.dispute.raisedAt      = new Date();
+
+    // Forfeit the deposit — renter does not get it back
+    if (booking.deposit?.paid && !booking.deposit.refunded && !booking.deposit.forfeited) {
+      booking.deposit.forfeited     = true;
+      booking.deposit.forfeitReason = 'Tool not returned — deposit forfeited to cover potential loss';
+    }
+
+    await booking.save();
+
+    // Notify renter — strong warning
+    await notifyAll({
+      user: booking.renterId,
+      inApp: {
+        userId: booking.renterId._id,
+        title: '🚨 Non-Return Reported',
+        message: `The owner of "${booking.toolId.name}" has reported you have not returned the tool. Your deposit has been forfeited. Please contact the owner immediately.`,
+        type: 'dispute',
+        link: '/bookings',
+      },
+      email: {
+        subject: `🚨 Non-Return Reported — ${booking.toolId.name}`,
+        template: 'nonReturnRenter',
+        data: {
+          renterName:  booking.renterId.name,
+          toolName:    booking.toolId.name,
+          ownerName:   booking.ownerId.name,
+          ownerPhone:  booking.ownerId.phone,
+          endDate:     booking.endDate.toLocaleDateString('en-NG'),
+          depositAmount: booking.deposit?.amount || 0,
+          bookingsUrl: `${process.env.CLIENT_URL}/bookings`,
+        },
+      },
+      sms: `URGENT ToolShare: ${booking.ownerId.name} has reported you haven't returned "${booking.toolId.name}". Your deposit of ₦${booking.deposit?.amount?.toLocaleString()} has been forfeited. Contact owner: ${booking.ownerId.phone}`,
+    });
+
+    // Notify all admins
+    const User = require('../models/User');
+    const admins = await User.find({ role: 'admin' }).select('_id email');
+    for (const admin of admins) {
+      await notifyAll({
+        user: admin,
+        inApp: {
+          userId: admin._id,
+          title: '🚨 Non-Return Dispute',
+          message: `${booking.ownerId.name} reported that ${booking.renterId.name} has not returned "${booking.toolId.name}". Deposit forfeited.`,
+          type: 'dispute',
+          link: '/admin',
+        },
+        email: {
+          subject: `🚨 Non-Return Dispute — ${booking.toolId.name}`,
+          template: 'disputeRaised',
+          data: {
+            raisedBy:    booking.ownerId.name,
+            raisedByRole: 'owner',
+            toolName:    booking.toolId.name,
+            renterName:  booking.renterId.name,
+            ownerName:   booking.ownerId.name,
+            reason:      'Tool not returned after rental end date',
+            adminUrl:    `${process.env.CLIENT_URL}/admin`,
+          },
+        },
+        sms: null,
+      });
+    }
+
+    res.status(200).json({
+      success: true,
+      message: 'Non-return reported. Renter notified, deposit forfeited, admin alerted.',
+      booking,
+    });
+  } catch (error) { next(error); }
+};
+
 module.exports = {
   getToolBookings, createBooking, getRenterBookings, getOwnerBookings,
   approveBooking, rejectBooking, completeBooking, cancelBooking,
-  getCancellationPolicyPreview, getBookingById,
+  getCancellationPolicyPreview, getBookingById, reportNonReturn,
 };
