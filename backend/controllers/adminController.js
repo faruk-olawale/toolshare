@@ -210,6 +210,7 @@ const getAllBookings = async (req, res, next) => {
   } catch (error) { next(error); }
 };
 
+// ── RESOLVE DISPUTE ───────────────────────────────────────────────────────────
 // ── SUSPEND USER ─────────────────────────────────────────────────────────────
 const suspendUser = async (req, res, next) => {
   try {
@@ -283,9 +284,80 @@ const unsuspendUser = async (req, res, next) => {
   } catch (error) { next(error); }
 };
 
+// ── RESOLVE DISPUTE (Admin) ───────────────────────────────────────────────────
+const resolveDispute = async (req, res, next) => {
+  try {
+    const { resolution, outcome, suspendRenter, markToolLost } = req.body;
+    if (!resolution) return res.status(400).json({ success: false, message: 'Resolution notes are required.' });
+    if (!outcome) return res.status(400).json({ success: false, message: 'Outcome is required.' });
+
+    const booking = await Booking.findById(req.params.id)
+      .populate('renterId', 'name email phone')
+      .populate('ownerId',  'name email phone')
+      .populate('toolId',   'name _id');
+
+    if (!booking) return res.status(404).json({ success: false, message: 'Booking not found.' });
+    if (booking.status !== 'disputed') return res.status(400).json({ success: false, message: 'This booking is not in disputed status.' });
+
+    booking.status               = outcome === 'tool_recovered' ? 'completed' : 'written_off';
+    booking.dispute.active       = false;
+    booking.dispute.resolvedAt   = new Date();
+    booking.dispute.resolution   = resolution;
+    booking.dispute.resolvedBy   = req.user._id;
+    booking.dispute.outcome      = outcome;
+    await booking.save();
+
+    // Optionally suspend renter
+    if (suspendRenter) {
+      await User.findByIdAndUpdate(booking.renterId._id, {
+        suspended: true,
+        suspendedAt: new Date(),
+        suspendedBy: req.user._id,
+        suspensionReason: `Dispute resolution: ${resolution}`,
+        $push: { suspensionHistory: { action: 'suspended', reason: `Dispute: ${resolution}`, by: req.user._id } },
+      });
+    }
+
+    // Optionally mark tool as lost
+    if (markToolLost) {
+      await Tool.findByIdAndUpdate(booking.toolId._id, {
+        available: false,
+        adminVerified: false,
+        adminNote: `Marked lost after dispute. Booking ${booking._id}. ${fmt(new Date())}`,
+      });
+    } else if (outcome === 'tool_recovered') {
+      await Tool.findByIdAndUpdate(booking.toolId._id, { available: true });
+    }
+
+    // Notify both parties
+    const notifyParty = (user, role) => {
+      sendEmail({
+        to: user.email,
+        subject: `✅ Dispute Resolved — ${booking.toolId.name}`,
+        template: 'disputeResolved',
+        data: { name: user.name, toolName: booking.toolId.name, resolution, outcome, clientUrl: process.env.CLIENT_URL },
+      }).catch(() => {});
+      notify({
+        userId: user._id,
+        title: `✅ Dispute Resolved — ${booking.toolId.name}`,
+        message: `Resolution: ${resolution}`,
+        type: 'dispute',
+        link: role === 'owner' ? '/booking-requests' : '/bookings',
+      }).catch(() => {});
+    };
+
+    notifyParty(booking.ownerId, 'owner');
+    notifyParty(booking.renterId, 'renter');
+
+    res.status(200).json({ success: true, message: 'Dispute resolved.', booking });
+  } catch (error) { next(error); }
+};
+
+const fmt = (d) => new Date(d).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' });
+
 module.exports = {
   getStats, getPendingTools, getAllTools, verifyTool, rejectTool,
   getPendingKyc, approveKyc, rejectKyc,
   getAllUsers, deleteUser, getAllBookings,
-  suspendUser, unsuspendUser,
+  suspendUser, unsuspendUser, resolveDispute,
 };

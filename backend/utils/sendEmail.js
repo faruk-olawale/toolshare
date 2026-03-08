@@ -395,6 +395,47 @@ const templates = {
     <a href="${bookingsUrl}" style="${btn}">View My Bookings →</a>
   `),
 
+  disputeEscalation1: ({ renterName, toolName, ownerName, ownerPhone, reportedAt, deadlineDate, supportUrl }) => base(`
+    <h2 style="${h2}">🚨 FINAL WARNING — Return Tool Immediately</h2>
+    <p style="${p}">Hi <strong>${renterName}</strong>, this is a final warning regarding the unreturned tool <strong>${toolName}</strong>.</p>
+    <div style="background:#fef2f2;border:2px solid #dc2626;border-radius:12px;padding:20px;margin:20px 0;">
+      <p style="margin:0 0 8px;color:#dc2626;font-weight:700;font-size:16px;">⚠️ Your account will be suspended in 4 days</p>
+      <p style="margin:4px 0;${p}"><strong>Tool:</strong> ${toolName}</p>
+      <p style="margin:4px 0;${p}"><strong>Reported:</strong> ${reportedAt}</p>
+      <p style="margin:4px 0;${p}"><strong>Suspension deadline:</strong> <span style="color:#dc2626;font-weight:700;">${deadlineDate}</span></p>
+    </div>
+    <p style="${p}">Please return the tool to the owner immediately:</p>
+    <div style="${box}">
+      <p style="margin:0;font-weight:600;">${ownerName}</p>
+      ${ownerPhone ? `<p style="margin:4px 0 0;color:#6b7280;">📞 ${ownerPhone}</p>` : ''}
+    </div>
+    <p style="${p}">If there are special circumstances (illness, emergency, bereavement), please contact our support team immediately so we can assist.</p>
+    <a href="${supportUrl}" style="${btn}">Contact Support →</a>
+  `),
+
+  disputeWrittenOff: ({ ownerName, toolName, renterName, depositAmount, resolution, supportUrl }) => base(`
+    <h2 style="${h2}">⚖️ Dispute Closed — Tool Written Off</h2>
+    <p style="${p}">Hi <strong>${ownerName}</strong>, the non-return dispute for <strong>${toolName}</strong> has been closed after 7 days.</p>
+    <div style="${box}">
+      <p style="margin:0 0 8px;font-weight:600;">Outcome:</p>
+      <p style="margin:4px 0;${p}"><strong>Renter (${renterName}):</strong> Account suspended</p>
+      <p style="margin:4px 0;${p}"><strong>Security Deposit:</strong> <span style="color:#f2711c;font-weight:700;">₦${Number(depositAmount).toLocaleString()} forfeited</span></p>
+      <p style="margin:4px 0;${p}"><strong>Tool status:</strong> Marked as lost — pending admin review to relist</p>
+    </div>
+    <p style="${p}">${resolution}</p>
+    <a href="${supportUrl}" style="${btn}">Contact Support →</a>
+  `),
+
+  disputeResolved: ({ name, toolName, resolution, outcome, clientUrl }) => base(`
+    <h2 style="${h2}">✅ Dispute Resolved</h2>
+    <p style="${p}">Hi <strong>${name}</strong>, the dispute for <strong>${toolName}</strong> has been resolved by our admin team.</p>
+    <div style="${box}">
+      <p style="margin:0 0 8px;font-weight:600;">Outcome: <span style="color:#f2711c;text-transform:capitalize;">${(outcome || '').replace('_', ' ')}</span></p>
+      <p style="margin:0;${p}">${resolution}</p>
+    </div>
+    <a href="${clientUrl}" style="${btn}">Go to ToolShare Africa →</a>
+  `),
+
   accountSuspended: ({ name, reason, supportUrl }) => base(`
     <h2 style="${h2}">⚠️ Your Account Has Been Suspended</h2>
     <p style="${p}">Hi <strong>${name}</strong>, your ToolShare Africa account has been suspended by our admin team.</p>
