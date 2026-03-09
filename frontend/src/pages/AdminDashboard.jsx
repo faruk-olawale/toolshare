@@ -518,7 +518,15 @@ export default function AdminDashboard() {
                       <span className="badge text-xs bg-gray-50 text-gray-500 border-gray-200 capitalize">{ticket.category}</span>
                     </div>
                     <p className="font-semibold text-gray-800 text-sm">{ticket.subject}</p>
-                    <p className="text-xs text-gray-400 mt-0.5">{ticket.name} · {ticket.email} · {new Date(ticket.createdAt).toLocaleDateString()}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">
+                      <span className="font-medium text-gray-700">{ticket.name}</span>
+                      {' · '}
+                      <a href={`mailto:${ticket.email}`} className="text-brand-600 hover:underline">{ticket.email}</a>
+                      {' · '}{new Date(ticket.createdAt).toLocaleDateString()}
+                    </p>
+                    {ticket.messages?.[0] && (
+                      <p className="text-xs text-gray-400 mt-1 italic truncate">&ldquo;{ticket.messages[0].message}&rdquo;</p>
+                    )}
                   </div>
                   <button onClick={() => {
                     setSelectedTicket(selectedTicket?._id === ticket._id ? null : ticket);
