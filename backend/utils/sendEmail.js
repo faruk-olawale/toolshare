@@ -1,12 +1,5 @@
-const nodemailer = require('nodemailer');
-
-const createTransporter = () => nodemailer.createTransport({
-  service: 'gmail',
-  auth: {
-    user: process.env.EMAIL_USER,
-    pass: process.env.EMAIL_PASS,
-  },
-});
+const { Resend } = require('resend');
+const resend = new Resend(process.env.RESEND_API_KEY);
 
 const btn = `display:inline-block;background:#f2711c;color:white;padding:12px 28px;border-radius:10px;text-decoration:none;font-weight:600;font-size:15px;margin-top:16px;`;
 const h2 = `color:#1a1a1a;font-size:22px;margin:0 0 8px;`;
@@ -468,8 +461,8 @@ const templates = {
 
 const sendEmail = async ({ to, subject, template, data }) => {
   try {
-    if (!process.env.EMAIL_USER || !process.env.EMAIL_PASS) {
-      console.log(`📧 Email skipped (no EMAIL_USER/PASS): ${subject} → ${to}`);
+    if (!process.env.RESEND_API_KEY) {
+      console.log(`📧 Email skipped (no RESEND_API_KEY): ${subject} → ${to}`);
       return;
     }
     if (!templates[template]) {
@@ -477,12 +470,17 @@ const sendEmail = async ({ to, subject, template, data }) => {
       return;
     }
     const html = templates[template](data);
-    const transporter = createTransporter();
-    await transporter.sendMail({
-      from: `ToolShare Africa <${process.env.EMAIL_USER}>`,
-      to, subject, html,
+    const { error } = await resend.emails.send({
+      from: 'ToolShare Africa <onboarding@resend.dev>',
+      to,
+      subject,
+      html,
     });
-    console.log(`📧 Email sent: ${subject} → ${to}`);
+    if (error) {
+      console.error(`📧 Email failed: ${error.message}`);
+    } else {
+      console.log(`📧 Email sent: ${subject} → ${to}`);
+    }
   } catch (err) {
     console.error(`📧 Email failed: ${err.message}`);
   }
