@@ -1,37 +1,110 @@
+import SupportForm from './SupportForm';
+import { Link } from 'react-router-dom';
+
+const SECTIONS = [
+  {
+    icon: '🪪', title: 'Identity Verification',
+    points: [
+      'All users must complete KYC (Know Your Customer) verification before transacting.',
+      'We accept NIN, International Passport, Driver\'s License, and Voter\'s Card.',
+      'Documents are reviewed manually by our admin team within 24 hours.',
+      'Your documents are stored securely and never shared with third parties.',
+    ],
+  },
+  {
+    icon: '🔒', title: 'Secure Payments',
+    points: [
+      'All payments are processed through Paystack — Nigeria\'s most trusted payment gateway.',
+      'Funds are held in escrow and only released when you confirm receipt of the tool.',
+      'Remaining 50% is released only after the tool is confirmed returned safely.',
+      'We never ask for bank details outside the official platform.',
+    ],
+  },
+  {
+    icon: '🤝', title: 'Meeting Safely',
+    points: [
+      'Always meet in a public place for tool handover where possible.',
+      'Verify the tool matches its listing photos before confirming receipt.',
+      'Take photos of the tool\'s condition before and after rental.',
+      'Never pay outside the platform — all transactions must go through ToolShare.',
+    ],
+  },
+  {
+    icon: '🚨', title: 'Reporting Issues',
+    points: [
+      'Use the "Report a Problem" button on any booking to raise a dispute.',
+      'Our admin team reviews all disputes within 24 hours.',
+      'Funds are frozen immediately when a dispute is raised.',
+      'For emergencies, contact us directly using the form below.',
+    ],
+  },
+  {
+    icon: '🚫', title: 'Prohibited Activities',
+    points: [
+      'Transacting outside the platform to avoid fees.',
+      'Creating fake accounts or submitting fraudulent ID documents.',
+      'Listing tools you do not own or have permission to rent.',
+      'Threatening, harassing, or intimidating other users.',
+    ],
+  },
+];
+
 export default function Safety() {
   return (
-    <div className="py-12 animate-fade-in">
-      <div className="page-container max-w-3xl">
+    <div className="py-10 animate-fade-in">
+      <div className="page-container max-w-4xl">
         <div className="text-center mb-10">
-          <h1 className="section-title mb-3">Safety Guidelines</h1>
-          <p className="text-gray-500 text-lg">Keeping every rental safe for everyone on ToolShare Africa</p>
+          <div className="text-5xl mb-4">🛡️</div>
+          <h1 className="text-3xl font-display font-bold text-gray-900 mb-2">Safety Guidelines</h1>
+          <p className="text-gray-500 max-w-xl mx-auto">Your safety is our top priority. Follow these guidelines for a secure rental experience on ToolShare Africa.</p>
         </div>
-        <div className="space-y-6">
-          {[
-            { emoji: '🤝', title: 'Meet Safely', color: 'bg-blue-50 border-blue-100', tips: ['Always meet in a public, well-lit location', 'Bring a friend or family member if possible', 'Share your meeting location with someone you trust', 'Meet during daylight hours when possible'] },
-            { emoji: '🔍', title: 'Verify Before You Rent', color: 'bg-green-50 border-green-100', tips: ['Check the tool\'s condition thoroughly before taking it', 'Take photos/videos documenting the tool\'s state', 'Test the tool works properly before leaving', 'Read the owner\'s profile and any reviews'] },
-            { emoji: '💳', title: 'Always Pay Through ToolShare', color: 'bg-brand-50 border-brand-100', tips: ['Never pay cash outside the platform', 'All payments are protected when made through Paystack', 'Never share your banking details with other users', 'Report any requests for off-platform payment immediately'] },
-            { emoji: '🛠️', title: 'Using Equipment Safely', color: 'bg-yellow-50 border-yellow-100', tips: ['Read the tool\'s manual before use', 'Wear appropriate protective equipment (gloves, goggles, etc.)', 'Never use a tool for purposes it wasn\'t designed for', 'Keep tools away from children'] },
-            { emoji: '📞', title: 'Communication', color: 'bg-purple-50 border-purple-100', tips: ['Use ToolShare\'s contact system to communicate', 'Be clear about pickup and return times', 'Respond promptly to messages', 'Be honest if there\'s a problem — contact us immediately'] },
-            { emoji: '🚨', title: 'Reporting Issues', color: 'bg-red-50 border-red-100', tips: ['Report damaged or faulty tools immediately', 'Report suspicious users to our team', 'In case of emergency, contact Nigerian emergency services (199)', 'Email safety@toolshare.africa for platform safety issues'] },
-          ].map(({ emoji, title, color, tips }) => (
-            <div key={title} className={`card p-6 border ${color}`}>
-              <h3 className="font-display font-bold text-lg text-gray-900 mb-4 flex items-center gap-2">
-                <span className="text-2xl">{emoji}</span> {title}
-              </h3>
+
+        <div className="grid md:grid-cols-2 gap-6 mb-10">
+          {SECTIONS.map(({ icon, title, points }) => (
+            <div key={title} className="card p-5">
+              <div className="flex items-center gap-3 mb-3">
+                <span className="text-2xl">{icon}</span>
+                <h3 className="font-display font-bold text-gray-900">{title}</h3>
+              </div>
               <ul className="space-y-2">
-                {tips.map(tip => (
-                  <li key={tip} className="flex items-start gap-2 text-gray-600">
-                    <span className="text-green-500 mt-0.5 flex-shrink-0">✓</span> {tip}
+                {points.map((p, i) => (
+                  <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
+                    <span className="text-green-500 flex-shrink-0 mt-0.5">✓</span> {p}
                   </li>
                 ))}
               </ul>
             </div>
           ))}
         </div>
-        <div className="mt-10 card p-6 text-center">
-          <p className="text-gray-600 mb-3">See something suspicious or need help?</p>
-          <a href="mailto:safety@toolshare.africa" className="btn-primary inline-flex">Report a Safety Issue</a>
+
+        {/* Emergency Banner */}
+        <div className="bg-red-50 border border-red-200 rounded-2xl p-5 mb-10 text-center">
+          <p className="font-bold text-red-800 mb-1">🚨 Experiencing a Safety Emergency?</p>
+          <p className="text-sm text-red-600 mb-3">If you feel unsafe or are being threatened, contact Nigerian emergency services first at <strong>112</strong>.</p>
+          <p className="text-sm text-red-500">Then report the incident to us using the form below.</p>
+        </div>
+
+        <div className="grid md:grid-cols-2 gap-8">
+          <div>
+            <h2 className="font-display font-bold text-xl text-gray-900 mb-4">Report a Safety Concern</h2>
+            <SupportForm source="safety" defaultSubject="Safety Concern" prefillCategory="safety" />
+          </div>
+          <div>
+            <h2 className="font-display font-bold text-xl text-gray-900 mb-4">Quick Links</h2>
+            <div className="space-y-3">
+              {[
+                { to: '/help', icon: '❓', label: 'Help Center', desc: 'Browse FAQs and guides' },
+                { to: '/privacy', icon: '🔒', label: 'Privacy Policy', desc: 'How we protect your data' },
+                { to: '/terms', icon: '📄', label: 'Terms of Service', desc: 'Rules for using the platform' },
+                { to: '/contact', icon: '💬', label: 'Contact Support', desc: 'Get direct help from our team' },
+              ].map(({ to, icon, label, desc }) => (
+                <Link key={to} to={to} className="card p-4 flex items-center gap-3 hover:border-brand-200 transition-colors">
+                  <span className="text-xl">{icon}</span>
+                  <div><p className="font-medium text-gray-800 text-sm">{label}</p><p className="text-xs text-gray-400">{desc}</p></div>
+                </Link>
+              ))}
+            </div>
+          </div>
         </div>
       </div>
     </div>

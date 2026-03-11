@@ -1,4 +1,4 @@
-import SupportForm from '../../components/support/SupportForm';
+import SupportForm from './SupportForm';
 import { Link } from 'react-router-dom';
 import { Mail, Clock, Shield } from 'lucide-react';
 

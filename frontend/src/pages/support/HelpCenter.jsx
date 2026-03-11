@@ -1,80 +1,84 @@
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
+import SupportForm from './SupportForm';
 import { ChevronDown, ChevronUp, Search } from 'lucide-react';
 
-const faqs = [
-  { category: 'Getting Started', q: 'How do I create an account?', a: 'Click "Get Started" on the homepage. Choose your role — Renter if you want to borrow tools, or Owner if you want to earn by listing yours. Fill in your details and you\'re ready to go.' },
-  { category: 'Getting Started', q: 'What is the difference between a Renter and an Owner?', a: 'Owners list their tools and earn money when others rent them. Renters browse, book, and pay for tools they need. You can only have one role per account.' },
-  { category: 'Booking', q: 'How do I book a tool?', a: 'Browse tools, click on one you like, select your rental dates, and click "Send Booking Request". The owner will review and approve or decline within 24 hours.' },
-  { category: 'Booking', q: 'Can I cancel a booking?', a: 'You can cancel a pending booking by contacting us at support@toolshare.africa. Approved bookings that have been paid cannot be cancelled — please contact the owner directly.' },
-  { category: 'Booking', q: 'What happens if the owner rejects my request?', a: 'You\'ll receive an email notification. No payment is taken for rejected bookings. You\'re free to search for other tools.' },
-  { category: 'Payments', q: 'How does payment work?', a: 'After your booking is approved, you\'ll see a "Pay Now" button. Payments are processed securely via Paystack using card, bank transfer, or USSD.' },
-  { category: 'Payments', q: 'Is my payment information safe?', a: 'Yes. We use Paystack, a PCI-DSS compliant payment processor. ToolShare Africa never stores your card details.' },
-  { category: 'Payments', q: 'When do owners receive their money?', a: 'Owners receive 90% of the rental amount within minutes of payment confirmation via NIP bank transfer. The remaining 10% is ToolShare Africa\'s platform fee.' },
-  { category: 'Listings', q: 'How do I list my tool?', a: 'Register as an Owner, go to Dashboard → List a Tool. Add photos, set your daily price, and submit. Our admin team will verify and publish your listing within 24 hours.' },
-  { category: 'Listings', q: 'Why hasn\'t my tool been published yet?', a: 'All listings go through admin verification to ensure quality and safety. This usually takes under 24 hours. You\'ll receive an email when your tool is live.' },
-  { category: 'Safety', q: 'How do I know I can trust other users?', a: 'All users are registered with verified email addresses. We recommend checking the owner\'s profile and contacting them before pickup. Always meet in safe, public locations.' },
-  { category: 'Safety', q: 'What if the tool is damaged during my rental?', a: 'You are responsible for the tool during your rental period. Report any pre-existing damage to the owner before taking the tool. We recommend documenting the tool\'s condition with photos.' },
+const FAQS = [
+  { q: 'How do I rent a tool?', a: 'Browse tools, pick your dates, and send a booking request. The owner approves and you pay securely through the platform.' },
+  { q: 'How does payment work?', a: 'You pay upfront via Paystack. The money is held in escrow — 50% released to the owner when you confirm receiving the tool, and the remaining 50% when you return it.' },
+  { q: 'What is KYC verification?', a: 'KYC (Know Your Customer) is identity verification. You upload a government-issued ID and a selfie. Our team reviews within 24 hours. It\'s required for all users.' },
+  { q: 'What IDs are accepted?', a: 'We accept NIN, International Passport, Driver\'s License, and Voter\'s Card.' },
+  { q: 'How do I list my tool for rent?', a: 'Complete KYC first, then go to Dashboard → List Tool. Upload photos, set your price, and provide proof of ownership. Admin reviews before it goes live.' },
+  { q: 'What if the tool is damaged?', a: 'Raise a dispute from your bookings page. Our admin team will review within 24 hours and resolve it fairly. Payments are frozen during disputes.' },
+  { q: 'How long does KYC approval take?', a: 'Usually within 24 hours on business days. You\'ll receive an email once approved or rejected.' },
+  { q: 'Can I cancel a booking?', a: 'Contact the tool owner directly using their phone number (shown after booking approval). For disputes contact our support team.' },
+  { q: 'How do owners receive payment?', a: 'Owners must add their bank details in Dashboard → Bank Details. Payouts happen automatically via bank transfer when the renter confirms receipt.' },
+  { q: 'Is ToolShare Africa available across Nigeria?', a: 'Yes! We cover all states. Filter by your city when browsing tools.' },
 ];
 
-const categories = [...new Set(faqs.map(f => f.category))];
+function FAQItem({ q, a }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="border-b border-gray-100 last:border-0">
+      <button onClick={() => setOpen(!open)} className="w-full flex items-center justify-between py-4 text-left gap-4">
+        <span className="font-medium text-gray-800 text-sm">{q}</span>
+        {open ? <ChevronUp size={16} className="text-gray-400 flex-shrink-0" /> : <ChevronDown size={16} className="text-gray-400 flex-shrink-0" />}
+      </button>
+      {open && <p className="text-sm text-gray-500 pb-4 leading-relaxed">{a}</p>}
+    </div>
+  );
+}
 
 export default function HelpCenter() {
-  const [open, setOpen] = useState(null);
   const [search, setSearch] = useState('');
-  const [category, setCategory] = useState('All');
-
-  const filtered = faqs.filter(f => {
-    const matchSearch = !search || f.q.toLowerCase().includes(search.toLowerCase()) || f.a.toLowerCase().includes(search.toLowerCase());
-    const matchCat = category === 'All' || f.category === category;
-    return matchSearch && matchCat;
-  });
+  const filtered = FAQS.filter(f => f.q.toLowerCase().includes(search.toLowerCase()) || f.a.toLowerCase().includes(search.toLowerCase()));
 
   return (
-    <div className="py-12 animate-fade-in">
-      <div className="page-container max-w-3xl">
+    <div className="py-10 animate-fade-in">
+      <div className="page-container max-w-4xl">
+        {/* Header */}
         <div className="text-center mb-10">
-          <h1 className="section-title mb-3">Help Center</h1>
-          <p className="text-gray-500 text-lg">Find answers to common questions about ToolShare Africa</p>
+          <div className="text-5xl mb-4">🔧</div>
+          <h1 className="text-3xl font-display font-bold text-gray-900 mb-2">Help Center</h1>
+          <p className="text-gray-500">Find answers or contact our support team</p>
         </div>
 
-        <div className="relative mb-6">
-          <Search className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400" size={18} />
-          <input type="text" className="input-field pl-11" placeholder="Search questions..." value={search} onChange={e => setSearch(e.target.value)} />
-        </div>
-
-        <div className="flex flex-wrap gap-2 mb-8">
-          {['All', ...categories].map(cat => (
-            <button key={cat} onClick={() => setCategory(cat)}
-              className={`px-4 py-2 rounded-xl text-sm font-medium transition-colors ${category === cat ? 'bg-brand-500 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:border-brand-300'}`}>
-              {cat}
-            </button>
+        {/* Quick Links */}
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-10">
+          {[
+            { icon: '🛡️', label: 'Safety Guidelines', to: '/safety' },
+            { icon: '🔒', label: 'Privacy Policy', to: '/privacy' },
+            { icon: '📄', label: 'Terms of Service', to: '/terms' },
+            { icon: '💬', label: 'Contact Us', to: '/contact' },
+          ].map(({ icon, label, to }) => (
+            <Link key={to} to={to} className="card p-4 text-center hover:border-brand-200 hover:-translate-y-0.5 transition-all">
+              <div className="text-2xl mb-1">{icon}</div>
+              <p className="text-xs font-medium text-gray-700">{label}</p>
+            </Link>
           ))}
         </div>
 
-        <div className="space-y-3">
-          {filtered.map((faq, i) => (
-            <div key={i} className="card overflow-hidden">
-              <button onClick={() => setOpen(open === i ? null : i)} className="w-full flex items-center justify-between p-5 text-left hover:bg-gray-50 transition-colors">
-                <span className="font-medium text-gray-800 pr-4">{faq.q}</span>
-                {open === i ? <ChevronUp size={18} className="text-brand-500 flex-shrink-0" /> : <ChevronDown size={18} className="text-gray-400 flex-shrink-0" />}
-              </button>
-              {open === i && (
-                <div className="px-5 pb-5 text-gray-600 leading-relaxed border-t border-gray-50 pt-4">
-                  {faq.a}
-                </div>
+        <div className="grid md:grid-cols-2 gap-8">
+          {/* FAQ */}
+          <div>
+            <h2 className="font-display font-bold text-xl text-gray-900 mb-4">Frequently Asked Questions</h2>
+            <div className="relative mb-4">
+              <Search size={15} className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400" />
+              <input type="text" placeholder="Search FAQs..." className="input-field pl-9 text-sm"
+                value={search} onChange={e => setSearch(e.target.value)} />
+            </div>
+            <div className="card p-4">
+              {filtered.length > 0 ? filtered.map((f, i) => <FAQItem key={i} {...f} />) : (
+                <p className="text-center text-gray-400 py-8 text-sm">No results found. Try a different search or contact us below.</p>
               )}
             </div>
-          ))}
-          {filtered.length === 0 && (
-            <div className="text-center py-12 text-gray-400">No results found for "{search}"</div>
-          )}
-        </div>
+          </div>
 
-        <div className="mt-12 card p-8 text-center bg-gradient-to-br from-brand-50 to-earth-50 border-brand-100">
-          <h3 className="font-display font-bold text-xl text-gray-900 mb-2">Still need help?</h3>
-          <p className="text-gray-500 mb-4">Our support team typically responds within 2 hours</p>
-          <a href="mailto:support@toolshare.africa" className="btn-primary inline-flex">📧 Email Support</a>
+          {/* Contact Form */}
+          <div>
+            <h2 className="font-display font-bold text-xl text-gray-900 mb-4">Still Need Help?</h2>
+            <SupportForm source="help" />
+          </div>
         </div>
       </div>
     </div>
