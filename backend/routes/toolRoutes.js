@@ -4,6 +4,7 @@ const multer  = require('multer');
 const path    = require('path');
 const fs      = require('fs');
 const { protect, authorize } = require('../middleware/auth');
+const { toolValidation, toolUpdateValidation, mongoIdParam } = require('../middleware/validate');
 const {
   getTools, getTool, createTool, updateTool, deleteTool, getMyTools, getNearbyTools,
 } = require('../controllers/toolController');
@@ -32,7 +33,6 @@ if (hasCloudinary) {
   combinedUpload = multer({ storage: combinedStorage, limits: { fileSize: 10 * 1024 * 1024 } })
     .fields([{ name: 'images', maxCount: 5 }, { name: 'ownershipDocs', maxCount: 5 }]);
 } else {
-  console.log('⚠️  Cloudinary not configured — using local storage for tool uploads');
   const uploadsDir = path.join(__dirname, '../uploads');
   ['tools','docs'].forEach(d => {
     const dir = path.join(uploadsDir, d);
@@ -48,13 +48,12 @@ if (hasCloudinary) {
     .fields([{ name: 'images', maxCount: 5 }, { name: 'ownershipDocs', maxCount: 5 }]);
 }
 
-
-router.get('/', getTools);
-router.get('/nearby', getNearbyTools);
-router.get('/my-tools', protect, authorize('owner'), getMyTools);
-router.get('/:id', getTool);
-router.post('/', protect, authorize('owner'), combinedUpload, createTool);
-router.put('/:id', protect, authorize('owner'), combinedUpload, updateTool);
-router.delete('/:id', protect, authorize('owner'), deleteTool);
+router.get('/',           getTools);
+router.get('/nearby',     getNearbyTools);
+router.get('/my-tools',   protect, authorize('owner'), getMyTools);
+router.get('/:id',        ...mongoIdParam('id'), getTool);
+router.post('/',          protect, authorize('owner'), combinedUpload, toolValidation, createTool);
+router.put('/:id',        protect, authorize('owner'), ...mongoIdParam('id'), combinedUpload, toolUpdateValidation, updateTool);
+router.delete('/:id',     protect, authorize('owner'), ...mongoIdParam('id'), deleteTool);
 
 module.exports = router;
