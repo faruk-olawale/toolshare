@@ -68,8 +68,9 @@ function ToolPreviewModal({ tool, onClose, onApprove, onReject }) {
   );
 }
 
-export default function ToolsTab({ tools, onVerify, onRejectClick, processing }) {
+export default function ToolsTab({ pendingTools, tools: toolsProp, onVerify, onRejectClick, processing }) {
   const [previewTool, setPreviewTool] = useState(null);
+  const tools = pendingTools ?? toolsProp ?? [];
 
   if (tools.length === 0) return (
     <div className="text-center py-20">

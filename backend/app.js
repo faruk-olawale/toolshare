@@ -12,7 +12,9 @@ const { apiLimiter, authLimiter, supportLimiter, kycLimiter } = require('./middl
 const app = express();
 
 // ── Security headers ───────────────────────────────────────────────────────────
-app.use(helmet());
+app.use(helmet({
+  crossOriginResourcePolicy: { policy: 'cross-origin' }, // allow Cloudinary images to load
+}));
 
 // ── Compression ────────────────────────────────────────────────────────────────
 app.use(compression());
