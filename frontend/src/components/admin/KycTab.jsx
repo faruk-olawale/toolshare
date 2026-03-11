@@ -1,7 +1,8 @@
 import { CheckCircle, XCircle } from 'lucide-react';
 import { getImgUrl } from '../../utils/imgUrl';
 
-export default function KycTab({ users, onApprove, onRejectClick, processing }) {
+export default function KycTab({ pendingKyc, users: usersProp, onApprove, onRejectClick, processing }) {
+  const users = pendingKyc ?? usersProp ?? [];
   if (users.length === 0) return (
     <div className="text-center py-20">
       <div className="text-5xl mb-3">✅</div>

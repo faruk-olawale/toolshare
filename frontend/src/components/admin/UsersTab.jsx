@@ -1,7 +1,11 @@
 import api from '../../services/api';
 import toast from 'react-hot-toast';
 
-export default function UsersTab({ users, setUsers, onSuspendClick, onDeleteClick, processing }) {
+export default function UsersTab({ allUsers, users: usersProp, setAllUsers, setUsers: setUsersProp, onSuspend, onSuspendClick, onDelete, onDeleteClick, processing }) {
+  const users = allUsers ?? usersProp ?? [];
+  const setUsers = setAllUsers ?? setUsersProp ?? (() => {});
+  const handleSuspend = onSuspend ?? onSuspendClick;
+  const handleDelete = onDelete ?? onDeleteClick;
   return (
     <div className="card overflow-hidden">
       <div className="overflow-x-auto">
@@ -46,12 +50,12 @@ export default function UsersTab({ users, setUsers, onSuspendClick, onDeleteClic
                           ✅ Reinstate
                         </button>
                       ) : (
-                        <button onClick={() => onSuspendClick(u)}
+                        <button onClick={() => handleSuspend(u)}
                           className="flex items-center gap-1 text-xs text-orange-600 hover:text-orange-800 hover:bg-orange-50 px-2 py-1.5 rounded-lg transition-colors whitespace-nowrap">
                           🚫 Suspend
                         </button>
                       )}
-                      <button onClick={() => onDeleteClick(u)}
+                      <button onClick={() => handleDelete(u)}
                         className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1.5 rounded-lg transition-colors">
                         🗑️
                       </button>

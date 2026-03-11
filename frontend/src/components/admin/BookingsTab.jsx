@@ -1,4 +1,5 @@
-export default function BookingsTab({ bookings }) {
+export default function BookingsTab({ allBookings, bookings: bookingsProp }) {
+  const bookings = allBookings ?? bookingsProp ?? [];
   return (
     <div className="card overflow-hidden">
       <div className="overflow-x-auto">
