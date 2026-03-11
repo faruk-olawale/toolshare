@@ -40,7 +40,6 @@ app.use('/api/escrow',   require('./routes/escrowRoutes'));
 app.use('/api/support',        require('./routes/supportRoutes'));
 app.use('/api/reviews',        require('./routes/reviewRoutes'));
 app.use('/api/notifications',  require('./routes/notificationRoutes'));
-// app.use('/api',                require('./routes/testRoutes')); // temp email test
 
 app.use((req, res) => {
   console.warn(`\x1b[33m⚠️  404 Not Found: ${req.method} ${req.originalUrl}\x1b[0m`);
