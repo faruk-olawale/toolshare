@@ -1,95 +1,34 @@
 import { useState, useEffect } from 'react';
 import api from '../services/api';
 import toast from 'react-hot-toast';
-import { CheckCircle, XCircle, Users, Package, BookOpen, TrendingUp, Eye, AlertTriangle, Shield } from 'lucide-react';
+import { Users, Package, BookOpen, TrendingUp, AlertTriangle, Shield } from 'lucide-react';
 
-import { getImgUrl, PLACEHOLDER } from '../utils/imgUrl';
-
-function DisputeResolveForm({ booking, onResolved }) {
-  const [outcome, setOutcome]       = useState('');
-  const [resolution, setResolution] = useState('');
-  const [reinstate, setReinstate]   = useState(false);
-  const [loading, setLoading]       = useState(false);
-  const [open, setOpen]             = useState(false);
-
-  if (!open) return (
-    <button onClick={() => setOpen(true)}
-      className="w-full py-2.5 text-sm font-semibold bg-brand-600 hover:bg-brand-700 text-white rounded-xl transition-colors">
-      ⚖️ Resolve This Dispute
-    </button>
-  );
-
-  return (
-    <div className="border-t border-gray-100 pt-4 space-y-3">
-      <p className="text-sm font-semibold text-gray-800">Resolve Dispute</p>
-      <div>
-        <label className="text-xs font-medium text-gray-600 mb-1 block">Outcome</label>
-        <select className="input-field text-sm" value={outcome} onChange={e => setOutcome(e.target.value)}>
-          <option value="">Select outcome...</option>
-          <option value="tool_recovered">✅ Tool Recovered — renter returned it</option>
-          <option value="written_off">📝 Written Off — tool not recovered</option>
-          <option value="deceased">🕊️ Deceased — renter passed away</option>
-          <option value="other">🔹 Other</option>
-        </select>
-      </div>
-      <div>
-        <label className="text-xs font-medium text-gray-600 mb-1 block">Resolution note (sent to owner)</label>
-        <textarea rows={2} className="input-field text-sm resize-none"
-          placeholder="Describe what happened and what action was taken..."
-          value={resolution} onChange={e => setResolution(e.target.value)} />
-      </div>
-      <label className="flex items-center gap-2 text-sm text-gray-600 cursor-pointer">
-        <input type="checkbox" checked={reinstate} onChange={e => setReinstate(e.target.checked)} className="rounded" />
-        Reinstate renter's account after resolution
-      </label>
-      <div className="flex gap-2">
-        <button onClick={() => setOpen(false)} className="btn-secondary flex-1 text-sm">Cancel</button>
-        <button disabled={!outcome || !resolution || loading}
-          onClick={async () => {
-            setLoading(true);
-            try {
-              const { data } = await api.put(`/admin/bookings/${booking._id}/resolve-dispute`, {
-                outcome, resolution, reinstateRenter: reinstate,
-              });
-              onResolved(data.booking);
-            } catch (err) {
-              toast.error(err.response?.data?.message || 'Failed to resolve');
-            }
-            setLoading(false);
-          }}
-          className="flex-1 bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl disabled:opacity-50 transition-colors">
-          {loading ? 'Resolving...' : '⚖️ Confirm Resolution'}
-        </button>
-      </div>
-    </div>
-  );
-}
+import ToolsTab     from '../components/admin/ToolsTab';
+import KycTab       from '../components/admin/KycTab';
+import UsersTab     from '../components/admin/UsersTab';
+import BookingsTab  from '../components/admin/BookingsTab';
+import DisputesTab  from '../components/admin/DisputesTab';
+import SupportTab   from '../components/admin/SupportTab';
+import { RejectModal, DeleteUserModal, SuspendUserModal, ToolPreviewModal } from '../components/admin/AdminModals';
 
 export default function AdminDashboard() {
-  const [tab, setTab] = useState('pending');
-  const [stats, setStats] = useState(null);
+  const [tab, setTab]               = useState('pending');
+  const [stats, setStats]           = useState(null);
   const [pendingTools, setPendingTools] = useState([]);
   const [pendingKyc, setPendingKyc] = useState([]);
-  const [allUsers, setAllUsers] = useState([]);
+  const [allUsers, setAllUsers]     = useState([]);
   const [allBookings, setAllBookings] = useState([]);
-  const [disputes, setDisputes] = useState([]);
-  const [tickets, setTickets] = useState([]);
-  const [selectedTicket, setSelectedTicket] = useState(null);
-  const [replyText, setReplyText] = useState('');
-  const [replyLoading, setReplyLoading] = useState(false);
-  const [loading, setLoading] = useState(true);
-  const [modal, setModal] = useState(null);
-  const [reason, setReason] = useState('');
+  const [disputes, setDisputes]     = useState([]);
+  const [tickets, setTickets]       = useState([]);
+  const [loading, setLoading]       = useState(true);
+
+  // Modal state
+  const [rejectModal, setRejectModal]   = useState(null); // { type, id }
+  const [deleteModal, setDeleteModal]   = useState(null); // user object
+  const [suspendModal, setSuspendModal] = useState(null); // user object
+  const [previewTool, setPreviewTool]   = useState(null); // tool object
+
   const [processing, setProcessing] = useState(null);
-  const [deleteModal, setDeleteModal] = useState(null);
-  const [suspendModal, setSuspendModal] = useState(null);
-  const [suspendReason, setSuspendReason] = useState('');
-  const [selectedKyc, setSelectedKyc] = useState(null);
-  const [checklist, setChecklist] = useState({});
-  const [resolveModal, setResolveModal] = useState(null);
-  const [resolveForm, setResolveForm] = useState({ resolution: '', action: '' });
-  const [previewTool, setPreviewTool] = useState(null);
-  const [previewImgIdx, setPreviewImgIdx] = useState(0);
 
   useEffect(() => { fetchAll(); }, []);
 
@@ -128,6 +67,7 @@ export default function AdminDashboard() {
     setLoading(false);
   };
 
+  // ── Actions ──────────────────────────────────────────────────────────────────
   const verifyTool = async (id) => {
     setProcessing(id);
     try {
@@ -148,25 +88,24 @@ export default function AdminDashboard() {
     setProcessing(null);
   };
 
-  const handleReject = async () => {
-    setProcessing(modal.id);
+  const handleRejectConfirm = async (reason) => {
+    setProcessing(rejectModal.id);
     try {
-      if (modal.type === 'rejectTool') {
-        await api.put(`/admin/tools/${modal.id}/reject`, { reason });
-        setPendingTools(prev => prev.filter(t => t._id !== modal.id));
+      if (rejectModal.type === 'rejectTool') {
+        await api.put(`/admin/tools/${rejectModal.id}/reject`, { reason });
+        setPendingTools(prev => prev.filter(t => t._id !== rejectModal.id));
         toast.success('Tool rejected.');
       } else {
-        await api.put(`/admin/kyc/${modal.id}/reject`, { reason });
-        setPendingKyc(prev => prev.filter(u => u._id !== modal.id));
+        await api.put(`/admin/kyc/${rejectModal.id}/reject`, { reason });
+        setPendingKyc(prev => prev.filter(u => u._id !== rejectModal.id));
         toast.success('KYC rejected.');
       }
-      setModal(null); setReason('');
+      setRejectModal(null);
     } catch (err) { toast.error(err.response?.data?.message || 'Failed.'); }
     setProcessing(null);
   };
 
   const handleDeleteUser = async () => {
-    if (!deleteModal) return;
     setProcessing(deleteModal._id);
     try {
       await api.delete(`/admin/users/${deleteModal._id}`);
@@ -174,27 +113,43 @@ export default function AdminDashboard() {
       setPendingKyc(prev => prev.filter(u => u._id !== deleteModal._id));
       toast.success(`${deleteModal.name}'s account has been deleted.`);
       setDeleteModal(null);
-    } catch (err) {
-      toast.error(err.response?.data?.message || 'Failed to delete user.');
-    }
+    } catch (err) { toast.error(err.response?.data?.message || 'Failed to delete user.'); }
     setProcessing(null);
   };
 
+  const handleSuspendUser = async (reason) => {
+    setProcessing(suspendModal._id);
+    try {
+      const { data } = await api.put(`/admin/users/${suspendModal._id}/suspend`, { reason });
+      setAllUsers(prev => prev.map(u => u._id === suspendModal._id ? data.user : u));
+      toast.success(`${suspendModal.name} has been suspended`);
+      setSuspendModal(null);
+    } catch (err) { toast.error(err.response?.data?.message || 'Failed to suspend'); }
+    setProcessing(null);
+  };
+
+  const handleDisputeResolved = (updated) => {
+    setDisputes(prev => prev.filter(d => d._id !== updated._id));
+    setAllBookings(prev => prev.map(x => x._id === updated._id ? updated : x));
+    toast.success('Dispute resolved');
+  };
 
   if (loading) return (
     <div className="py-8 page-container"><div className="animate-pulse space-y-6">
       <div className="h-8 bg-gray-100 rounded w-48" />
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">{[...Array(8)].map((_, i) => <div key={i} className="h-24 bg-gray-100 rounded-2xl" />)}</div>
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+        {[...Array(8)].map((_, i) => <div key={i} className="h-24 bg-gray-100 rounded-2xl" />)}
+      </div>
     </div></div>
   );
 
   const tabs = [
-    { key: 'pending', label: 'Tools', count: pendingTools.length, alert: pendingTools.length > 0 },
-    { key: 'kyc', label: 'KYC', count: pendingKyc.length, alert: pendingKyc.length > 0 },
-    { key: 'users', label: 'Users', count: allUsers.length },
-    { key: 'bookings', label: 'Bookings', count: allBookings.length },
-    { key: 'disputes', label: 'Disputes', count: disputes.length, alert: disputes.length > 0 },
-    { key: 'support', label: 'Support', count: tickets.filter(t => t.status !== 'resolved').length, alert: tickets.some(t => t.status === 'open') },
+    { key: 'pending',   label: 'Tools',    count: pendingTools.length,                                    alert: pendingTools.length > 0 },
+    { key: 'kyc',       label: 'KYC',      count: pendingKyc.length,                                      alert: pendingKyc.length > 0 },
+    { key: 'users',     label: 'Users',    count: allUsers.length },
+    { key: 'bookings',  label: 'Bookings', count: allBookings.length },
+    { key: 'disputes',  label: 'Disputes', count: disputes.length,                                        alert: disputes.length > 0 },
+    { key: 'support',   label: 'Support',  count: tickets.filter(t => t.status !== 'resolved').length,    alert: tickets.some(t => t.status === 'open') },
   ];
 
   return (
@@ -209,14 +164,14 @@ export default function AdminDashboard() {
         {stats && (
           <div className="grid grid-cols-2 md:grid-cols-4 gap-3 mb-6">
             {[
-              { label: 'Users', value: stats.totalUsers, icon: <Users size={15} />, color: 'bg-blue-50 text-blue-600' },
-              { label: 'Tools', value: stats.totalTools, icon: <Package size={15} />, color: 'bg-purple-50 text-purple-600' },
-              { label: 'Bookings', value: stats.totalBookings, icon: <BookOpen size={15} />, color: 'bg-green-50 text-green-600' },
-              { label: 'Pending Tools', value: stats.pendingTools, icon: <AlertTriangle size={15} />, color: 'bg-yellow-50 text-yellow-600' },
-              { label: 'Pending KYC', value: stats.pendingKyc, icon: <Shield size={15} />, color: 'bg-orange-50 text-orange-600' },
-              { label: 'Platform Revenue', value: `₦${Math.round(stats.totalRevenue || 0).toLocaleString()}`, icon: <TrendingUp size={15} />, color: 'bg-brand-50 text-brand-600' },
-              { label: 'Gross Volume', value: `₦${Math.round(stats.grossVolume || 0).toLocaleString()}`, icon: <TrendingUp size={15} />, color: 'bg-green-50 text-green-700' },
-              { label: 'Paid Bookings', value: stats.paidBookings || 0, icon: <BookOpen size={15} />, color: 'bg-teal-50 text-teal-600' },
+              { label: 'Users',           value: stats.totalUsers,                                          icon: <Users size={15} />,        color: 'bg-blue-50 text-blue-600' },
+              { label: 'Tools',           value: stats.totalTools,                                          icon: <Package size={15} />,      color: 'bg-purple-50 text-purple-600' },
+              { label: 'Bookings',        value: stats.totalBookings,                                       icon: <BookOpen size={15} />,     color: 'bg-green-50 text-green-600' },
+              { label: 'Pending Tools',   value: stats.pendingTools,                                        icon: <AlertTriangle size={15} />, color: 'bg-yellow-50 text-yellow-600' },
+              { label: 'Pending KYC',     value: stats.pendingKyc,                                          icon: <Shield size={15} />,       color: 'bg-orange-50 text-orange-600' },
+              { label: 'Platform Revenue',value: `₦${Math.round(stats.totalRevenue || 0).toLocaleString()}`, icon: <TrendingUp size={15} />,   color: 'bg-brand-50 text-brand-600' },
+              { label: 'Gross Volume',    value: `₦${Math.round(stats.grossVolume  || 0).toLocaleString()}`, icon: <TrendingUp size={15} />,   color: 'bg-green-50 text-green-700' },
+              { label: 'Paid Bookings',   value: stats.paidBookings || 0,                                   icon: <BookOpen size={15} />,     color: 'bg-teal-50 text-teal-600' },
             ].map(({ label, value, icon, color }) => (
               <div key={label} className="card p-4">
                 <div className={`w-8 h-8 ${color} rounded-xl flex items-center justify-center mb-2`}>{icon}</div>
@@ -238,568 +193,25 @@ export default function AdminDashboard() {
           ))}
         </div>
 
-        {/* Pending Tools */}
-        {tab === 'pending' && (
-          <div className="space-y-4">
-            {pendingTools.length === 0 ? (
-              <div className="text-center py-20"><div className="text-5xl mb-3">✅</div><p className="text-gray-500">No tools pending review</p></div>
-            ) : pendingTools.map(tool => (
-              <div key={tool._id} className="card p-4">
-                <div className="flex gap-3 mb-3">
-                  <div className="w-20 h-20 rounded-xl overflow-hidden flex-shrink-0 bg-earth-100">
-                    <img src={getImgUrl(tool.images?.[0])} className="w-full h-full object-cover" onError={e => { e.target.src = PLACEHOLDER; }} />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <h3 className="font-bold text-gray-900 truncate">{tool.name}</h3>
-                    <div className="flex flex-wrap gap-1 mt-1">
-                      <span className="badge bg-purple-50 text-purple-700 border-purple-100 text-xs">{tool.category}</span>
-                      <span className="badge bg-gray-50 text-gray-600 border-gray-100 text-xs">{tool.location}</span>
-                    </div>
-                    <div className="text-brand-600 font-bold text-sm mt-1">₦{tool.pricePerDay?.toLocaleString()}/day</div>
-                    <p className="text-xs text-gray-400 truncate">{tool.ownerId?.name} · {tool.ownerId?.email}</p>
-                    {/* KYC badge on owner */}
-                    <span className={`inline-block mt-1 text-xs px-2 py-0.5 rounded-full font-medium ${tool.ownerId?.kyc?.status === 'approved' ? 'bg-green-50 text-green-700' : 'bg-yellow-50 text-yellow-700'}`}>
-                      Owner KYC: {tool.ownerId?.kyc?.status || 'not submitted'}
-                    </span>
-                  </div>
-                </div>
-                <p className="text-sm text-gray-500 mb-3 line-clamp-2">{tool.description}</p>
-                {tool.ownershipNote && (
-                  <div className="bg-blue-50 border border-blue-100 rounded-lg p-3 mb-3">
-                    <p className="text-xs font-medium text-blue-700 mb-1">Owner's note about ownership:</p>
-                    <p className="text-sm text-blue-800">{tool.ownershipNote}</p>
-                  </div>
-                )}
-                {/* Ownership documents */}
-                {tool.ownershipDocs?.length > 0 && (
-                  <div className="mb-3">
-                    <p className="text-xs font-medium text-gray-500 mb-2">Proof of Ownership Documents:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {tool.ownershipDocs.map((doc, i) => (
-                        <a key={i} href={getImgUrl(doc)} target="_blank" rel="noreferrer"
-                          className="flex items-center gap-1 bg-gray-50 border border-gray-200 rounded-lg px-3 py-1.5 text-xs text-gray-700 hover:bg-gray-100">
-                          📄 Document {i + 1}
-                        </a>
-                      ))}
-                    </div>
-                  </div>
-                )}
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <button onClick={() => { setPreviewTool(tool); setPreviewImgIdx(0); }} className="btn-secondary py-2 px-3 text-sm flex items-center justify-center gap-1">
-                    <Eye size={13} /> Preview
-                  </button>
-                  <button onClick={() => { setModal({ type: 'rejectTool', id: tool._id }); setReason(''); }}
-                    disabled={processing === tool._id}
-                    className="btn-secondary py-2 px-4 text-sm text-red-500 border-red-100 hover:bg-red-50 flex items-center justify-center gap-1">
-                    <XCircle size={14} /> Reject
-                  </button>
-                  <button onClick={() => verifyTool(tool._id)} disabled={processing === tool._id}
-                    className="btn-primary py-2 px-4 text-sm flex items-center justify-center gap-1 flex-1">
-                    <CheckCircle size={14} /> {processing === tool._id ? 'Processing...' : 'Approve & Go Live'}
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* KYC Verification */}
-        {tab === 'kyc' && (
-          <div className="space-y-4">
-            {pendingKyc.length === 0 ? (
-              <div className="text-center py-20"><div className="text-5xl mb-3">✅</div><p className="text-gray-500">No KYC submissions pending</p></div>
-            ) : pendingKyc.map(user => (
-              <div key={user._id} className="card p-4">
-                <div className="flex items-start justify-between gap-4 mb-4">
-                  <div>
-                    <h3 className="font-bold text-gray-900">{user.name}</h3>
-                    <p className="text-sm text-gray-500">{user.email} · {user.phone}</p>
-                    <div className="flex gap-2 mt-1">
-                      <span className={`badge text-xs ${user.role === 'owner' ? 'bg-brand-50 text-brand-700 border-brand-100' : 'bg-blue-50 text-blue-700 border-blue-100'}`}>{user.role}</span>
-                      <span className="badge text-xs bg-yellow-50 text-yellow-700 border-yellow-100">KYC Pending</span>
-                    </div>
-                  </div>
-                  <p className="text-xs text-gray-400">{new Date(user.kyc?.submittedAt).toLocaleDateString()}</p>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  <div className="bg-gray-50 rounded-xl p-3">
-                    <p className="text-xs text-gray-400 mb-1">ID Type</p>
-                    <p className="text-sm font-medium text-gray-800 capitalize">{user.kyc?.idType?.replace('_', ' ')}</p>
-                  </div>
-                  <div className="bg-gray-50 rounded-xl p-3">
-                    <p className="text-xs text-gray-400 mb-1">ID Number</p>
-                    <p className="text-sm font-medium text-gray-800">{user.kyc?.idNumber}</p>
-                  </div>
-                </div>
-
-                <div className="grid grid-cols-2 gap-3 mb-4">
-                  {user.kyc?.idDocument && (
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1 font-medium">ID Document</p>
-                      <a href={getImgUrl(user.kyc.idDocument)} target="_blank" rel="noreferrer">
-                        <img src={getImgUrl(user.kyc.idDocument)} className="w-full h-32 object-cover rounded-xl border border-gray-200 hover:opacity-90 transition" />
-                      </a>
-                    </div>
-                  )}
-                  {user.kyc?.selfie && (
-                    <div>
-                      <p className="text-xs text-gray-500 mb-1 font-medium">Selfie with ID</p>
-                      <a href={getImgUrl(user.kyc.selfie)} target="_blank" rel="noreferrer">
-                        <img src={getImgUrl(user.kyc.selfie)} className="w-full h-32 object-cover rounded-xl border border-gray-200 hover:opacity-90 transition" />
-                      </a>
-                    </div>
-                  )}
-                </div>
-
-                <div className="flex flex-col sm:flex-row gap-2">
-                  <button onClick={() => { setModal({ type: 'rejectKyc', id: user._id }); setReason(''); }}
-                    disabled={processing === user._id}
-                    className="btn-secondary py-2 px-4 text-sm text-red-500 border-red-100 hover:bg-red-50 flex items-center justify-center gap-1">
-                    <XCircle size={14} /> Reject
-                  </button>
-                  <button onClick={() => approveKyc(user._id)} disabled={processing === user._id}
-                    className="btn-primary py-2 px-4 text-sm flex items-center justify-center gap-1 flex-1">
-                    <CheckCircle size={14} /> {processing === user._id ? 'Processing...' : 'Approve Identity'}
-                  </button>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-
-        {/* Users */}
-        {tab === 'users' && (
-          <div className="card overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-50 border-b border-gray-100">
-                  <tr>{['Name', 'Email', 'Role', 'KYC', 'Status', 'Joined', 'Actions'].map(h => (
-                    <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
-                  ))}</tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {allUsers.map(u => (
-                    <tr key={u._id} className={`hover:bg-gray-50 ${u.suspended ? 'bg-red-50/30' : ''}`}>
-                      <td className="px-4 py-3 font-medium text-gray-800 whitespace-nowrap">{u.name}</td>
-                      <td className="px-4 py-3 text-gray-500">{u.email}</td>
-                      <td className="px-4 py-3"><span className={`badge text-xs ${u.role === 'owner' ? 'bg-brand-50 text-brand-700 border-brand-100' : u.role === 'admin' ? 'bg-purple-50 text-purple-700 border-purple-100' : 'bg-blue-50 text-blue-700 border-blue-100'}`}>{u.role}</span></td>
-                      <td className="px-4 py-3"><span className={`badge text-xs ${u.kyc?.status === 'approved' ? 'bg-green-50 text-green-700 border-green-100' : u.kyc?.status === 'pending' ? 'bg-yellow-50 text-yellow-700 border-yellow-100' : u.kyc?.status === 'rejected' ? 'bg-red-50 text-red-700 border-red-100' : 'bg-gray-50 text-gray-500 border-gray-100'}`}>{u.kyc?.status || 'not submitted'}</span></td>
-                      <td className="px-4 py-3">
-                        {u.suspended
-                          ? <span className="badge text-xs bg-red-50 text-red-700 border-red-200">🚫 Suspended</span>
-                          : <span className="badge text-xs bg-green-50 text-green-700 border-green-100">✅ Active</span>
-                        }
-                      </td>
-                      <td className="px-4 py-3 text-gray-400 whitespace-nowrap">{new Date(u.createdAt).toLocaleDateString()}</td>
-                      <td className="px-4 py-3">
-                        {u.role !== 'admin' && (
-                          <div className="flex items-center gap-1">
-                            {u.suspended ? (
-                              <button onClick={async () => {
-                                if (!confirm(`Reinstate ${u.name}'s account?`)) return;
-                                try {
-                                  const { data } = await api.put(`/admin/users/${u._id}/unsuspend`);
-                                  setAllUsers(prev => prev.map(x => x._id === u._id ? data.user : x));
-                                  toast.success(`${u.name} reinstated`);
-                                } catch { toast.error('Failed to reinstate'); }
-                              }} className="flex items-center gap-1 text-xs text-green-600 hover:text-green-800 hover:bg-green-50 px-2 py-1.5 rounded-lg transition-colors whitespace-nowrap">
-                                ✅ Reinstate
-                              </button>
-                            ) : (
-                              <button onClick={() => setSuspendModal(u)}
-                                className="flex items-center gap-1 text-xs text-orange-600 hover:text-orange-800 hover:bg-orange-50 px-2 py-1.5 rounded-lg transition-colors whitespace-nowrap">
-                                🚫 Suspend
-                              </button>
-                            )}
-                            <button onClick={() => setDeleteModal(u)}
-                              className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700 hover:bg-red-50 px-2 py-1.5 rounded-lg transition-colors">
-                              🗑️
-                            </button>
-                          </div>
-                        )}
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
-
-        {/* Bookings */}
-        {tab === 'disputes' && (
-          <div className="space-y-4">
-            {disputes.length === 0 ? (
-              <div className="card text-center py-16 text-gray-400">
-                <p className="text-4xl mb-3">⚖️</p>
-                <p className="font-medium">No active disputes</p>
-              </div>
-            ) : disputes.map(b => {
-              const daysSince = Math.floor((new Date() - new Date(b.dispute?.raisedAt)) / (1000*60*60*24));
-              const level = b.dispute?.escalationLevel || 0;
-              return (
-                <div key={b._id} className={`card border-l-4 ${level >= 1 ? 'border-l-red-500' : 'border-l-orange-400'}`}>
-                  <div className="flex items-start justify-between gap-4 flex-wrap mb-3">
-                    <div>
-                      <div className="flex items-center gap-2 flex-wrap mb-1">
-                        <span className={`badge text-xs ${level >= 1 ? 'bg-red-50 text-red-700 border-red-200' : 'bg-orange-50 text-orange-700 border-orange-200'}`}>
-                          {level === 0 ? '⚠️ Level 0 — Reported' : level === 1 ? '🚨 Level 1 — Final Warning Sent' : '💀 Level 2 — Written Off'}
-                        </span>
-                        <span className="text-xs text-gray-400">Day {daysSince} of dispute</span>
-                        {daysSince < 3 && <span className="badge text-xs bg-yellow-50 text-yellow-700 border-yellow-200">Final warning in {3 - daysSince} day(s)</span>}
-                        {daysSince >= 3 && daysSince < 7 && <span className="badge text-xs bg-red-50 text-red-700 border-red-200">Auto-suspend in {7 - daysSince} day(s)</span>}
-                        {daysSince >= 7 && <span className="badge text-xs bg-red-100 text-red-800 border-red-300">⚠️ Should be written off</span>}
-                      </div>
-                      <p className="font-bold text-gray-900">🔧 {b.toolId?.name}</p>
-                      <p className="text-sm text-gray-500 mt-0.5">
-                        Owner: <strong>{b.ownerId?.name}</strong> · Renter: <strong className="text-red-600">{b.renterId?.name}</strong>
-                      </p>
-                      <p className="text-xs text-gray-400 mt-1">Reported: {new Date(b.dispute?.raisedAt).toLocaleDateString('en-NG', { day: 'numeric', month: 'short', year: 'numeric' })}</p>
-                    </div>
-                    <div className="flex flex-col gap-2 shrink-0">
-                      <a href={`mailto:${b.renterId?.email}`} className="btn-secondary text-xs px-3 py-1.5 text-center">
-                        📧 Email Renter
-                      </a>
-                      <a href={`mailto:${b.ownerId?.email}`} className="btn-secondary text-xs px-3 py-1.5 text-center">
-                        📧 Email Owner
-                      </a>
-                    </div>
-                  </div>
-
-                  {/* Escalation timeline */}
-                  <div className="flex items-center gap-0 mb-4">
-                    {[{label:'Reported',day:0},{label:'Warning',day:3},{label:'Suspend',day:7}].map((step, i) => (
-                      <div key={i} className="flex items-center flex-1">
-                        <div className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold ${daysSince >= step.day ? 'bg-red-500 text-white' : 'bg-gray-100 text-gray-400'}`}>
-                          {daysSince >= step.day ? '✓' : step.day}
-                        </div>
-                        <div className="flex-1 flex flex-col items-center">
-                          <div className={`h-1 w-full ${i < 2 ? (daysSince >= [3,7][i] ? 'bg-red-400' : 'bg-gray-200') : ''}`} />
-                          <span className="text-xs text-gray-400 mt-1">{step.label}</span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-
-                  {/* Resolve form */}
-                  <DisputeResolveForm booking={b} onResolved={(updated) => {
-                    setDisputes(prev => prev.filter(d => d._id !== updated._id));
-                    setAllBookings(prev => prev.map(x => x._id === updated._id ? updated : x));
-                    toast.success('Dispute resolved');
-                  }} />
-                </div>
-              );
-            })}
-          </div>
-        )}
-
-        {tab === 'support' && (
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <p className="text-sm text-gray-500">{tickets.length} ticket{tickets.length !== 1 ? 's' : ''} &middot; {tickets.filter(t => t.status === 'open').length} open</p>
-              <button onClick={fetchAll} className="btn-secondary text-xs px-3 py-1.5 flex items-center gap-1.5">
-                🔄 Refresh
-              </button>
-            </div>
-            {tickets.length === 0 ? (
-              <div className="card text-center py-16 text-gray-400">
-                <p className="text-4xl mb-3">🎫</p>
-                <p className="font-medium">No support tickets yet</p>
-              </div>
-            ) : tickets.map(ticket => (
-              <div key={ticket._id} className={`card border-l-4 ${ticket.status === 'open' ? 'border-l-red-400' : ticket.status === 'in_progress' ? 'border-l-yellow-400' : 'border-l-green-400'}`}>
-                <div className="flex items-start justify-between gap-4 flex-wrap">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex items-center gap-2 flex-wrap mb-1">
-                      <span className="font-bold text-gray-900 text-sm">#{ticket.ticketNumber}</span>
-                      <span className={`badge text-xs ${ticket.priority === 'high' ? 'bg-red-50 text-red-700 border-red-200' : 'bg-yellow-50 text-yellow-700 border-yellow-200'}`}>{ticket.priority}</span>
-                      <span className={`badge text-xs ${ticket.status === 'open' ? 'bg-red-50 text-red-700 border-red-200' : ticket.status === 'in_progress' ? 'bg-yellow-50 text-yellow-700 border-yellow-200' : 'bg-green-50 text-green-700 border-green-200'}`}>{ticket.status.replace('_', ' ')}</span>
-                      <span className="badge text-xs bg-gray-50 text-gray-500 border-gray-200 capitalize">{ticket.category}</span>
-                    </div>
-                    <p className="font-semibold text-gray-800 text-sm">{ticket.subject}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">
-                      <span className="font-medium text-gray-700">{ticket.name}</span>
-                      {' · '}
-                      <a href={`mailto:${ticket.email}`} className="text-brand-600 hover:underline">{ticket.email}</a>
-                      {' · '}{new Date(ticket.createdAt).toLocaleDateString()}
-                    </p>
-                    {ticket.messages?.[0] && (
-                      <p className="text-xs text-gray-400 mt-1 italic truncate">&ldquo;{ticket.messages[0].message}&rdquo;</p>
-                    )}
-                  </div>
-                  <button onClick={() => {
-                    setSelectedTicket(selectedTicket?._id === ticket._id ? null : ticket);
-                    setReplyText(''); // clear reply text when switching tickets
-                  }}
-                    className="btn-secondary text-xs px-3 py-1.5 shrink-0">
-                    {selectedTicket?._id === ticket._id ? 'Close' : 'View & Reply'}
-                  </button>
-                </div>
-
-                {selectedTicket?._id === ticket._id && (
-                  <div className="mt-4 border-t border-gray-100 pt-4 space-y-3">
-                    {/* Message thread - use selectedTicket to always show latest */}
-                    <div className="space-y-2 max-h-64 overflow-y-auto">
-                      {selectedTicket.messages.map((msg, i) => (
-                        <div key={i} className={`rounded-xl px-4 py-3 text-sm ${msg.sender === 'admin' ? 'bg-brand-50 text-brand-900 ml-8' : 'bg-gray-50 text-gray-700 mr-8'}`}>
-                          <p className="text-xs font-semibold mb-1 text-gray-400">{msg.sender === 'admin' ? '👤 You (Admin)' : `🙋 ${ticket.name}`}</p>
-                          {msg.message}
-                        </div>
-                      ))}
-                    </div>
-
-                    {/* Reply box */}
-                    {selectedTicket.status !== 'resolved' && (
-                      <div className="space-y-2">
-                        <textarea rows={3} className="input-field resize-none text-sm"
-                          placeholder="Type your reply..." value={replyText}
-                          onChange={e => setReplyText(e.target.value)} />
-                        <div className="flex gap-2 flex-wrap">
-                          <button disabled={!replyText.trim() || replyLoading}
-                            onClick={async () => {
-                              setReplyLoading(true);
-                              try {
-                                const { data } = await api.post(`/support/admin/tickets/${ticket._id}/reply`, { message: replyText });
-                                setTickets(prev => prev.map(t => t._id === ticket._id ? data.ticket : t));
-                                setSelectedTicket(data.ticket);
-                                setReplyText('');
-                                toast.success('Reply sent!');
-                              } catch { toast.error('Failed to send reply'); }
-                              setReplyLoading(false);
-                            }}
-                            className="btn-primary text-sm px-4 py-2 disabled:opacity-50">
-                            {replyLoading ? 'Sending...' : '📤 Send Reply'}
-                          </button>
-                          <button onClick={async () => {
-                            try {
-                              await api.put(`/support/admin/tickets/${ticket._id}/status`, { status: 'resolved' });
-                              setTickets(prev => prev.map(t => t._id === ticket._id ? { ...t, status: 'resolved' } : t));
-                              setSelectedTicket(null);
-                              toast.success('Ticket resolved!');
-                            } catch { toast.error('Failed to resolve'); }
-                          }} className="bg-green-500 hover:bg-green-600 text-white text-sm px-4 py-2 rounded-xl font-medium transition-colors">
-                            ✅ Mark Resolved
-                          </button>
-                          <button onClick={async () => {
-                            if (!confirm('Delete this ticket?')) return;
-                            try {
-                              await api.delete(`/support/admin/tickets/${ticket._id}`);
-                              setTickets(prev => prev.filter(t => t._id !== ticket._id));
-                              setSelectedTicket(null);
-                              toast.success('Ticket deleted');
-                            } catch { toast.error('Failed to delete'); }
-                          }} className="bg-red-50 hover:bg-red-100 text-red-600 text-sm px-4 py-2 rounded-xl font-medium transition-colors">
-                            🗑 Delete
-                          </button>
-                        </div>
-                      </div>
-                    )}
-                    {ticket.status === 'resolved' && (
-                      <p className="text-xs text-green-600 font-medium">✅ This ticket has been resolved.</p>
-                    )}
-                  </div>
-                )}
-              </div>
-            ))}
-          </div>
-        )}
-
-        {tab === 'bookings' && (
-          <div className="card overflow-hidden">
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
-                <thead className="bg-gray-50 border-b border-gray-100">
-                  <tr>{['Tool', 'Renter', 'Amount', 'Status', 'Payment', 'Date'].map(h => (
-                    <th key={h} className="text-left px-4 py-3 text-xs font-semibold text-gray-500 uppercase tracking-wide whitespace-nowrap">{h}</th>
-                  ))}</tr>
-                </thead>
-                <tbody className="divide-y divide-gray-50">
-                  {allBookings.map(b => (
-                    <tr key={b._id} className="hover:bg-gray-50">
-                      <td className="px-4 py-3 font-medium text-gray-800 whitespace-nowrap">{b.toolId?.name}</td>
-                      <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{b.renterId?.name}</td>
-                      <td className="px-4 py-3 font-semibold text-brand-600 whitespace-nowrap">₦{b.totalAmount?.toLocaleString()}</td>
-                      <td className="px-4 py-3 whitespace-nowrap"><span className={`badge text-xs ${b.status === 'approved' ? 'bg-green-50 text-green-700 border-green-100' : b.status === 'pending' ? 'bg-yellow-50 text-yellow-700 border-yellow-100' : b.status === 'completed' ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-red-50 text-red-700 border-red-100'}`}>{b.status}</span></td>
-                      <td className="px-4 py-3 whitespace-nowrap"><span className={`badge text-xs ${b.paymentStatus === 'paid' ? 'bg-green-50 text-green-700 border-green-100' : 'bg-gray-50 text-gray-500 border-gray-100'}`}>{b.paymentStatus}</span></td>
-                      <td className="px-4 py-3 text-gray-400 whitespace-nowrap">{new Date(b.createdAt).toLocaleDateString()}</td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            </div>
-          </div>
-        )}
+        {/* Tab content */}
+        {tab === 'pending'  && <ToolsTab    pendingTools={pendingTools} processing={processing} onVerify={verifyTool} onReject={(id, type) => setRejectModal({ id, type })} onPreview={setPreviewTool} />}
+        {tab === 'kyc'      && <KycTab      pendingKyc={pendingKyc} processing={processing} onApprove={approveKyc} onReject={(id, type) => setRejectModal({ id, type })} />}
+        {tab === 'users'    && <UsersTab    allUsers={allUsers} processing={processing} setAllUsers={setAllUsers} onSuspend={setSuspendModal} onDelete={setDeleteModal} />}
+        {tab === 'bookings' && <BookingsTab allBookings={allBookings} />}
+        {tab === 'disputes' && <DisputesTab disputes={disputes} onResolved={handleDisputeResolved} />}
+        {tab === 'support'  && <SupportTab  tickets={tickets} setTickets={setTickets} onRefresh={fetchAll} />}
       </div>
 
-      {/* Reject Modal */}
-      {modal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md animate-slide-up">
-            <h3 className="font-display font-bold text-lg text-gray-900 mb-2">
-              {modal.type === 'rejectTool' ? 'Reject Tool Listing' : 'Reject KYC Submission'}
-            </h3>
-            <p className="text-sm text-gray-500 mb-4">Provide a reason so the user knows what to fix:</p>
-            <textarea className="input-field resize-none mb-4" rows={4}
-              placeholder={modal.type === 'rejectTool' ? 'e.g. No proof of ownership provided, images unclear...' : 'e.g. ID document is blurry, selfie does not match ID...'}
-              value={reason} onChange={e => setReason(e.target.value)} />
-            <div className="flex gap-3">
-              <button onClick={() => setModal(null)} className="btn-secondary flex-1">Cancel</button>
-              <button onClick={handleReject} disabled={!reason || processing}
-                className="flex-1 bg-red-500 hover:bg-red-600 text-white font-medium px-6 py-3 rounded-xl transition-colors disabled:opacity-50">
-                {processing ? 'Processing...' : 'Reject'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-    {/* Delete User Modal */}
-      {deleteModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md animate-slide-up">
-            <div className="w-12 h-12 bg-red-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <span className="text-2xl">🗑️</span>
-            </div>
-            <h3 className="font-display font-bold text-lg text-gray-900 mb-2 text-center">Delete Account</h3>
-            <p className="text-sm text-gray-500 text-center mb-1">You are about to permanently delete:</p>
-            <p className="text-center font-semibold text-gray-800 mb-1">{deleteModal.name}</p>
-            <p className="text-center text-sm text-gray-400 mb-4">{deleteModal.email} · {deleteModal.role}</p>
-            <div className="bg-red-50 border border-red-100 rounded-xl p-3 mb-5">
-              <p className="text-xs text-red-600 text-center">⚠️ This cannot be undone. All their tools, bookings and data will be permanently deleted.</p>
-            </div>
-            <div className="flex gap-3">
-              <button onClick={() => setDeleteModal(null)} className="btn-secondary flex-1">Cancel</button>
-              <button onClick={handleDeleteUser} disabled={processing === deleteModal._id}
-                className="flex-1 bg-red-500 hover:bg-red-600 text-white font-medium px-6 py-3 rounded-xl transition-colors disabled:opacity-50">
-                {processing === deleteModal._id ? 'Deleting...' : '🗑️ Delete Account'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Suspend User Modal */}
-      {suspendModal && (
-        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-          <div className="bg-white rounded-2xl p-6 w-full max-w-md animate-slide-up">
-            <div className="w-12 h-12 bg-orange-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
-              <span className="text-2xl">🚫</span>
-            </div>
-            <h3 className="font-display font-bold text-lg text-gray-900 mb-1 text-center">Suspend Account</h3>
-            <p className="text-center font-semibold text-gray-800 mb-0.5">{suspendModal.name}</p>
-            <p className="text-center text-sm text-gray-400 mb-4">{suspendModal.email} · {suspendModal.role}</p>
-            <div className="mb-4">
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Reason for suspension <span className="text-red-500">*</span></label>
-              <textarea rows={3} className="input-field resize-none"
-                placeholder="e.g. Tool not returned after multiple reminders, fraudulent activity..."
-                value={suspendReason} onChange={e => setSuspendReason(e.target.value)} />
-            </div>
-            <div className="bg-orange-50 border border-orange-100 rounded-xl p-3 mb-5">
-              <p className="text-xs text-orange-700">The user will be notified by email and will not be able to log in until reinstated.</p>
-            </div>
-            <div className="flex gap-3">
-              <button onClick={() => { setSuspendModal(null); setSuspendReason(''); }} className="btn-secondary flex-1">Cancel</button>
-              <button
-                disabled={!suspendReason.trim() || processing === suspendModal._id}
-                onClick={async () => {
-                  setProcessing(suspendModal._id);
-                  try {
-                    const { data } = await api.put(`/admin/users/${suspendModal._id}/suspend`, { reason: suspendReason });
-                    setAllUsers(prev => prev.map(u => u._id === suspendModal._id ? data.user : u));
-                    toast.success(`${suspendModal.name} has been suspended`);
-                    setSuspendModal(null);
-                    setSuspendReason('');
-                  } catch (err) { toast.error(err.response?.data?.message || 'Failed to suspend'); }
-                  setProcessing(null);
-                }}
-                className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-medium px-6 py-3 rounded-xl transition-colors disabled:opacity-50">
-                {processing === suspendModal._id ? 'Suspending...' : '🚫 Suspend Account'}
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* Tool Preview Modal */}
-      {previewTool && (
-        <div className="fixed inset-0 bg-black/70 z-50 flex items-center justify-center p-4" onClick={() => setPreviewTool(null)}>
-          <div className="bg-white rounded-2xl max-w-lg w-full max-h-[90vh] overflow-y-auto" onClick={e => e.stopPropagation()}>
-            {/* Images */}
-            <div className="relative bg-gray-100 rounded-t-2xl overflow-hidden" style={{height: '260px'}}>
-              <img
-                src={previewTool.images?.length ? getImgUrl(previewTool.images[previewImgIdx]) : PLACEHOLDER}
-                className="w-full h-full object-cover"
-                onError={e => { e.target.src = PLACEHOLDER; }}
-              />
-              {previewTool.images?.length > 1 && (
-                <>
-                  <button onClick={() => setPreviewImgIdx(i => (i - 1 + previewTool.images.length) % previewTool.images.length)}
-                    className="absolute left-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/40 hover:bg-black/60 text-white rounded-full flex items-center justify-center text-lg">‹</button>
-                  <button onClick={() => setPreviewImgIdx(i => (i + 1) % previewTool.images.length)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 w-8 h-8 bg-black/40 hover:bg-black/60 text-white rounded-full flex items-center justify-center text-lg">›</button>
-                  <div className="absolute bottom-2 left-1/2 -translate-x-1/2 flex gap-1">
-                    {previewTool.images.map((_, i) => (
-                      <button key={i} onClick={() => setPreviewImgIdx(i)}
-                        className={`w-2 h-2 rounded-full transition-all ${i === previewImgIdx ? 'bg-white' : 'bg-white/50'}`} />
-                    ))}
-                  </div>
-                </>
-              )}
-              <button onClick={() => setPreviewTool(null)}
-                className="absolute top-3 right-3 w-8 h-8 bg-black/40 hover:bg-black/60 text-white rounded-full flex items-center justify-center text-lg">✕</button>
-              <span className="absolute top-3 left-3 bg-yellow-400 text-yellow-900 text-xs font-bold px-2 py-1 rounded-full">Pending Review</span>
-            </div>
-
-            {/* Details */}
-            <div className="p-5 space-y-3">
-              <div className="flex items-start justify-between gap-2">
-                <h2 className="font-display font-bold text-gray-900 text-lg">{previewTool.name}</h2>
-                <span className="text-brand-600 font-bold text-lg whitespace-nowrap">₦{previewTool.pricePerDay?.toLocaleString()}/day</span>
-              </div>
-              <div className="flex flex-wrap gap-2">
-                <span className="badge bg-purple-50 text-purple-700 border-purple-100 text-xs">{previewTool.category}</span>
-                <span className="badge bg-gray-50 text-gray-600 border-gray-100 text-xs">📍 {previewTool.location}</span>
-                <span className="badge bg-blue-50 text-blue-600 border-blue-100 text-xs">{previewTool.condition}</span>
-              </div>
-              <p className="text-sm text-gray-600">{previewTool.description}</p>
-
-              {/* Owner info */}
-              <div className="bg-gray-50 rounded-xl p-3">
-                <p className="text-xs font-semibold text-gray-500 mb-1">Listed by</p>
-                <p className="text-sm font-medium text-gray-800">{previewTool.ownerId?.name}</p>
-                <p className="text-xs text-gray-400">{previewTool.ownerId?.email}</p>
-              </div>
-
-              {/* Ownership docs */}
-              {previewTool.ownershipDocs?.length > 0 && (
-                <div>
-                  <p className="text-xs font-semibold text-gray-500 mb-2">Proof of Ownership ({previewTool.ownershipDocs.length} file{previewTool.ownershipDocs.length > 1 ? 's' : ''})</p>
-                  <div className="flex flex-wrap gap-2">
-                    {previewTool.ownershipDocs.map((doc, i) => (
-                      <a key={i} href={getImgUrl(doc)} target="_blank" rel="noreferrer"
-                        className="flex items-center gap-1 bg-blue-50 border border-blue-100 rounded-lg px-3 py-1.5 text-xs text-blue-700 hover:bg-blue-100">
-                        📄 Document {i + 1} ↗
-                      </a>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {/* Actions */}
-              <div className="flex gap-2 pt-2">
-                <button onClick={() => { setModal({ type: 'rejectTool', id: previewTool._id }); setPreviewTool(null); setReason(''); }}
-                  className="btn-secondary flex-1 py-2.5 text-sm text-red-500 border-red-100 hover:bg-red-50 flex items-center justify-center gap-1">
-                  <XCircle size={14} /> Reject
-                </button>
-                <button onClick={() => { verifyTool(previewTool._id); setPreviewTool(null); }}
-                  className="btn-primary flex-1 py-2.5 text-sm flex items-center justify-center gap-1">
-                  <CheckCircle size={14} /> Approve & Go Live
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
+      {/* Modals */}
+      <RejectModal     modal={rejectModal}  onConfirm={handleRejectConfirm} onClose={() => setRejectModal(null)}  processing={processing} />
+      <DeleteUserModal user={deleteModal}   onConfirm={handleDeleteUser}    onClose={() => setDeleteModal(null)}  processing={processing} />
+      <SuspendUserModal user={suspendModal} onConfirm={handleSuspendUser}   onClose={() => setSuspendModal(null)} processing={processing} />
+      <ToolPreviewModal
+        tool={previewTool}
+        onClose={() => setPreviewTool(null)}
+        onApprove={() => { verifyTool(previewTool._id); setPreviewTool(null); }}
+        onReject={() => { setRejectModal({ type: 'rejectTool', id: previewTool._id }); setPreviewTool(null); }}
+      />
     </div>
   );
 }
