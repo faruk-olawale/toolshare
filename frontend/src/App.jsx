@@ -1,11 +1,14 @@
 import { Routes, Route, Navigate } from 'react-router-dom';
 import { useAuth } from './context/AuthContext';
+import ErrorBoundary from './components/ui/ErrorBoundary';
 import Navbar from './components/layout/Navbar';
 import Footer from './components/layout/Footer';
 import LoadingScreen from './components/ui/LoadingScreen';
 import Landing from './pages/Landing';
 import Login from './pages/Login';
 import Register from './pages/Register';
+import ForgotPassword from './pages/ForgotPassword';
+import ResetPassword from './pages/ResetPassword';
 import BrowseTools from './pages/BrowseTools';
 import ToolDetail from './pages/ToolDetail';
 import MapSearch from './pages/MapSearch';
@@ -48,6 +51,7 @@ export default function App() {
   const { loading } = useAuth();
   if (loading) return <LoadingScreen />;
   return (
+    <ErrorBoundary>
     <div className="min-h-screen flex flex-col bg-[#faf9f7]">
       <Navbar />
       <main className="flex-1">
@@ -64,6 +68,8 @@ export default function App() {
           <Route path="/auth/google/success" element={<GoogleSuccess />} />
           <Route path="/login" element={<PublicRoute><Login /></PublicRoute>} />
           <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
+          <Route path="/forgot-password" element={<PublicRoute><ForgotPassword /></PublicRoute>} />
+          <Route path="/reset-password" element={<PublicRoute><ResetPassword /></PublicRoute>} />
           <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
           <Route path="/kyc" element={<PrivateRoute><KYCVerification /></PrivateRoute>} />
           <Route path="/messages" element={<PrivateRoute><MessageCenter /></PrivateRoute>} />
@@ -82,5 +88,6 @@ export default function App() {
       </main>
       <Footer />
     </div>
+    </ErrorBoundary>
   );
 }

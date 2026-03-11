@@ -12,15 +12,17 @@ export default function Dashboard() {
   const [loading, setLoading]   = useState(true);
 
   useEffect(() => {
+    const controller = new AbortController();
+
     const fetchAll = async () => {
       try {
-        const kycRes = await api.get('/kyc/status');
+        const kycRes = await api.get('/kyc/status', { signal: controller.signal });
         setKycStatus(kycRes.data.kyc);
 
         if (user.role === 'owner') {
           const [toolsRes, bookingsRes] = await Promise.all([
-            api.get('/tools/my-tools'),
-            api.get('/bookings/owner-bookings'),
+            api.get('/tools/my-tools', { signal: controller.signal }),
+            api.get('/bookings/owner-bookings', { signal: controller.signal }),
           ]);
           const bookings = bookingsRes.data.bookings;
           const tools    = toolsRes.data.tools || [];
@@ -59,7 +61,7 @@ export default function Dashboard() {
             recentActivity: allActivity,
           });
         } else {
-          const { data } = await api.get('/bookings/my-bookings');
+          const { data } = await api.get('/bookings/my-bookings', { signal: controller.signal });
           const bookings = data.bookings;
           setStats({
             totalBookings: bookings.length,
@@ -70,10 +72,13 @@ export default function Dashboard() {
             recentBookings: bookings.slice(0, 5),
           });
         }
-      } catch {}
+      } catch (err) {
+        if (err.name === 'CanceledError' || err.name === 'AbortError') return;
+      }
       setLoading(false);
     };
     fetchAll();
+    return () => controller.abort();
   }, [user]);
 
   if (loading) return (

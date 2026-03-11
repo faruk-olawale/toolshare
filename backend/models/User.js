@@ -27,6 +27,10 @@ const userSchema = new mongoose.Schema({
     reviewedBy: { type: mongoose.Schema.Types.ObjectId, ref: 'User', default: null },
   },
 
+  // Password reset
+  resetPasswordToken:   { type: String, default: null, select: false },
+  resetPasswordExpires: { type: Date,   default: null, select: false },
+
   // Account suspension
   suspended: { type: Boolean, default: false },
   suspendedAt: { type: Date, default: null },

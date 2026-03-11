@@ -1,12 +1,54 @@
-const express  = require('express');
-const cors     = require('cors');
-const path     = require('path');
-const session  = require('express-session');
-const passport = require('./config/passport');
+const express    = require('express');
+const cors       = require('cors');
+const helmet     = require('helmet');
+const compression = require('compression');
+const mongoSanitize = require('express-mongo-sanitize');
+const path       = require('path');
+const session    = require('express-session');
+const passport   = require('./config/passport');
 const errorHandler = require('./middleware/errorHandler');
 const { apiLimiter, authLimiter, supportLimiter, kycLimiter } = require('./middleware/rateLimiter');
 
 const app = express();
+
+// ── Security headers ───────────────────────────────────────────────────────────
+app.use(helmet());
+
+// ── Compression ────────────────────────────────────────────────────────────────
+app.use(compression());
+
+// ── CORS — only allow our frontend ────────────────────────────────────────────
+const allowedOrigins = [
+  process.env.CLIENT_URL,
+  'http://localhost:5173',
+  'http://localhost:3000',
+].filter(Boolean);
+
+app.use(cors({
+  origin: (origin, callback) => {
+    // Allow requests with no origin (mobile apps, curl, Postman)
+    if (!origin) return callback(null, true);
+    if (allowedOrigins.includes(origin)) return callback(null, true);
+    callback(new Error(`CORS: origin ${origin} not allowed`));
+  },
+  credentials: true,
+}));
+
+// ── Body parsing ───────────────────────────────────────────────────────────────
+app.use('/api/payments/webhook', express.raw({ type: 'application/json' }));
+app.use(express.json({ limit: '10mb' }));
+app.use(express.urlencoded({ extended: true, limit: '10mb' }));
+
+// ── MongoDB injection sanitization ────────────────────────────────────────────
+app.use(mongoSanitize());
+
+// ── Session + Passport (Google OAuth) ─────────────────────────────────────────
+app.use(session({ secret: process.env.JWT_SECRET || 'testsecret', resave: false, saveUninitialized: false }));
+app.use(passport.initialize());
+app.use(passport.session());
+
+// ── Static uploads ─────────────────────────────────────────────────────────────
+app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
 // ── Request logger ─────────────────────────────────────────────────────────────
 app.use((req, res, next) => {
@@ -22,20 +64,11 @@ app.use((req, res, next) => {
   next();
 });
 
-app.use(cors({ origin: '*', credentials: true }));
-app.use('/api/payments/webhook', express.raw({ type: 'application/json' }));
-app.use(express.json({ limit: '10mb' }));
-app.use(express.urlencoded({ extended: true, limit: '10mb' }));
-app.use(session({ secret: process.env.JWT_SECRET || 'testsecret', resave: false, saveUninitialized: false }));
-app.use(passport.initialize());
-app.use(passport.session());
-app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
-
 // ── Rate limiting ──────────────────────────────────────────────────────────────
-app.use('/api/', apiLimiter);                    // global: 100 req / 15min
-app.use('/api/auth', authLimiter);               // auth: 10 req / 15min
-app.use('/api/support/tickets', supportLimiter); // support: 5 tickets / hour
-app.use('/api/kyc', kycLimiter);                 // kyc: 5 uploads / hour
+app.use('/api/', apiLimiter);
+app.use('/api/auth', authLimiter);
+app.use('/api/support/tickets', supportLimiter);
+app.use('/api/kyc', kycLimiter);
 
 // ── Routes ─────────────────────────────────────────────────────────────────────
 app.use('/api/auth',          require('./routes/authRoutes'));
@@ -49,10 +82,12 @@ app.use('/api/support',       require('./routes/supportRoutes'));
 app.use('/api/reviews',       require('./routes/reviewRoutes'));
 app.use('/api/notifications', require('./routes/notificationRoutes'));
 
+// ── 404 ────────────────────────────────────────────────────────────────────────
 app.use((req, res) => {
-  console.warn(`\x1b[33m⚠️  404 Not Found: ${req.method} ${req.originalUrl}\x1b[0m`);
+  console.warn(`\x1b[33m⚠️  404: ${req.method} ${req.originalUrl}\x1b[0m`);
   res.status(404).json({ success: false, message: `Route ${req.originalUrl} not found.` });
 });
+
 app.use(errorHandler);
 
 module.exports = app;
