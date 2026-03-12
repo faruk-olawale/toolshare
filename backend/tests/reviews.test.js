@@ -24,29 +24,22 @@ afterAll(async () => { await mongoose.connection.close(); });
 
 beforeEach(async () => {
   const ownerRes = await request(app).post('/api/auth/register').send({
-    name: 'Owner', email: 'rowner@test.com', password: 'pass123', role: 'owner',
+    name: 'Owner', email: 'rowner@test.com', password: 'password123', role: 'owner',
   });
   ownerToken = ownerRes.body.token;
   ownerId    = ownerRes.body.user._id;
 
   const renterRes = await request(app).post('/api/auth/register').send({
-    name: 'Renter', email: 'rrenter@test.com', password: 'pass123', role: 'renter',
+    name: 'Renter', email: 'rrenter@test.com', password: 'password123', role: 'renter',
   });
   renterToken = renterRes.body.token;
   renterId    = renterRes.body.user._id;
 
- const tool = await Tool.create({
-  ownerId,
-  name: 'Booking Test Tool', // or 'Review Test Tool'
-  category: 'Construction',
-  description: 'Test',
-  pricePerDay: 5000,
-  location: 'Lagos',
-  adminVerified: true,
-  ownershipDocs: ['/doc.pdf'],
-  coordinates: { type: 'Point', coordinates: [3.3792, 6.5244] }, // Lagos lon/lat
-});
-toolId = tool._id;
+  const tool = await Tool.create({
+    ownerId, name: 'Review Test Tool', category: 'Construction',
+    description: 'Test', pricePerDay: 5000, location: 'Lagos',
+    adminVerified: true, ownershipDocs: ['/doc.pdf'],
+  });
   toolId = tool._id;
 
   const booking = await Booking.create({

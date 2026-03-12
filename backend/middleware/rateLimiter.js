@@ -1,46 +1,48 @@
 const rateLimit = require('express-rate-limit');
 
-// General API limit — 100 requests per 15 minutes
-const apiLimiter = rateLimit({
+// In test environment, disable all rate limiting so tests run freely
+const isTest = process.env.NODE_ENV === 'test';
+
+const passThrough = (req, res, next) => next();
+
+const makeLimit = (options) => isTest ? passThrough : rateLimit(options);
+
+const apiLimiter = makeLimit({
   windowMs: 15 * 60 * 1000,
   max: 100,
-  message: { success: false, message: 'Too many requests, please try again in 15 minutes.' },
+  message: { success: false, message: 'Too many requests. Please try again in 15 minutes.' },
   standardHeaders: true,
   legacyHeaders: false,
 });
 
-// Auth routes — 10 attempts per 15 minutes (prevent brute force)
-const authLimiter = rateLimit({
+const authLimiter = makeLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
-  message: { success: false, message: 'Too many login attempts, please try again in 15 minutes.' },
+  message: { success: false, message: 'Too many login attempts. Please try again in 15 minutes.' },
   standardHeaders: true,
   legacyHeaders: false,
 });
 
-// Support tickets — 5 per hour (prevent spam)
-const supportLimiter = rateLimit({
+const supportLimiter = makeLimit({
   windowMs: 60 * 60 * 1000,
   max: 5,
-  message: { success: false, message: 'Too many support tickets submitted, please wait an hour.' },
+  message: { success: false, message: 'Too many support tickets submitted. Please wait an hour.' },
   standardHeaders: true,
   legacyHeaders: false,
 });
 
-// Password reset — 3 per hour
-const passwordResetLimiter = rateLimit({
+const passwordResetLimiter = makeLimit({
   windowMs: 60 * 60 * 1000,
   max: 3,
-  message: { success: false, message: 'Too many password reset attempts, please try again in an hour.' },
+  message: { success: false, message: 'Too many password reset attempts. Please try again in an hour.' },
   standardHeaders: true,
   legacyHeaders: false,
 });
 
-// KYC upload — 5 per hour
-const kycLimiter = rateLimit({
+const kycLimiter = makeLimit({
   windowMs: 60 * 60 * 1000,
   max: 5,
-  message: { success: false, message: 'Too many KYC submissions, please try again later.' },
+  message: { success: false, message: 'Too many KYC submissions. Please wait an hour.' },
   standardHeaders: true,
   legacyHeaders: false,
 });

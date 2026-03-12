@@ -248,21 +248,21 @@ const suspendUser = async (req, res, next) => {
     await user.save();
 
     // Notify user by email
-    sendEmail({
+    try { await sendEmail({
       to: user.email,
       subject: '⚠️ Your ToolShare Africa Account Has Been Suspended',
       template: 'accountSuspended',
       data: { name: user.name, reason, supportUrl: `${process.env.CLIENT_URL}/contact` },
-    }).catch(() => {});
+    }); } catch (_) {}
 
     // In-app notify user
-    notify({
+    try { await notify({
       userId: user._id,
       title: '⚠️ Account Suspended',
       message: `Your account has been suspended. Reason: ${reason}. Contact support to appeal.`,
       type: 'system',
       link: '/contact',
-    }).catch(() => {});
+    }); } catch (_) {} // safe
 
     res.status(200).json({ success: true, message: `${user.name}'s account has been suspended.`, user });
   } catch (error) { next(error); }
@@ -283,20 +283,20 @@ const unsuspendUser = async (req, res, next) => {
     await user.save();
 
     // Notify user
-    sendEmail({
+    try { await sendEmail({
       to: user.email,
       subject: '✅ Your ToolShare Africa Account Has Been Reinstated',
       template: 'accountUnsuspended',
       data: { name: user.name, clientUrl: process.env.CLIENT_URL },
-    }).catch(() => {});
+    }); } catch (_) {}
 
-    notify({
+    try { await notify({
       userId: user._id,
       title: '✅ Account Reinstated',
       message: 'Your account suspension has been lifted. Welcome back!',
       type: 'system',
       link: '/dashboard',
-    }).catch(() => {});
+    }); } catch (_) {} // safe
 
     res.status(200).json({ success: true, message: `${user.name}'s account has been reinstated.`, user });
   } catch (error) { next(error); }
@@ -348,20 +348,20 @@ const resolveDispute = async (req, res, next) => {
     }
 
     // Notify both parties
-    const notifyParty = (user, role) => {
-      sendEmail({
+    const notifyParty = async (user, role) => {
+      try { await sendEmail({
         to: user.email,
         subject: `✅ Dispute Resolved — ${booking.toolId.name}`,
         template: 'disputeResolved',
         data: { name: user.name, toolName: booking.toolId.name, resolution, outcome, clientUrl: process.env.CLIENT_URL },
-      }).catch(() => {});
-      notify({
+      }); } catch (_) {}
+      try { await notify({
         userId: user._id,
         title: `✅ Dispute Resolved — ${booking.toolId.name}`,
         message: `Resolution: ${resolution}`,
         type: 'dispute',
         link: role === 'owner' ? '/booking-requests' : '/bookings',
-      }).catch(() => {});
+      }); } catch (_) {} // safe
     };
 
     notifyParty(booking.ownerId, 'owner');

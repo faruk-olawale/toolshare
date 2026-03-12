@@ -114,9 +114,14 @@ const updateTool = async (req, res, next) => {
     }
 
     const updated = await Tool.findByIdAndUpdate(req.params.id, {
-      name, category, description,
-      pricePerDay: Number(pricePerDay),
-      location, condition, available, ownershipNote,
+      ...(name !== undefined && { name }),
+      ...(category !== undefined && { category }),
+      ...(description !== undefined && { description }),
+      ...(pricePerDay !== undefined && { pricePerDay: Number(pricePerDay) }),
+      ...(location !== undefined && { location }),
+      ...(condition !== undefined && { condition }),
+      ...(available !== undefined && { available }),
+      ...(ownershipNote !== undefined && { ownershipNote }),
       ...(newImages.length > 0 && { images: newImages }),
       ...(newDocs.length > 0 && { ownershipDocs: newDocs }),
       adminVerified: false,
@@ -150,8 +155,14 @@ const deleteTool = async (req, res, next) => {
 
 const getMyTools = async (req, res, next) => {
   try {
-    const tools = await Tool.find({ ownerId: req.user._id }).sort({ createdAt: -1 });
-    res.status(200).json({ success: true, count: tools.length, tools });
+    const { page = 1, limit = 12 } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+    const query = { ownerId: req.user._id };
+    const [tools, total] = await Promise.all([
+      Tool.find(query).sort({ createdAt: -1 }).skip(skip).limit(Number(limit)),
+      Tool.countDocuments(query),
+    ]);
+    res.status(200).json({ success: true, count: tools.length, total, page: Number(page), pages: Math.ceil(total / Number(limit)), tools });
   } catch (error) { next(error); }
 };
 

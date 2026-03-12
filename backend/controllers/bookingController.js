@@ -12,9 +12,9 @@ const fmt = (date) => new Date(date).toLocaleDateString('en-NG', { day: 'numeric
 
 // ─── Notify helper (email + sms + in-app) ────────────────────────────────────
 const notifyAll = async ({ user, inApp, email, sms }) => {
-  if (inApp) await notify(inApp).catch(() => {});
-  if (email && user?.email) sendEmail({ to: user.email, ...email }).catch(() => {});
-  if (sms && user?.phone) sendSMS({ to: user.phone, message: sms }).catch(() => {});
+  if (inApp) { try { await notify(inApp); } catch (_) {} }
+  if (email && user?.email) { try { await sendEmail({ to: user.email, ...email }); } catch (_) {} }
+  if (sms && user?.phone) { try { await sendSMS({ to: user.phone, message: sms }); } catch (_) {} }
 };
 
 // ─── CREATE BOOKING ───────────────────────────────────────────────────────────
@@ -122,21 +122,39 @@ const createBooking = async (req, res, next) => {
 // ─── GET BOOKINGS ─────────────────────────────────────────────────────────────
 const getRenterBookings = async (req, res, next) => {
   try {
-    const bookings = await Booking.find({ renterId: req.user._id })
-      .populate('toolId',  'name category images location pricePerDay')
-      .populate('ownerId', 'name phone email')
-      .sort({ createdAt: -1 });
-    res.status(200).json({ success: true, count: bookings.length, bookings });
+    const { page = 1, limit = 10, status } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+    const query = { renterId: req.user._id };
+    if (status) query.status = status;
+    const [bookings, total] = await Promise.all([
+      Booking.find(query)
+        .populate('toolId',  'name category images location pricePerDay')
+        .populate('ownerId', 'name phone email')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(Number(limit)),
+      Booking.countDocuments(query),
+    ]);
+    res.status(200).json({ success: true, count: bookings.length, total, page: Number(page), pages: Math.ceil(total / Number(limit)), bookings });
   } catch (error) { next(error); }
 };
 
 const getOwnerBookings = async (req, res, next) => {
   try {
-    const bookings = await Booking.find({ ownerId: req.user._id })
-      .populate('toolId',   'name category images location pricePerDay')
-      .populate('renterId', 'name phone email')
-      .sort({ createdAt: -1 });
-    res.status(200).json({ success: true, count: bookings.length, bookings });
+    const { page = 1, limit = 10, status } = req.query;
+    const skip = (Number(page) - 1) * Number(limit);
+    const query = { ownerId: req.user._id };
+    if (status) query.status = status;
+    const [bookings, total] = await Promise.all([
+      Booking.find(query)
+        .populate('toolId',   'name category images location pricePerDay')
+        .populate('renterId', 'name phone email')
+        .sort({ createdAt: -1 })
+        .skip(skip)
+        .limit(Number(limit)),
+      Booking.countDocuments(query),
+    ]);
+    res.status(200).json({ success: true, count: bookings.length, total, page: Number(page), pages: Math.ceil(total / Number(limit)), bookings });
   } catch (error) { next(error); }
 };
 

@@ -7,9 +7,9 @@ const notify = require('../utils/notify');
 const notifyAdmins = async ({ title, message, type, link }) => {
   try {
     const admins = await User.find({ role: 'admin' }).select('_id');
-    await Promise.all(admins.map(admin =>
-      notify({ userId: admin._id, title, message, type, link }).catch(() => {})
-    ));
+    await Promise.all(admins.map(async admin => {
+      try { await notify({ userId: admin._id, title, message, type, link }); } catch (_) {}
+    }));
   } catch {}
 };
 
@@ -34,21 +34,21 @@ const createTicket = async (req, res, next) => {
     });
 
     // Email confirmation to user
-    sendEmail({
+    try { await sendEmail({
       to: email,
       subject: `✅ Support Ticket #${ticket.ticketNumber} Received`,
       template: 'ticketCreated',
       data: { name, ticketNumber: ticket.ticketNumber, subject, message, clientUrl: process.env.CLIENT_URL },
-    }).catch(() => {});
+    }); } catch (_) {}
 
     // Email alert to admin (use ADMIN_EMAIL if set, fallback to EMAIL_USER)
     const adminEmail = process.env.ADMIN_EMAIL || process.env.EMAIL_USER;
-    sendEmail({
+    try { await sendEmail({
       to: adminEmail,
       subject: `🎫 New Support Ticket #${ticket.ticketNumber} — ${subject}`,
       template: 'ticketAlert',
       data: { name, email, subject, message, category, ticketNumber: ticket.ticketNumber, adminUrl: `${process.env.CLIENT_URL}/admin` },
-    }).catch(() => {});
+    }); } catch (_) {}
 
     // ── In-app notification to all admins ────────────────────────────────────
     const priorityIcon = priority === 'high' ? '🚨' : '🎫';
@@ -135,7 +135,7 @@ const replyToTicket = async (req, res, next) => {
         adminMessage: message,
         clientUrl: process.env.CLIENT_URL,
       },
-    }).catch(() => {});
+    });
 
     // In-app notification to user (if they have an account)
     if (ticket.userId) {
@@ -145,7 +145,7 @@ const replyToTicket = async (req, res, next) => {
         message: `We've replied to your support ticket: "${ticket.subject}"`,
         type: 'system',
         link: '/help',
-      }).catch(() => {});
+      });
     }
 
     res.status(200).json({ success: true, message: 'Reply sent!', ticket });
@@ -174,7 +174,7 @@ const updateTicketStatus = async (req, res, next) => {
         subject: `✅ Ticket #${ticket.ticketNumber} Resolved`,
         template: 'ticketResolved',
         data: { name: ticket.name, ticketNumber: ticket.ticketNumber, subject: ticket.subject, clientUrl: process.env.CLIENT_URL },
-      }).catch(() => {});
+      });
 
       // In-app notification to user (if they have an account)
       if (ticket.userId) {
@@ -184,7 +184,7 @@ const updateTicketStatus = async (req, res, next) => {
           message: `Your support ticket "${ticket.subject}" has been resolved. Check your email for details.`,
           type: 'system',
           link: '/help',
-        }).catch(() => {});
+        });
       }
     }
 
