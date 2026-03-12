@@ -16,7 +16,8 @@ const hasCloudinary = process.env.CLOUDINARY_CLOUD_NAME &&
 let combinedUpload;
 
 if (hasCloudinary) {
-  const { CloudinaryStorage } = require('multer-storage-cloudinary');
+  const multerCloudinary = require('multer-storage-cloudinary');
+  const CloudinaryStorage = multerCloudinary.CloudinaryStorage || multerCloudinary.default?.CloudinaryStorage || multerCloudinary;
   const cloudinary = require('../config/cloudinary');
   const combinedStorage = new CloudinaryStorage({
     cloudinary,

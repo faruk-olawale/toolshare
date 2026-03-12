@@ -14,7 +14,8 @@ const hasCloudinary = process.env.CLOUDINARY_CLOUD_NAME &&
 let uploadKyc;
 
 if (hasCloudinary) {
-  const { CloudinaryStorage } = require('multer-storage-cloudinary');
+  const multerCloudinary = require('multer-storage-cloudinary');
+  const CloudinaryStorage = multerCloudinary.CloudinaryStorage || multerCloudinary.default?.CloudinaryStorage || multerCloudinary;
   const cloudinary = require('../config/cloudinary');
   const kycStorage = new CloudinaryStorage({
     cloudinary,

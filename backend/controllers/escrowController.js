@@ -220,7 +220,7 @@ const raiseDispute = async (req, res, next) => {
 
     // Email admin
     sendEmail({
-      to: process.env.EMAIL_USER,
+      to: process.env.ADMIN_EMAIL || process.env.EMAIL_USER,
       subject: `🚨 Dispute Raised — ${booking.toolId.name}`,
       template: 'disputeRaised',
       data: {
@@ -333,6 +333,14 @@ const getEscrowStatus = async (req, res, next) => {
       .populate('renterId', 'name')
       .populate('ownerId', 'name');
     if (!booking) return res.status(404).json({ success: false, message: 'Booking not found.' });
+
+    const isParty = [
+      booking.renterId._id.toString(),
+      booking.ownerId._id.toString(),
+    ].includes(req.user._id.toString());
+    if (!isParty && req.user.role !== 'admin')
+      return res.status(403).json({ success: false, message: 'Not authorized.' });
+
     res.status(200).json({ success: true, booking });
   } catch (error) { next(error); }
 };

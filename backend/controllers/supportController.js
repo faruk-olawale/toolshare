@@ -92,18 +92,16 @@ const getAllTickets = async (req, res, next) => {
     if (category) query.category = category;
     if (priority) query.priority = priority;
 
-    const [tickets, allTickets] = await Promise.all([
+    const [tickets, total, open, inProgress, resolved, high] = await Promise.all([
       SupportTicket.find(query).populate('userId', 'name email role').sort({ createdAt: -1 }),
-      SupportTicket.find({}),
+      SupportTicket.countDocuments({}),
+      SupportTicket.countDocuments({ status: 'open' }),
+      SupportTicket.countDocuments({ status: 'in_progress' }),
+      SupportTicket.countDocuments({ status: 'resolved' }),
+      SupportTicket.countDocuments({ priority: 'high' }),
     ]);
 
-    const counts = {
-      total: allTickets.length,
-      open: allTickets.filter(t => t.status === 'open').length,
-      in_progress: allTickets.filter(t => t.status === 'in_progress').length,
-      resolved: allTickets.filter(t => t.status === 'resolved').length,
-      high: allTickets.filter(t => t.priority === 'high').length,
-    };
+    const counts = { total, open, in_progress: inProgress, resolved, high };
 
     res.status(200).json({ success: true, counts, tickets });
   } catch (error) { next(error); }
@@ -196,7 +194,8 @@ const updateTicketStatus = async (req, res, next) => {
 // DELETE /api/support/admin/tickets/:id
 const deleteTicket = async (req, res, next) => {
   try {
-    await SupportTicket.findByIdAndDelete(req.params.id);
+    const ticket = await SupportTicket.findByIdAndDelete(req.params.id);
+    if (!ticket) return res.status(404).json({ success: false, message: 'Ticket not found.' });
     res.status(200).json({ success: true, message: 'Ticket deleted.' });
   } catch (error) { next(error); }
 };

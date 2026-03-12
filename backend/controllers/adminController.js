@@ -7,36 +7,43 @@ const notify      = require('../utils/notify');
 
 const getStats = async (req, res, next) => {
   try {
-    const [totalUsers, totalTools, totalBookings, pendingTools, pendingKyc, payments, paidBookings] = await Promise.all([
+    const [
+      totalUsers, totalTools, totalBookings, pendingTools, pendingKyc,
+      paymentAgg, bookingAgg,
+    ] = await Promise.all([
       User.countDocuments(),
       Tool.countDocuments(),
       Booking.countDocuments(),
       Tool.countDocuments({ adminVerified: false }),
       User.countDocuments({ 'kyc.status': 'pending' }),
-      Payment.find({ status: 'success' }),
-      Booking.find({ paymentStatus: { $in: ['paid', 'partially_released', 'fully_released'] } }),
+      // Aggregate payment stats — never loads documents into memory
+      Payment.aggregate([
+        { $match: { status: 'success' } },
+        { $group: { _id: null, totalFee: { $sum: '$platformFee' }, count: { $sum: 1 } } },
+      ]),
+      // Aggregate booking stats — never loads documents into memory
+      Booking.aggregate([
+        { $match: { paymentStatus: { $in: ['paid', 'partially_released', 'fully_released'] } } },
+        { $group: { _id: null, gross: { $sum: '$totalAmount' }, count: { $sum: 1 } } },
+      ]),
     ]);
 
-    // Revenue from completed Paystack payments (platform fee in kobo → naira)
-    const revenueFromPayments = payments.reduce((sum, p) => sum + (p.platformFee || 0), 0) / 100;
+    const paymentStats  = paymentAgg[0]  || { totalFee: 0, count: 0 };
+    const bookingStats  = bookingAgg[0]  || { gross: 0,    count: 0 };
 
-    // Fallback: estimate from paid bookings if no payment records yet (10% platform fee)
-    const revenueFromBookings = paidBookings.reduce((sum, b) => sum + (b.totalAmount || 0), 0) * 0.10;
-
-    // Use whichever is higher (payments are authoritative once Paystack is live)
+    // Revenue from Paystack fees (kobo → naira); fallback estimate if no payments yet
+    const revenueFromPayments = paymentStats.totalFee / 100;
+    const revenueFromBookings = bookingStats.gross * 0.10;
     const totalRevenue = revenueFromPayments > 0 ? revenueFromPayments : revenueFromBookings;
-
-    // Gross transaction volume
-    const grossVolume = paidBookings.reduce((sum, b) => sum + (b.totalAmount || 0), 0);
 
     res.status(200).json({
       success: true,
       stats: {
         totalUsers, totalTools, totalBookings, pendingTools, pendingKyc,
         totalRevenue,
-        grossVolume,
-        paidBookings: paidBookings.length,
-        successfulPayments: payments.length,
+        grossVolume:        bookingStats.gross,
+        paidBookings:       bookingStats.count,
+        successfulPayments: paymentStats.count,
       }
     });
   } catch (error) { next(error); }
@@ -52,18 +59,25 @@ const getPendingTools = async (req, res, next) => {
   } catch (error) { next(error); }
 };
 
+// ── Pagination helper — caps limit at 100, ensures page ≥ 1 ─────────────────
+const parsePage = (query, defaultLimit = 20) => {
+  const page  = Math.max(1, parseInt(query.page)  || 1);
+  const limit = Math.min(100, Math.max(1, parseInt(query.limit) || defaultLimit));
+  return { page, limit, skip: (page - 1) * limit };
+};
+
 const getAllTools = async (req, res, next) => {
   try {
-    const { verified, page = 1, limit = 20 } = req.query;
+    const { verified } = req.query;
+    const { page, limit, skip } = parsePage(req.query);
     const query = {};
     if (verified === 'true') query.adminVerified = true;
     if (verified === 'false') query.adminVerified = false;
-    const skip = (Number(page) - 1) * Number(limit);
     const [tools, total] = await Promise.all([
-      Tool.find(query).populate('ownerId', 'name email').sort({ createdAt: -1 }).skip(skip).limit(Number(limit)),
+      Tool.find(query).populate('ownerId', 'name email').sort({ createdAt: -1 }).skip(skip).limit(limit),
       Tool.countDocuments(query),
     ]);
-    res.status(200).json({ success: true, count: tools.length, total, page: Number(page), pages: Math.ceil(total / Number(limit)), tools });
+    res.status(200).json({ success: true, count: tools.length, total, page, pages: Math.ceil(total / limit), tools });
   } catch (error) { next(error); }
 };
 
@@ -180,14 +194,17 @@ const rejectKyc = async (req, res, next) => {
 // ── USER MANAGEMENT ──────────────────────────────────────────────────────────
 const getAllUsers = async (req, res, next) => {
   try {
-    const { page = 1, limit = 20, search = '' } = req.query;
-    const skip = (Number(page) - 1) * Number(limit);
-    const query = search ? { $or: [{ name: { $regex: search, $options: 'i' } }, { email: { $regex: search, $options: 'i' } }] } : {};
+    const { page = 1, search = '' } = req.query;
+    const limit = Math.min(Number(req.query.limit) || 20, 100); // cap at 100
+    const skip = (Number(page) - 1) * limit;
+    // Escape regex special chars to prevent ReDoS
+    const escaped = search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&');
+    const query = escaped ? { $or: [{ name: { $regex: escaped, $options: 'i' } }, { email: { $regex: escaped, $options: 'i' } }] } : {};
     const [users, total] = await Promise.all([
-      User.find(query).sort({ createdAt: -1 }).skip(skip).limit(Number(limit)),
+      User.find(query).sort({ createdAt: -1 }).skip(skip).limit(limit),
       User.countDocuments(query),
     ]);
-    res.status(200).json({ success: true, count: users.length, total, page: Number(page), pages: Math.ceil(total / Number(limit)), users });
+    res.status(200).json({ success: true, count: users.length, total, page: Number(page), pages: Math.ceil(total / limit), users });
   } catch (error) { next(error); }
 };
 
@@ -211,8 +228,9 @@ const deleteUser = async (req, res, next) => {
 
 const getAllBookings = async (req, res, next) => {
   try {
-    const { page = 1, limit = 20, status } = req.query;
-    const skip = (Number(page) - 1) * Number(limit);
+    const { page = 1, status } = req.query;
+    const limit = Math.min(Number(req.query.limit) || 20, 100); // cap at 100
+    const skip = (Number(page) - 1) * limit;
     const query = status ? { status } : {};
     const [bookings, total] = await Promise.all([
       Booking.find(query)
@@ -221,10 +239,10 @@ const getAllBookings = async (req, res, next) => {
         .populate('ownerId', 'name email')
         .sort({ createdAt: -1 })
         .skip(skip)
-        .limit(Number(limit)),
+        .limit(limit),
       Booking.countDocuments(query),
     ]);
-    res.status(200).json({ success: true, count: bookings.length, total, page: Number(page), pages: Math.ceil(total / Number(limit)), bookings });
+    res.status(200).json({ success: true, count: bookings.length, total, page: Number(page), pages: Math.ceil(total / limit), bookings });
   } catch (error) { next(error); }
 };
 
@@ -364,8 +382,8 @@ const resolveDispute = async (req, res, next) => {
       }); } catch (_) {} // safe
     };
 
-    notifyParty(booking.ownerId, 'owner');
-    notifyParty(booking.renterId, 'renter');
+    await notifyParty(booking.ownerId, 'owner');
+    await notifyParty(booking.renterId, 'renter');
 
     res.status(200).json({ success: true, message: 'Dispute resolved.', booking });
   } catch (error) { next(error); }
