@@ -220,7 +220,7 @@ const raiseDispute = async (req, res, next) => {
 
     // Email admin
     sendEmail({
-      to: process.env.ADMIN_EMAIL || process.env.EMAIL_USER,
+      to: process.env.ADMIN_EMAIL,
       subject: `🚨 Dispute Raised — ${booking.toolId.name}`,
       template: 'disputeRaised',
       data: {
