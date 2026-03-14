@@ -6,6 +6,9 @@ const mongoSanitize = require('express-mongo-sanitize');
 const path       = require('path');
 const session    = require('express-session');
 const passport   = require('./config/passport');
+const { createSessionStore } = require('./utils/sessionStore');
+const { getJwtSecret } = require('./utils/authSecrets');
+const logger = require('./utils/logger');
 const errorHandler = require('./middleware/errorHandler');
 const { apiLimiter, authLimiter, supportLimiter, kycLimiter } = require('./middleware/rateLimiter');
 
@@ -45,24 +48,47 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(mongoSanitize());
 
 // ── Session + Passport (Google OAuth) ─────────────────────────────────────────
-app.use(session({ secret: process.env.JWT_SECRET || 'testsecret', resave: false, saveUninitialized: false }));
+const sessionSecret = process.env.SESSION_SECRET || getJwtSecret();
+
+const sessionStore = createSessionStore({
+  mongoUri: process.env.MONGODB_URI,
+  ttlSeconds: 60 * 60 * 24 * 14,
+});
+
+app.use(session({
+  secret: sessionSecret || 'dev-session-secret',
+  resave: false,
+  saveUninitialized: false,
+  store: sessionStore,
+  cookie: {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    maxAge: 14 * 24 * 60 * 60 * 1000,
+  },
+}));
 app.use(passport.initialize());
 app.use(passport.session());
 
 // ── Static uploads ─────────────────────────────────────────────────────────────
 app.use('/uploads', express.static(path.join(__dirname, 'uploads')));
 
-// ── Request logger ─────────────────────────────────────────────────────────────
+// ── Request logger (structured JSON + correlation ID) ─────────────────────────
 app.use((req, res, next) => {
   const start = Date.now();
+  req.requestId = logger.getRequestId(req);
+  res.setHeader('x-request-id', req.requestId);
+
   res.on('finish', () => {
-    const ms = Date.now() - start;
-    const color = res.statusCode >= 500 ? '\x1b[31m'
-                : res.statusCode >= 400 ? '\x1b[33m'
-                : res.statusCode >= 200 ? '\x1b[32m'
-                : '\x1b[36m';
-    console.log(`${color}${req.method} ${req.originalUrl} → ${res.statusCode} (${ms}ms)\x1b[0m`);
+    logger.info('http_request', {
+      requestId: req.requestId,
+      method: req.method,
+      path: req.originalUrl,
+      statusCode: res.statusCode,
+      durationMs: Date.now() - start,
+    });
   });
+
   next();
 });
 
@@ -86,7 +112,11 @@ app.use('/api/notifications', require('./routes/notificationRoutes'));
 
 // ── 404 ────────────────────────────────────────────────────────────────────────
 app.use((req, res) => {
-  console.warn(`\x1b[33m⚠️  404: ${req.method} ${req.originalUrl}\x1b[0m`);
+  logger.warn('route_not_found', {
+    requestId: req.requestId,
+    method: req.method,
+    path: req.originalUrl,
+  });
   res.status(404).json({ success: false, message: `Route ${req.originalUrl} not found.` });
 });
 

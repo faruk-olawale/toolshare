@@ -2,7 +2,7 @@ const express = require('express');
 const router = express.Router();
 const { body } = require('express-validator');
 const passport = require('../config/passport');
-const { register, login, googleAuthCallback, getProfile, updateProfile } = require('../controllers/authController');
+const { register, login, logout, googleAuthCallback, getProfile, updateProfile } = require('../controllers/authController');
 const { forgotPassword, resetPassword } = require('../controllers/passwordController');
 const { protect } = require('../middleware/auth');
 const { authLimiter, passwordResetLimiter } = require('../middleware/rateLimiter');
@@ -26,6 +26,7 @@ router.get('/google/callback',
   googleAuthCallback
 );
 
+router.post('/logout', protect, logout);
 router.get('/profile', protect, getProfile);
 router.put('/profile', protect, updateProfile);
 

@@ -1,5 +1,7 @@
 const jwt = require('jsonwebtoken');
 const User = require('../models/User');
+const { COOKIE_NAME, parseCookies } = require('../utils/authCookie');
+const { getJwtSecret } = require('../utils/authSecrets');
 
 const protect = async (req, res, next) => {
   try {
@@ -10,13 +12,18 @@ const protect = async (req, res, next) => {
     }
 
     if (!token) {
+      const cookies = parseCookies(req.headers.cookie);
+      token = cookies[COOKIE_NAME];
+    }
+
+    if (!token) {
       return res.status(401).json({
         success: false,
         message: 'Access denied. No token provided.',
       });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
+    const decoded = jwt.verify(token, getJwtSecret());
     const user = await User.findById(decoded.id);
 
     if (!user) {
