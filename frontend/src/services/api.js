@@ -1,36 +1,38 @@
 import axios from 'axios';
+import { authStorage } from '../utils/authStorage';
 
 const BASE_URL = import.meta.env.VITE_API_URL || 'https://toolshare-africa-api.onrender.com/api';
 
 const api = axios.create({
   baseURL: BASE_URL,
+  withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
 });
 
-// Attach JWT token to every request
-api.interceptors.request.use((config) => {
-  const token = localStorage.getItem('tsa_token');
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
+const redirectTo = (targetUrl) => {
+  const current = `${window.location.pathname}${window.location.search}`;
 
-// Global response error handling
+  if (current !== targetUrl) {
+    window.location.assign(targetUrl);
+  }
+};
+
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response?.status === 401) {
-      localStorage.removeItem('tsa_token');
-      localStorage.removeItem('tsa_user');
-      window.location.href = '/login';
+    const { status, data } = error.response || {};
+
+    if (status === 401) {
+      authStorage.clearSession();
+      redirectTo('/login');
     }
-    if (error.response?.status === 403 && error.response?.data?.suspended) {
-      localStorage.removeItem('tsa_token');
-      localStorage.removeItem('tsa_user');
-      const reason = encodeURIComponent(error.response.data.reason || 'Policy violation');
-      window.location.href = `/suspended?reason=${reason}`;
+
+    if (status === 403 && data?.suspended) {
+      authStorage.clearSession();
+      const reason = encodeURIComponent(data.reason || 'Policy violation');
+      redirectTo(`/suspended?reason=${reason}`);
     }
+
     return Promise.reject(error);
   }
 );
