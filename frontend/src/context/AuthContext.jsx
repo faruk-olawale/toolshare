@@ -15,19 +15,11 @@ export const AuthProvider = ({ children }) => {
 
   const syncUser = useCallback((nextUser) => {
     setUser(nextUser);
-
-    const token = authStorage.getToken();
-    if (token) {
-      authStorage.setSession({ token, user: nextUser });
-    }
+    authStorage.setSession({ user: nextUser });
   }, []);
 
+
   const loadUser = useCallback(async () => {
-   const token = authStorage.getToken();
-    if (!token) {
-      setLoading(false);
-      return;
-    }
     try {
       const { data } = await api.get('/auth/profile');
       syncUser(data.user);
@@ -36,7 +28,7 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-  }, []);
+    }, [clearAuthState, syncUser]);
 
   useEffect(() => {
     loadUser();
@@ -44,7 +36,7 @@ export const AuthProvider = ({ children }) => {
 
    useEffect(() => {
     const onStorage = (event) => {
-      if ([authStorage.keys.token, authStorage.keys.user].includes(event.key)) {
+      if ([authStorage.keys.user].includes(event.key)) {
         setUser(authStorage.getStoredUser());
       }
     };
@@ -64,22 +56,27 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     const { data } = await api.post('/auth/login', { email, password });
-    authStorage.setSession({ token: data.token, user: data.user });
+    authStorage.setSession({ user: data.user });
     setUser(data.user);
     return data;
   };
 
   const register = async (formData) => {
     const { data } = await api.post('/auth/register', formData);
-    authStorage.setSession({ token: data.token, user: data.user });
+    authStorage.setSession({ user: data.user });
     setUser(data.user);
     return data;
   };
 
-  const logout = () => {
-    setUser(null);
-    clearAuthState();
+
+    const logout = async () => {
+    try {
+      await api.post('/auth/logout');
+    } finally {
+      clearAuthState();
+    }
   };
+
 
    const updateUser = (updatedUser) => {
     syncUser(updatedUser);
@@ -91,6 +88,7 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
+
 
 export const useAuth = () => {
   const ctx = useContext(AuthContext);

@@ -10,15 +10,13 @@ export default function GoogleSuccess() {
   const { updateUser } = useAuth();
 
   useEffect(() => {
-    const token = searchParams.get('token');
     const error = searchParams.get('error');
 
-    if (error || !token) {
+    if (error) {
       navigate('/login?error=oauth_failed');
       return;
     }
 
-    localStorage.setItem('tsa_token', token);
 
     api.get('/auth/profile').then(({ data }) => {
       updateUser(data.user);
@@ -26,7 +24,8 @@ export default function GoogleSuccess() {
     }).catch(() => {
       navigate('/login?error=oauth_failed');
     });
-  }, []);
+   }, [navigate, searchParams, updateUser]);
 
   return <LoadingScreen />;
+
 }

@@ -2,6 +2,7 @@ const { validationResult } = require('express-validator');
 const User = require('../models/User');
 const { generateToken } = require('../utils/generateToken');
 const { sendEmail } = require('../utils/sendEmail');
+const { setAuthCookie, clearAuthCookie } = require('../utils/authCookie');
 
 // @desc    Register
 const register = async (req, res, next) => {
@@ -15,6 +16,7 @@ const register = async (req, res, next) => {
 
     const user = await User.create({ name, email, passwordHash: password, phone, location, role });
     const token = generateToken(user._id);
+    setAuthCookie(res, token);
 
     // Welcome email
     sendEmail({
@@ -42,6 +44,7 @@ const login = async (req, res, next) => {
     if (!isMatch) return res.status(401).json({ success: false, message: 'Invalid email or password.' });
 
     const token = generateToken(user._id);
+    setAuthCookie(res, token);
     res.status(200).json({ success: true, message: 'Login successful.', token, user: user.toJSON() });
   } catch (error) { next(error); }
 };
@@ -50,11 +53,20 @@ const login = async (req, res, next) => {
 const googleAuthCallback = async (req, res) => {
   try {
     const token = generateToken(req.user._id);
-    res.redirect(`${process.env.CLIENT_URL}/auth/google/success?token=${token}`);
+    setAuthCookie(res, token);
+    res.redirect(`${process.env.CLIENT_URL}/auth/google/success`);
   } catch (error) {
     res.redirect(`${process.env.CLIENT_URL}/login?error=oauth_failed`);
   }
 };
+
+
+// @desc    Logout
+const logout = async (req, res) => {
+  clearAuthCookie(res);
+  res.status(200).json({ success: true, message: 'Logged out successfully.' });
+};
+
 
 // @desc    Get profile
 const getProfile = async (req, res, next) => {
@@ -73,4 +85,4 @@ const updateProfile = async (req, res, next) => {
   } catch (error) { next(error); }
 };
 
-module.exports = { register, login, googleAuthCallback, getProfile, updateProfile };
+module.exports = { register, login, logout, googleAuthCallback, getProfile, updateProfile };

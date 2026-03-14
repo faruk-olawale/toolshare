@@ -6,6 +6,7 @@ const mongoSanitize = require('express-mongo-sanitize');
 const path       = require('path');
 const session    = require('express-session');
 const passport   = require('./config/passport');
+const MongoSessionStore = require('./utils/mongoSessionStore');
 const errorHandler = require('./middleware/errorHandler');
 const { apiLimiter, authLimiter, supportLimiter, kycLimiter } = require('./middleware/rateLimiter');
 
@@ -51,10 +52,21 @@ if (!sessionSecret && process.env.NODE_ENV === 'production') {
   throw new Error('SESSION_SECRET (or JWT_SECRET) must be set in production');
 }
 
+const sessionStore = process.env.MONGODB_URI
+  ? new MongoSessionStore({ ttlSeconds: 60 * 60 * 24 * 14 })
+  : undefined;
+
 app.use(session({
   secret: sessionSecret || 'dev-session-secret',
   resave: false,
   saveUninitialized: false,
+  store: sessionStore,
+  cookie: {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: process.env.NODE_ENV === 'production' ? 'none' : 'lax',
+    maxAge: 14 * 24 * 60 * 60 * 1000,
+  },
 }));
 app.use(passport.initialize());
 app.use(passport.session());

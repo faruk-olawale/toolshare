@@ -5,6 +5,7 @@ const BASE_URL = import.meta.env.VITE_API_URL || 'https://toolshare-africa-api.o
 
 const api = axios.create({
   baseURL: BASE_URL,
+  withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
 });
 
@@ -17,13 +18,6 @@ const redirectTo = (targetUrl) => {
   }
 };
 
-api.interceptors.request.use((config) => {
-  const token = authStorage.getToken();
-  if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
-  }
-  return config;
-});
 
 // Global response error handling
 api.interceptors.response.use(
