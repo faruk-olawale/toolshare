@@ -9,7 +9,6 @@ const api = axios.create({
   headers: { 'Content-Type': 'application/json' },
 });
 
-// Attach JWT token to every request
 const redirectTo = (targetUrl) => {
   const current = `${window.location.pathname}${window.location.search}`;
 
@@ -18,22 +17,22 @@ const redirectTo = (targetUrl) => {
   }
 };
 
-
-// Global response error handling
 api.interceptors.response.use(
   (response) => response,
   (error) => {
-   const { status, data } = error.response || {};
+    const { status, data } = error.response || {};
 
     if (status === 401) {
       authStorage.clearSession();
       redirectTo('/login');
     }
+
     if (status === 403 && data?.suspended) {
       authStorage.clearSession();
       const reason = encodeURIComponent(data.reason || 'Policy violation');
       redirectTo(`/suspended?reason=${reason}`);
     }
+
     return Promise.reject(error);
   }
 );

@@ -17,15 +17,13 @@ export default function GoogleSuccess() {
       return;
     }
 
-
     api.get('/auth/profile').then(({ data }) => {
       updateUser(data.user);
       navigate('/dashboard');
     }).catch(() => {
       navigate('/login?error=oauth_failed');
     });
-   }, [navigate, searchParams, updateUser]);
+  }, [navigate, searchParams, updateUser]);
 
   return <LoadingScreen />;
-
 }

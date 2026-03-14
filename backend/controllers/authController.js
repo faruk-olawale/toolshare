@@ -67,7 +67,6 @@ const logout = async (req, res) => {
   res.status(200).json({ success: true, message: 'Logged out successfully.' });
 };
 
-
 // @desc    Get profile
 const getProfile = async (req, res, next) => {
   try {

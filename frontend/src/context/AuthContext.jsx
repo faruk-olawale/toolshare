@@ -18,7 +18,6 @@ export const AuthProvider = ({ children }) => {
     authStorage.setSession({ user: nextUser });
   }, []);
 
-
   const loadUser = useCallback(async () => {
     try {
       const { data } = await api.get('/auth/profile');
@@ -28,15 +27,15 @@ export const AuthProvider = ({ children }) => {
     } finally {
       setLoading(false);
     }
-    }, [clearAuthState, syncUser]);
+  }, [clearAuthState, syncUser]);
 
   useEffect(() => {
     loadUser();
   }, [loadUser]);
 
-   useEffect(() => {
+  useEffect(() => {
     const onStorage = (event) => {
-      if ([authStorage.keys.user].includes(event.key)) {
+      if (event.key === authStorage.keys.user) {
         setUser(authStorage.getStoredUser());
       }
     };
@@ -56,20 +55,17 @@ export const AuthProvider = ({ children }) => {
 
   const login = async (email, password) => {
     const { data } = await api.post('/auth/login', { email, password });
-    authStorage.setSession({ user: data.user });
-    setUser(data.user);
+    syncUser(data.user);
     return data;
   };
 
   const register = async (formData) => {
     const { data } = await api.post('/auth/register', formData);
-    authStorage.setSession({ user: data.user });
-    setUser(data.user);
+    syncUser(data.user);
     return data;
   };
 
-
-    const logout = async () => {
+  const logout = async () => {
     try {
       await api.post('/auth/logout');
     } finally {
@@ -77,8 +73,7 @@ export const AuthProvider = ({ children }) => {
     }
   };
 
-
-   const updateUser = (updatedUser) => {
+  const updateUser = (updatedUser) => {
     syncUser(updatedUser);
   };
 
@@ -88,7 +83,6 @@ export const AuthProvider = ({ children }) => {
     </AuthContext.Provider>
   );
 };
-
 
 export const useAuth = () => {
   const ctx = useContext(AuthContext);
