@@ -1,6 +1,13 @@
+const logger = require('../utils/logger');
+
 const errorHandler = (err, req, res, next) => {
-  console.error(`\x1b[31m❌ Error on ${req.method} ${req.originalUrl}:\x1b[0m`, err.message);
-  if (process.env.NODE_ENV !== 'production') console.error(err.stack);
+  logger.error('request_error', {
+    requestId: req.requestId,
+    method: req.method,
+    path: req.originalUrl,
+    error: err.message,
+    ...(process.env.NODE_ENV !== 'production' && { stack: err.stack }),
+  });
 
   let statusCode = err.statusCode || 500;
   let message = err.message || 'Internal Server Error';

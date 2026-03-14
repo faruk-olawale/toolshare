@@ -1,11 +1,13 @@
 const rateLimit = require('express-rate-limit');
 
-// In test environment, disable all rate limiting so tests run freely
-const isTest = process.env.NODE_ENV === 'test';
+// Enable limiter only when explicitly turned on (e.g. production env).
+// Example:
+//   ENABLE_RATE_LIMITER=true  -> limiter active
+//   ENABLE_RATE_LIMITER=false -> limiter bypassed
+const limiterEnabled = process.env.ENABLE_RATE_LIMITER === 'true' || process.env.NODE_ENV === 'production';
 
 const passThrough = (req, res, next) => next();
-
-const makeLimit = (options) => isTest ? passThrough : rateLimit(options);
+const makeLimit = (options) => (limiterEnabled ? rateLimit(options) : passThrough);
 
 const apiLimiter = makeLimit({
   windowMs: 15 * 60 * 1000,
