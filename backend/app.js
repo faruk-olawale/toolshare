@@ -45,7 +45,17 @@ app.use(express.urlencoded({ extended: true, limit: '10mb' }));
 app.use(mongoSanitize());
 
 // ── Session + Passport (Google OAuth) ─────────────────────────────────────────
-app.use(session({ secret: process.env.JWT_SECRET || 'testsecret', resave: false, saveUninitialized: false }));
+const sessionSecret = process.env.SESSION_SECRET || process.env.JWT_SECRET;
+
+if (!sessionSecret && process.env.NODE_ENV === 'production') {
+  throw new Error('SESSION_SECRET (or JWT_SECRET) must be set in production');
+}
+
+app.use(session({
+  secret: sessionSecret || 'dev-session-secret',
+  resave: false,
+  saveUninitialized: false,
+}));
 app.use(passport.initialize());
 app.use(passport.session());
 
