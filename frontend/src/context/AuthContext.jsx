@@ -1,24 +1,38 @@
 import { createContext, useContext, useState, useEffect, useCallback } from 'react';
 import api from '../services/api';
+import { authStorage } from '../utils/authStorage';
 
 const AuthContext = createContext(null);
 
 export const AuthProvider = ({ children }) => {
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(authStorage.getStoredUser());
   const [loading, setLoading] = useState(true);
 
+  const clearAuthState = useCallback(() => {
+    authStorage.clearSession();
+    setUser(null);
+  }, []);
+
+  const syncUser = useCallback((nextUser) => {
+    setUser(nextUser);
+
+    const token = authStorage.getToken();
+    if (token) {
+      authStorage.setSession({ token, user: nextUser });
+    }
+  }, []);
+
   const loadUser = useCallback(async () => {
-    const token = localStorage.getItem('tsa_token');
+   const token = authStorage.getToken();
     if (!token) {
       setLoading(false);
       return;
     }
     try {
       const { data } = await api.get('/auth/profile');
-      setUser(data.user);
+      syncUser(data.user);
     } catch {
-      localStorage.removeItem('tsa_token');
-      localStorage.removeItem('tsa_user');
+      clearAuthState();
     } finally {
       setLoading(false);
     }
@@ -28,27 +42,48 @@ export const AuthProvider = ({ children }) => {
     loadUser();
   }, [loadUser]);
 
+   useEffect(() => {
+    const onStorage = (event) => {
+      if ([authStorage.keys.token, authStorage.keys.user].includes(event.key)) {
+        setUser(authStorage.getStoredUser());
+      }
+    };
+
+    const onAuthCleared = () => {
+      setUser(null);
+    };
+
+    window.addEventListener('storage', onStorage);
+    window.addEventListener(authStorage.keys.clearedEvent, onAuthCleared);
+
+    return () => {
+      window.removeEventListener('storage', onStorage);
+      window.removeEventListener(authStorage.keys.clearedEvent, onAuthCleared);
+    };
+  }, []);
+
   const login = async (email, password) => {
     const { data } = await api.post('/auth/login', { email, password });
-    localStorage.setItem('tsa_token', data.token);
+    authStorage.setSession({ token: data.token, user: data.user });
     setUser(data.user);
     return data;
   };
 
   const register = async (formData) => {
     const { data } = await api.post('/auth/register', formData);
-    localStorage.setItem('tsa_token', data.token);
+    authStorage.setSession({ token: data.token, user: data.user });
     setUser(data.user);
     return data;
   };
 
   const logout = () => {
-    localStorage.removeItem('tsa_token');
-    localStorage.removeItem('tsa_user');
     setUser(null);
+    clearAuthState();
   };
 
-  const updateUser = (updatedUser) => setUser(updatedUser);
+   const updateUser = (updatedUser) => {
+    syncUser(updatedUser);
+  };
 
   return (
     <AuthContext.Provider value={{ user, loading, login, register, logout, updateUser }}>
