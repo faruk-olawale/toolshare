@@ -8,12 +8,12 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
           <div className="md:col-span-2">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-9 h-9 bg-brand-500 rounded-xl flex items-center justify-center">
+              <div className="w-9 h-9 bg-[#1a5c3a] rounded-xl flex items-center justify-center">
                 <Wrench size={18} className="text-white" />
               </div>
               <div>
                 <span className="font-display font-bold text-white text-lg leading-none">ToolShare</span>
-                <span className="block text-xs text-brand-400 leading-none">Africa</span>
+                <span className="block text-xs text-[#3d9166] leading-none">Africa</span>
               </div>
             </div>
             <p className="text-sm text-gray-400 max-w-xs leading-relaxed">
@@ -21,7 +21,7 @@ export default function Footer() {
             </p>
             <div className="flex items-center gap-3 mt-5">
               {[Twitter, Instagram, Linkedin, Mail].map((Icon, i) => (
-                <a key={i} href="#" className="w-8 h-8 bg-gray-800 hover:bg-brand-500 rounded-lg flex items-center justify-center transition-colors">
+                <a key={i} href="#" className="w-8 h-8 bg-gray-800 hover:bg-[#1a5c3a] rounded-lg flex items-center justify-center transition-colors">
                   <Icon size={14} />
                 </a>
               ))}

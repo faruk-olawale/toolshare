@@ -74,12 +74,12 @@ export default function AvailabilityCalendar({ bookedRanges = [], onRangeSelect,
     const past    = isPast(d);
     const booked  = isBooked(d);
     const sel     = !readOnly && isSelected(d);
-    const todayCls = isToday(d) ? 'ring-2 ring-brand-400' : '';
+    const todayCls = isToday(d) ? 'ring-2 ring-[#3d9166]' : '';
 
     if (booked)  return `${todayCls} bg-red-100 text-red-400 cursor-not-allowed line-through`;
     if (past)    return `${todayCls} text-gray-300 cursor-not-allowed`;
-    if (sel)     return `${todayCls} bg-brand-500 text-white font-semibold`;
-    if (!readOnly) return `${todayCls} hover:bg-brand-50 hover:text-brand-700 cursor-pointer text-gray-700`;
+    if (sel)     return `${todayCls} bg-[#1a5c3a] text-white font-semibold`;
+    if (!readOnly) return `${todayCls} hover:bg-[#eef6f1] hover:text-[#154d30] cursor-pointer text-gray-700`;
     return `${todayCls} text-gray-700`;
   };
 
@@ -125,27 +125,27 @@ export default function AvailabilityCalendar({ bookedRanges = [], onRangeSelect,
         </div>
         {!readOnly && (
           <div className="flex items-center gap-1.5">
-            <div className="w-3 h-3 rounded bg-brand-500" />
+            <div className="w-3 h-3 rounded bg-[#1a5c3a]" />
             <span className="text-xs text-gray-500">Your selection</span>
           </div>
         )}
         <div className="flex items-center gap-1.5">
-          <div className="w-3 h-3 rounded bg-white border-2 border-brand-400" />
+          <div className="w-3 h-3 rounded bg-white border-2 border-[#3d9166]" />
           <span className="text-xs text-gray-500">Today</span>
         </div>
       </div>
 
       {/* Selected range display */}
       {!readOnly && selectStart && selectEnd && (
-        <div className="px-5 py-3 bg-brand-50 border-t border-brand-100 flex items-center justify-between">
+        <div className="px-5 py-3 bg-[#eef6f1] border-t border-[#d4eadd] flex items-center justify-between">
           <div>
-            <p className="text-xs font-semibold text-brand-700">Selected dates</p>
-            <p className="text-sm text-brand-900 font-bold">
+            <p className="text-xs font-semibold text-[#154d30]">Selected dates</p>
+            <p className="text-sm text-[#0a2d1b] font-bold">
               {selectStart.toLocaleDateString()} → {selectEnd.toLocaleDateString()}
             </p>
           </div>
           <button onClick={() => { setSelectStart(null); setSelectEnd(null); }}
-            className="text-xs text-brand-500 hover:text-brand-700 underline">Clear</button>
+            className="text-xs text-[#1a5c3a] hover:text-[#154d30] underline">Clear</button>
         </div>
       )}
     </div>

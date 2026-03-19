@@ -45,12 +45,12 @@ export default function SupportForm({ source = 'contact', defaultSubject = '', p
       </div>
       <h3 className="text-xl font-display font-bold text-gray-900 mb-2">Message Received!</h3>
       <p className="text-gray-500 text-sm mb-3">Your ticket number is:</p>
-      <div className="bg-brand-50 border border-brand-100 rounded-xl py-3 px-6 inline-block mb-4">
-        <span className="text-brand-600 font-bold text-2xl font-mono">{submitted}</span>
+      <div className="bg-[#eef6f1] border border-[#d4eadd] rounded-xl py-3 px-6 inline-block mb-4">
+        <span className="text-[#1a5c3a] font-bold text-2xl font-mono">{submitted}</span>
       </div>
       <p className="text-gray-400 text-sm mb-6">We'll reply to <strong>{form.email}</strong> within 24 hours.</p>
       <button onClick={() => { setSubmitted(null); setForm({ ...form, message: '', subject: defaultSubject }); }}
-        className="text-sm text-brand-600 hover:underline">Submit another message</button>
+        className="text-sm text-[#1a5c3a] hover:underline">Submit another message</button>
     </div>
   );
 

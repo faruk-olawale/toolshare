@@ -22,7 +22,7 @@ export default function ReviewList({ reviews = [], averageRating, title = 'Revie
           <div key={review._id} className="border-b border-gray-100 pb-4 last:border-0 last:pb-0">
             <div className="flex items-start justify-between gap-2 mb-1">
               <div className="flex items-center gap-2">
-                <div className="w-8 h-8 bg-brand-100 rounded-full flex items-center justify-center text-brand-700 font-bold text-sm flex-shrink-0">
+                <div className="w-8 h-8 bg-[#d4eadd] rounded-full flex items-center justify-center text-[#154d30] font-bold text-sm flex-shrink-0">
                   {review.reviewerId?.name?.[0]?.toUpperCase() || '?'}
                 </div>
                 <div>

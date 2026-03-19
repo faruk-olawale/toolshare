@@ -59,15 +59,15 @@ export default function BankDetails() {
           <p className="text-gray-500">Add your bank account to receive rental payments automatically</p>
         </div>
 
-        <div className="card p-5 mb-6 bg-gradient-to-br from-brand-50 to-earth-50 border-brand-100">
+        <div className="card p-5 mb-6 bg-gradient-to-br from-[#eef6f1] to-[#eef6f1] border-[#d4eadd]">
           <h3 className="font-semibold text-gray-800 mb-3">💡 How Payouts Work</h3>
           <div className="space-y-2 text-sm text-gray-600">
-            <div className="flex items-start gap-2"><span className="text-brand-500 font-bold">1.</span><span>Renter pays for approved booking via Paystack</span></div>
-            <div className="flex items-start gap-2"><span className="text-brand-500 font-bold">2.</span><span>ToolShare deducts <strong>10% platform fee</strong></span></div>
-            <div className="flex items-start gap-2"><span className="text-brand-500 font-bold">3.</span><span><strong>90% is transferred</strong> directly to your bank account</span></div>
-            <div className="flex items-start gap-2"><span className="text-brand-500 font-bold">4.</span><span>Money arrives same day via NIP transfer</span></div>
+            <div className="flex items-start gap-2"><span className="text-[#1a5c3a] font-bold">1.</span><span>Renter pays for approved booking via Paystack</span></div>
+            <div className="flex items-start gap-2"><span className="text-[#1a5c3a] font-bold">2.</span><span>ToolShare deducts <strong>10% platform fee</strong></span></div>
+            <div className="flex items-start gap-2"><span className="text-[#1a5c3a] font-bold">3.</span><span><strong>90% is transferred</strong> directly to your bank account</span></div>
+            <div className="flex items-start gap-2"><span className="text-[#1a5c3a] font-bold">4.</span><span>Money arrives same day via NIP transfer</span></div>
           </div>
-          <div className="mt-4 bg-white rounded-xl p-4 border border-brand-100">
+          <div className="mt-4 bg-white rounded-xl p-4 border border-[#d4eadd]">
             <p className="text-xs text-gray-400 font-medium uppercase tracking-wide mb-2">Example Payout</p>
             <div className="space-y-1 text-sm">
               <div className="flex justify-between text-gray-600"><span>Renter pays</span><span>₦20,000</span></div>
@@ -121,7 +121,7 @@ export default function BankDetails() {
                       key={bank.code}
                       type="button"
                       onClick={() => selectBank(bank)}
-                      className="w-full text-left px-4 py-2.5 text-sm hover:bg-brand-50 hover:text-brand-700 transition-colors border-b border-gray-50 last:border-0"
+                      className="w-full text-left px-4 py-2.5 text-sm hover:bg-[#eef6f1] hover:text-[#154d30] transition-colors border-b border-gray-50 last:border-0"
                     >
                       {bank.name}
                     </button>

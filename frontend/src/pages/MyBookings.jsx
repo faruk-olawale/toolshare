@@ -167,7 +167,7 @@ function BookingCard({ booking, onUpdate, reviewedIds, setReviewedIds, onCancel 
           <div className="flex items-center gap-1 text-xs text-gray-400 mt-0.5">
             <Calendar size={11} /> {fmt(booking.startDate)} → {fmt(booking.endDate)}
           </div>
-          <p className="text-brand-600 font-bold text-sm mt-1">
+          <p className="text-[#1a5c3a] font-bold text-sm mt-1">
             ₦{booking.totalAmount?.toLocaleString()}
             {booking.deposit?.amount > 0 && (
               <span className="text-gray-400 font-normal text-xs ml-2">
@@ -421,7 +421,7 @@ export default function MyBookings() {
 
   if (paymentVerifying) return (
     <div className="py-20 flex flex-col items-center justify-center gap-4">
-      <div className="w-12 h-12 border-4 border-brand-200 border-t-brand-500 rounded-full animate-spin" />
+      <div className="w-12 h-12 border-4 border-[#a8d4bb] border-t-[#1a5c3a] rounded-full animate-spin" />
       <p className="text-gray-600 font-medium">Verifying your payment...</p>
       <p className="text-sm text-gray-400">Please wait, do not refresh</p>
     </div>
@@ -474,7 +474,7 @@ export default function MyBookings() {
               return (
                 <button key={s} onClick={() => setFilter(s)}
                   className={`px-3 py-1.5 rounded-xl text-xs font-medium capitalize transition-all ${
-                    filter === s ? 'bg-brand-500 text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    filter === s ? 'bg-[#1a5c3a] text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}>
                   {s} <span className="opacity-70">({count})</span>
                 </button>

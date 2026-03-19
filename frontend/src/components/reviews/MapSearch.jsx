@@ -124,7 +124,7 @@ export default function MapSearch() {
             <div className="flex gap-2">
               {RADIUS_OPTIONS.map(({ label, value }) => (
                 <button key={value} onClick={() => handleRadiusChange(value)}
-                  className={`flex-1 py-1.5 text-xs rounded-lg border transition-colors ${radius === value ? 'bg-brand-500 text-white border-brand-500' : 'border-gray-200 text-gray-600 hover:border-brand-300'}`}>
+                  className={`flex-1 py-1.5 text-xs rounded-lg border transition-colors ${radius === value ? 'bg-[#1a5c3a] text-white border-[#1a5c3a]' : 'border-gray-200 text-gray-600 hover:border-[#6db591]'}`}>
                   {label}
                 </button>
               ))}
@@ -142,7 +142,7 @@ export default function MapSearch() {
           )}
           {tools.map(tool => (
             <div key={tool._id} onClick={() => setSelected(tool)}
-              className={`card p-3 cursor-pointer transition-all hover:border-brand-200 ${selected?._id === tool._id ? 'border-brand-300 bg-brand-50' : ''}`}>
+              className={`card p-3 cursor-pointer transition-all hover:border-[#a8d4bb] ${selected?._id === tool._id ? 'border-[#6db591] bg-[#eef6f1]' : ''}`}>
               <div className="flex gap-2">
                 <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-earth-100">
                   <img src={tool.images?.[0]?.startsWith('http') ? tool.images[0] : `${BASE_URL}${tool.images?.[0]}`}
@@ -152,7 +152,7 @@ export default function MapSearch() {
                   <p className="font-semibold text-gray-900 text-sm truncate">{tool.name}</p>
                   <p className="text-xs text-gray-400">{tool.location}</p>
                   <div className="flex items-center justify-between mt-0.5">
-                    <p className="text-brand-600 font-bold text-xs">₦{tool.pricePerDay?.toLocaleString()}/day</p>
+                    <p className="text-[#1a5c3a] font-bold text-xs">₦{tool.pricePerDay?.toLocaleString()}/day</p>
                     {tool.averageRating && (
                       <span className="text-xs text-gray-500">⭐ {tool.averageRating}</span>
                     )}
@@ -181,7 +181,7 @@ export default function MapSearch() {
                 <div>
                   <p className="font-bold text-gray-900 text-sm">{selected.name}</p>
                   <p className="text-xs text-gray-400">{selected.location}</p>
-                  <p className="text-brand-600 font-bold text-sm">₦{selected.pricePerDay?.toLocaleString()}/day</p>
+                  <p className="text-[#1a5c3a] font-bold text-sm">₦{selected.pricePerDay?.toLocaleString()}/day</p>
                   {selected.averageRating && (
                     <div className="flex items-center gap-1 mt-0.5">
                       <StarRating value={Math.round(selected.averageRating)} readonly size={12} />

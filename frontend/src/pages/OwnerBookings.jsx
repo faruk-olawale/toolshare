@@ -24,7 +24,7 @@ const STATUS_STYLES = {
 
 const PAYMENT_STYLES = {
   unpaid:            'bg-gray-50 text-gray-500 border-gray-100',
-  paid:              'bg-brand-50 text-brand-700 border-brand-100',
+  paid:              'bg-[#eef6f1] text-[#154d30] border-[#d4eadd]',
   partially_released:'bg-blue-50 text-blue-700 border-blue-100',
   fully_released:    'bg-green-50 text-green-700 border-green-100',
   refunded:          'bg-purple-50 text-purple-700 border-purple-100',
@@ -226,7 +226,7 @@ function BookingCard({ booking, onUpdate, reviewedIds, setReviewedIds }) {
               </div>
             </div>
             <div className="text-right flex-shrink-0">
-              <p className="text-brand-600 font-bold text-lg">₦{booking.totalAmount?.toLocaleString()}</p>
+              <p className="text-[#1a5c3a] font-bold text-lg">₦{booking.totalAmount?.toLocaleString()}</p>
               {booking.deposit?.amount > 0 && (
                 <p className="text-xs text-gray-400">+₦{booking.deposit.amount.toLocaleString()} deposit</p>
               )}
@@ -564,7 +564,7 @@ export default function OwnerBookings() {
               return (
                 <button key={s} onClick={() => setFilter(s)}
                   className={`px-3 py-1.5 rounded-xl text-xs font-medium capitalize transition-all ${
-                    filter === s ? 'bg-brand-500 text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                    filter === s ? 'bg-[#1a5c3a] text-white shadow-sm' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
                   }`}>
                   {s} <span className="opacity-70">({count})</span>
                 </button>

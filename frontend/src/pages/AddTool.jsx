@@ -192,7 +192,7 @@ export default function AddTool() {
             )}
 
             {previews.length < 5 && (
-              <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-brand-300 hover:bg-brand-50 transition-colors">
+              <label className="flex flex-col items-center justify-center w-full h-28 border-2 border-dashed border-gray-200 rounded-xl cursor-pointer hover:border-[#6db591] hover:bg-[#eef6f1] transition-colors">
                 <ImagePlus size={24} className="text-gray-400 mb-2" />
                 <span className="text-sm text-gray-500">Click to upload tool photos</span>
                 <span className="text-xs text-gray-400">PNG, JPG, WEBP up to 10MB each</span>

@@ -11,7 +11,7 @@ function DisputeResolveForm({ booking, onResolved }) {
 
   if (!open) return (
     <button onClick={() => setOpen(true)}
-      className="w-full py-2.5 text-sm font-semibold bg-brand-600 hover:bg-brand-700 text-white rounded-xl transition-colors">
+      className="w-full py-2.5 text-sm font-semibold bg-[#1a5c3a] hover:bg-[#154d30] text-white rounded-xl transition-colors">
       ⚖️ Resolve This Dispute
     </button>
   );
@@ -54,7 +54,7 @@ function DisputeResolveForm({ booking, onResolved }) {
             }
             setLoading(false);
           }}
-          className="flex-1 bg-brand-600 hover:bg-brand-700 text-white text-sm font-semibold px-4 py-2.5 rounded-xl disabled:opacity-50 transition-colors">
+          className="flex-1 bg-[#1a5c3a] hover:bg-[#154d30] text-white text-sm font-semibold px-4 py-2.5 rounded-xl disabled:opacity-50 transition-colors">
           {loading ? 'Resolving...' : '⚖️ Confirm Resolution'}
         </button>
       </div>

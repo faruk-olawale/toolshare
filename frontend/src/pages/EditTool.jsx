@@ -83,7 +83,7 @@ export default function EditTool() {
               <textarea className="input-field resize-none" rows={4} value={form.description} onChange={(e) => setForm({ ...form, description: e.target.value })} />
             </div>
             <div className="flex items-center gap-3 p-4 bg-gray-50 rounded-xl">
-              <input type="checkbox" id="available" checked={form.available} onChange={(e) => setForm({ ...form, available: e.target.checked })} className="w-4 h-4 accent-brand-500" />
+              <input type="checkbox" id="available" checked={form.available} onChange={(e) => setForm({ ...form, available: e.target.checked })} className="w-4 h-4 accent-[#1a5c3a]" />
               <label htmlFor="available" className="text-sm font-medium text-gray-700">Mark as available for booking</label>
             </div>
             <div className="flex gap-3">

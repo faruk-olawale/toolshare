@@ -136,7 +136,7 @@ export function ToolPreviewModal({ tool, onApprove, onReject, onClose }) {
         <div className="p-5 space-y-3">
           <div className="flex items-start justify-between gap-2">
             <h2 className="font-display font-bold text-gray-900 text-lg">{tool.name}</h2>
-            <span className="text-brand-600 font-bold text-lg whitespace-nowrap">₦{tool.pricePerDay?.toLocaleString()}/day</span>
+            <span className="text-[#1a5c3a] font-bold text-lg whitespace-nowrap">₦{tool.pricePerDay?.toLocaleString()}/day</span>
           </div>
           <div className="flex flex-wrap gap-2">
             <span className="badge bg-purple-50 text-purple-700 border-purple-100 text-xs">{tool.category}</span>

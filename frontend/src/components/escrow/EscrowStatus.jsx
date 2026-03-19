@@ -44,9 +44,9 @@ export default function EscrowStatus({ booking }) {
   );
 
   return (
-    <div className="bg-gradient-to-br from-brand-50 to-earth-50 border border-brand-100 rounded-2xl p-5">
+    <div className="bg-gradient-to-br from-[#eef6f1] to-[#eef6f1] border border-[#d4eadd] rounded-2xl p-5">
       <div className="flex items-center gap-2 mb-4">
-        <Shield size={16} className="text-brand-500" />
+        <Shield size={16} className="text-[#1a5c3a]" />
         <p className="font-semibold text-gray-800 text-sm">Escrow Protection</p>
       </div>
       <div className="space-y-3">

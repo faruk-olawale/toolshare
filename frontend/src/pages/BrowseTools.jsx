@@ -73,11 +73,11 @@ export default function BrowseTools() {
           </div>
           <button
             onClick={() => setShowFilters(!showFilters)}
-            className={`btn-secondary flex items-center gap-2 ${showFilters ? 'border-brand-400 text-brand-600' : ''}`}
+            className={`btn-secondary flex items-center gap-2 ${showFilters ? 'border-[#3d9166] text-[#1a5c3a]' : ''}`}
           >
             <SlidersHorizontal size={16} />
             <span className="hidden sm:inline">Filters</span>
-            {hasFilters && <span className="w-2 h-2 bg-brand-500 rounded-full"></span>}
+            {hasFilters && <span className="w-2 h-2 bg-[#1a5c3a] rounded-full"></span>}
           </button>
           {hasFilters && (
             <button onClick={clearFilters} className="btn-secondary flex items-center gap-1 text-red-500 border-red-100 hover:bg-red-50">
@@ -178,7 +178,7 @@ export default function BrowseTools() {
                     key={i}
                     onClick={() => handleFilter('page', i + 1)}
                     className={`w-10 h-10 rounded-lg text-sm font-medium transition-colors ${
-                      filters.page === i + 1 ? 'bg-brand-500 text-white' : 'bg-white border border-gray-200 text-gray-600 hover:border-brand-300'
+                      filters.page === i + 1 ? 'bg-[#1a5c3a] text-white' : 'bg-white border border-gray-200 text-gray-600 hover:border-[#6db591]'
                     }`}
                   >
                     {i + 1}

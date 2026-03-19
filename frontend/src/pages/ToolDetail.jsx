@@ -127,7 +127,7 @@ export default function ToolDetail() {
                       key={i}
                       onClick={() => setActiveImg(i)}
                       className={`w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 border-2 transition-all ${
-                        i === activeImg ? 'border-brand-500' : 'border-transparent'
+                        i === activeImg ? 'border-[#1a5c3a]' : 'border-transparent'
                       }`}
                     >
                       <img src={getImgUrl(img)} className="w-full h-full object-cover" onError={(e) => { e.target.src = PLACEHOLDER; }} />
@@ -141,7 +141,7 @@ export default function ToolDetail() {
             <div className="card p-6">
               <div className="flex flex-wrap items-start justify-between gap-4 mb-4">
                 <div>
-                  <span className="text-xs font-medium text-brand-600 bg-brand-50 px-3 py-1 rounded-full border border-brand-100">
+                  <span className="text-xs font-medium text-[#1a5c3a] bg-[#eef6f1] px-3 py-1 rounded-full border border-[#d4eadd]">
                     {tool.category}
                   </span>
                   <h1 className="text-3xl font-display font-bold text-gray-900 mt-2">{tool.name}</h1>
@@ -151,7 +151,7 @@ export default function ToolDetail() {
                   </div>
                 </div>
                 <div className="text-right">
-                  <div className="text-3xl font-bold text-brand-600">₦{tool.pricePerDay?.toLocaleString()}</div>
+                  <div className="text-3xl font-bold text-[#1a5c3a]">₦{tool.pricePerDay?.toLocaleString()}</div>
                   <div className="text-sm text-gray-400">per day</div>
                 </div>
               </div>
@@ -176,7 +176,7 @@ export default function ToolDetail() {
               <div className="card p-6">
                 <h3 className="font-semibold text-gray-800 mb-4">About the Owner</h3>
                 <div className="flex items-start gap-4">
-                  <div className="w-14 h-14 bg-gradient-to-br from-brand-400 to-earth-500 rounded-2xl flex items-center justify-center flex-shrink-0">
+                  <div className="w-14 h-14 bg-gradient-to-br from-[#3d9166] to-[#3d9166] rounded-2xl flex items-center justify-center flex-shrink-0">
                     <span className="text-white text-2xl font-bold">{tool.ownerId.name?.charAt(0)}</span>
                   </div>
                   <div className="flex-1">
@@ -229,7 +229,7 @@ export default function ToolDetail() {
                     <p className={`text-xs mb-2 ${kycStatus === 'pending' ? 'text-yellow-600' : 'text-orange-600'}`}>
                       {kycStatus === 'pending' ? 'Your documents are being reviewed. You can book once approved.' : 'Verify your identity before booking any tool.'}
                     </p>
-                    <Link to="/kyc" className="text-xs font-semibold text-brand-600 hover:underline">
+                    <Link to="/kyc" className="text-xs font-semibold text-[#1a5c3a] hover:underline">
                       {kycStatus === 'pending' ? 'View Status →' : 'Complete Verification →'}
                     </Link>
                   </div>
@@ -241,7 +241,7 @@ export default function ToolDetail() {
                         <Calendar size={14} className="inline mr-1" />Select Dates
                       </label>
                       <button type="button" onClick={() => setShowCalendar(v => !v)}
-                        className="text-xs text-brand-600 hover:underline">
+                        className="text-xs text-[#1a5c3a] hover:underline">
                         {showCalendar ? 'Hide calendar' : 'Show calendar'}
                       </button>
                     </div>
@@ -294,15 +294,15 @@ export default function ToolDetail() {
 
                   {/* Price Breakdown */}
                   {totalDays > 0 && (
-                    <div className="bg-brand-50 rounded-xl p-4 border border-brand-100">
+                    <div className="bg-[#eef6f1] rounded-xl p-4 border border-[#d4eadd]">
                       <div className="space-y-2 text-sm">
                         <div className="flex justify-between text-gray-600">
                           <span>₦{tool.pricePerDay?.toLocaleString()} × {totalDays} day{totalDays > 1 ? 's' : ''}</span>
                           <span>₦{totalCost?.toLocaleString()}</span>
                         </div>
-                        <div className="flex justify-between font-bold text-gray-900 pt-1 border-t border-brand-200">
+                        <div className="flex justify-between font-bold text-gray-900 pt-1 border-t border-[#a8d4bb]">
                           <span>Total</span>
-                          <span className="text-brand-600">₦{totalCost?.toLocaleString()}</span>
+                          <span className="text-[#1a5c3a]">₦{totalCost?.toLocaleString()}</span>
                         </div>
                       </div>
                     </div>
@@ -331,7 +331,7 @@ export default function ToolDetail() {
           {/* Reviews Section */}
           <div className="card p-6 mt-6">
             <h2 className="font-display font-bold text-xl text-gray-900 mb-4">
-              ⭐ Reviews {avgRating && <span className="text-brand-600">{avgRating} / 5</span>}
+              ⭐ Reviews {avgRating && <span className="text-[#1a5c3a]">{avgRating} / 5</span>}
             </h2>
             <ReviewList reviews={reviews} averageRating={avgRating} />
           </div>

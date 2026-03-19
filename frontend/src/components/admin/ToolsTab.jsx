@@ -28,7 +28,7 @@ function ToolPreviewModal({ tool, onClose, onApprove, onReject }) {
         <div className="p-5 space-y-3">
           <div className="flex items-start justify-between gap-2">
             <h2 className="font-display font-bold text-gray-900 text-lg">{tool.name}</h2>
-            <span className="text-brand-600 font-bold text-lg whitespace-nowrap">₦{tool.pricePerDay?.toLocaleString()}/day</span>
+            <span className="text-[#1a5c3a] font-bold text-lg whitespace-nowrap">₦{tool.pricePerDay?.toLocaleString()}/day</span>
           </div>
           <div className="flex flex-wrap gap-2">
             <span className="badge bg-purple-50 text-purple-700 border-purple-100 text-xs">{tool.category}</span>
@@ -95,7 +95,7 @@ export default function ToolsTab({ pendingTools, tools: toolsProp, onVerify, onR
                   <span className="badge bg-purple-50 text-purple-700 border-purple-100 text-xs">{tool.category}</span>
                   <span className="badge bg-gray-50 text-gray-600 border-gray-100 text-xs">{tool.location}</span>
                 </div>
-                <div className="text-brand-600 font-bold text-sm mt-1">₦{tool.pricePerDay?.toLocaleString()}/day</div>
+                <div className="text-[#1a5c3a] font-bold text-sm mt-1">₦{tool.pricePerDay?.toLocaleString()}/day</div>
                 <p className="text-xs text-gray-400 truncate">{tool.ownerId?.name} · {tool.ownerId?.email}</p>
                 <span className={`inline-block mt-1 text-xs px-2 py-0.5 rounded-full font-medium ${tool.ownerId?.kyc?.status === 'approved' ? 'bg-green-50 text-green-700' : 'bg-yellow-50 text-yellow-700'}`}>
                   Owner KYC: {tool.ownerId?.kyc?.status || 'not submitted'}

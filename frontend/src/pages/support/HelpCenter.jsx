@@ -51,7 +51,7 @@ export default function HelpCenter() {
             { icon: '📄', label: 'Terms of Service', to: '/terms' },
             { icon: '💬', label: 'Contact Us', to: '/contact' },
           ].map(({ icon, label, to }) => (
-            <Link key={to} to={to} className="card p-4 text-center hover:border-brand-200 hover:-translate-y-0.5 transition-all">
+            <Link key={to} to={to} className="card p-4 text-center hover:border-[#a8d4bb] hover:-translate-y-0.5 transition-all">
               <div className="text-2xl mb-1">{icon}</div>
               <p className="text-xs font-medium text-gray-700">{label}</p>
             </Link>

@@ -37,7 +37,7 @@ export default function SupportTab({ tickets, setTickets, onRefresh }) {
               <p className="text-xs text-gray-500 mt-0.5">
                 <span className="font-medium text-gray-700">{ticket.name}</span>
                 {' · '}
-                <a href={`mailto:${ticket.email}`} className="text-brand-600 hover:underline">{ticket.email}</a>
+                <a href={`mailto:${ticket.email}`} className="text-[#1a5c3a] hover:underline">{ticket.email}</a>
                 {' · '}{new Date(ticket.createdAt).toLocaleDateString()}
               </p>
               {ticket.messages?.[0] && (
@@ -54,7 +54,7 @@ export default function SupportTab({ tickets, setTickets, onRefresh }) {
             <div className="mt-4 border-t border-gray-100 pt-4 space-y-3">
               <div className="space-y-2 max-h-64 overflow-y-auto">
                 {selectedTicket.messages.map((msg, i) => (
-                  <div key={i} className={`rounded-xl px-4 py-3 text-sm ${msg.sender === 'admin' ? 'bg-brand-50 text-brand-900 ml-8' : 'bg-gray-50 text-gray-700 mr-8'}`}>
+                  <div key={i} className={`rounded-xl px-4 py-3 text-sm ${msg.sender === 'admin' ? 'bg-[#eef6f1] text-[#0a2d1b] ml-8' : 'bg-gray-50 text-gray-700 mr-8'}`}>
                     <p className="text-xs font-semibold mb-1 text-gray-400">{msg.sender === 'admin' ? '👤 You (Admin)' : `🙋 ${ticket.name}`}</p>
                     {msg.message}
                   </div>

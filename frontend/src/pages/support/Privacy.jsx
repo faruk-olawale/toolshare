@@ -47,8 +47,8 @@ export default function Privacy() {
 
         <div className="grid md:grid-cols-3 gap-8">
           <div className="md:col-span-2">
-            <div className="bg-brand-50 border border-brand-100 rounded-2xl p-5 mb-6">
-              <p className="text-sm text-brand-800 font-medium">🇳🇬 ToolShare Africa is committed to protecting your privacy and complying with the Nigeria Data Protection Regulation (NDPR).</p>
+            <div className="bg-[#eef6f1] border border-[#d4eadd] rounded-2xl p-5 mb-6">
+              <p className="text-sm text-[#0f3d25] font-medium">🇳🇬 ToolShare Africa is committed to protecting your privacy and complying with the Nigeria Data Protection Regulation (NDPR).</p>
             </div>
 
             <div className="space-y-6">

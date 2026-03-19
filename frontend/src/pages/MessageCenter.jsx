@@ -104,7 +104,7 @@ export default function MessageCenter() {
               {unreadCount > 0 && (
                 <button
                   onClick={markAllRead}
-                  className="flex items-center gap-1 text-xs sm:text-sm text-brand-600 hover:text-brand-700 font-medium px-2.5 sm:px-3 py-2 rounded-xl hover:bg-brand-50 transition-colors whitespace-nowrap"
+                  className="flex items-center gap-1 text-xs sm:text-sm text-[#1a5c3a] hover:text-[#154d30] font-medium px-2.5 sm:px-3 py-2 rounded-xl hover:bg-[#eef6f1] transition-colors whitespace-nowrap"
                 >
                   <CheckCheck size={14} />
                   <span className="hidden sm:inline">Mark all read</span>
@@ -125,9 +125,9 @@ export default function MessageCenter() {
         </div>
 
         {/* Chat teaser banner */}
-        <div className="bg-gradient-to-r from-brand-50 to-blue-50 border border-brand-100 rounded-2xl p-4 mb-6 flex items-center gap-3">
+        <div className="bg-gradient-to-r from-[#eef6f1] to-blue-50 border border-[#d4eadd] rounded-2xl p-4 mb-6 flex items-center gap-3">
           <div className="w-10 h-10 bg-white rounded-xl flex items-center justify-center shadow-sm flex-shrink-0">
-            <MessageSquare size={18} className="text-brand-500" />
+            <MessageSquare size={18} className="text-[#1a5c3a]" />
           </div>
           <div className="flex-1 min-w-0">
             <p className="text-sm font-semibold text-gray-800">Direct messaging coming soon</p>
@@ -135,7 +135,7 @@ export default function MessageCenter() {
               Soon you'll be able to chat directly with renters and owners.
             </p>
           </div>
-          <span className="text-xs bg-brand-100 text-brand-700 font-semibold px-2.5 py-1 rounded-full flex-shrink-0">
+          <span className="text-xs bg-[#d4eadd] text-[#154d30] font-semibold px-2.5 py-1 rounded-full flex-shrink-0">
             Soon
           </span>
         </div>
@@ -201,7 +201,7 @@ export default function MessageCenter() {
                   key={n._id}
                   onClick={() => handleClick(n)}
                   className={`bg-white rounded-2xl border cursor-pointer active:scale-[0.99] hover:shadow-md transition-all duration-150 ${
-                    !n.read ? 'border-brand-100 ring-1 ring-brand-100' : 'border-gray-100'
+                    !n.read ? 'border-[#d4eadd] ring-1 ring-[#d4eadd]' : 'border-gray-100'
                   }`}
                 >
                   <div className="flex items-start gap-3 p-4">
@@ -218,7 +218,7 @@ export default function MessageCenter() {
                           {n.title}
                         </p>
                         {!n.read && (
-                          <span className="w-2.5 h-2.5 bg-brand-500 rounded-full flex-shrink-0 mt-1" />
+                          <span className="w-2.5 h-2.5 bg-[#1a5c3a] rounded-full flex-shrink-0 mt-1" />
                         )}
                       </div>
 
@@ -233,7 +233,7 @@ export default function MessageCenter() {
                         </span>
                         <span className="text-xs text-gray-300">{timeAgo(n.createdAt)}</span>
                         {n.link && (
-                          <span className="text-xs text-brand-500 font-medium">
+                          <span className="text-xs text-[#1a5c3a] font-medium">
                             Tap to view →
                           </span>
                         )}

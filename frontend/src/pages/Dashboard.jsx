@@ -137,7 +137,7 @@ export default function Dashboard() {
                   <PlusCircle size={18} /> List Tool
                 </Link>
               ) : (
-                <Link to="/kyc" className="btn-primary flex items-center gap-2 bg-orange-500 hover:bg-orange-600">
+                <Link to="/kyc" className="btn-primary flex items-center gap-2 bg-#1a5c3a hover:bg-#1a5c3a">
                   🪪 Verify Identity
                 </Link>
               )
@@ -171,8 +171,8 @@ export default function Dashboard() {
               {quickActions.map(({ label, to, icon }) => (
                 <Link key={label} to={to} className="flex items-center gap-3 p-3 rounded-xl hover:bg-gray-50 transition-colors group">
                   <span className="text-xl">{icon}</span>
-                  <span className="text-sm font-medium text-gray-700 group-hover:text-brand-600">{label}</span>
-                  <ArrowRight size={14} className="ml-auto text-gray-300 group-hover:text-brand-400" />
+                  <span className="text-sm font-medium text-gray-700 group-hover:text-[#1a5c3a]">{label}</span>
+                  <ArrowRight size={14} className="ml-auto text-gray-300 group-hover:text-[#3d9166]" />
                 </Link>
               ))}
             </div>
@@ -182,7 +182,7 @@ export default function Dashboard() {
           <div className="card p-6">
             <div className="flex items-center justify-between mb-4">
               <h3 className="font-display font-semibold text-lg text-gray-900">Recent Activity</h3>
-              <Link to={isOwner ? '/booking-requests' : '/bookings'} className="text-sm text-brand-600 hover:underline">View all</Link>
+              <Link to={isOwner ? '/booking-requests' : '/bookings'} className="text-sm text-[#1a5c3a] hover:underline">View all</Link>
             </div>
 
             {/* Tool status alerts for owners */}
@@ -215,7 +215,7 @@ export default function Dashboard() {
               <div className="text-center py-8">
                 <div className="text-4xl mb-2">📭</div>
                 <p className="text-gray-500 text-sm">No activity yet.</p>
-                {!kycApproved && <Link to="/kyc" className="text-sm text-brand-600 hover:underline mt-2 block">Complete KYC to get started →</Link>}
+                {!kycApproved && <Link to="/kyc" className="text-sm text-[#1a5c3a] hover:underline mt-2 block">Complete KYC to get started →</Link>}
               </div>
             ) : (
               <div className="space-y-2">

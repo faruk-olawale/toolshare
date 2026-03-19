@@ -24,25 +24,41 @@
 }
 
 @layer components {
+
+  /* ── Buttons ─────────────────────────────────────────────────────────────── */
+
   .btn-primary {
-    @apply bg-brand-500 hover:bg-brand-600 text-white font-medium px-6 py-3 rounded-xl transition-all duration-200 shadow-sm hover:shadow-md active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
+    @apply bg-[#1a5c3a] hover:bg-[#154d30] text-white font-medium px-6 py-3 rounded-xl
+           transition-all duration-200 shadow-sm hover:shadow-md
+           active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed;
   }
 
   .btn-secondary {
-    @apply bg-white hover:bg-gray-50 text-gray-800 font-medium px-6 py-3 rounded-xl border border-gray-200 transition-all duration-200 hover:border-gray-300 active:scale-95;
+    @apply bg-white hover:bg-gray-50 text-gray-800 font-medium px-6 py-3 rounded-xl
+           border border-gray-200 transition-all duration-200
+           hover:border-gray-300 active:scale-95;
   }
 
   .btn-outline {
-    @apply border-2 border-brand-500 text-brand-600 hover:bg-brand-50 font-medium px-6 py-3 rounded-xl transition-all duration-200 active:scale-95;
+    @apply border-2 border-[#1a5c3a] text-[#1a5c3a] hover:bg-[#eef6f1] font-medium
+           px-6 py-3 rounded-xl transition-all duration-200 active:scale-95;
   }
 
+  /* ── Form inputs ─────────────────────────────────────────────────────────── */
+
   .input-field {
-    @apply w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-800 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-brand-300 focus:border-brand-400 transition-all duration-200;
+    @apply w-full px-4 py-3 bg-white border border-gray-200 rounded-xl text-gray-800
+           placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-[#6db591]
+           focus:border-[#3d9166] transition-all duration-200;
   }
+
+  /* ── Cards ───────────────────────────────────────────────────────────────── */
 
   .card {
     @apply bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden;
   }
+
+  /* ── Badges ──────────────────────────────────────────────────────────────── */
 
   .badge {
     @apply inline-flex items-center px-2.5 py-1 rounded-lg text-xs font-medium;
@@ -72,16 +88,20 @@
     @apply badge bg-gray-50 text-gray-600 border border-gray-200;
   }
 
+  /* ── Typography ──────────────────────────────────────────────────────────── */
+
   .section-title {
     @apply text-3xl font-display font-bold text-gray-900;
   }
+
+  /* ── Layout ──────────────────────────────────────────────────────────────── */
 
   .page-container {
     @apply max-w-7xl mx-auto px-4 sm:px-6 lg:px-8;
   }
 }
 
-/* Scrollbar styles */
+/* ── Scrollbar ───────────────────────────────────────────────────────────── */
 ::-webkit-scrollbar {
   width: 6px;
 }
@@ -89,18 +109,18 @@
   background: #f1f0ee;
 }
 ::-webkit-scrollbar-thumb {
-  background: #c9b090;
+  background: #6db591;
   border-radius: 3px;
 }
 
-/* Image skeleton loading */
+/* ── Image skeleton loading ──────────────────────────────────────────────── */
 .image-placeholder {
-  background: linear-gradient(90deg, #f0e8db 25%, #e5d8c5 50%, #f0e8db 75%);
+  background: linear-gradient(90deg, #eef6f1 25%, #d4eadd 50%, #eef6f1 75%);
   background-size: 200% 100%;
   animation: shimmer 1.5s infinite;
 }
 
 @keyframes shimmer {
-  0% { background-position: 200% 0; }
+  0%   { background-position: 200% 0; }
   100% { background-position: -200% 0; }
 }

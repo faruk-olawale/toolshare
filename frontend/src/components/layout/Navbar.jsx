@@ -12,7 +12,6 @@ export default function Navbar() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [openTickets, setOpenTickets]   = useState(0);
 
-  // Poll for open support tickets every 60s when logged in as admin
   useEffect(() => {
     if (user?.role !== 'admin') return;
     const fetchTickets = () => {
@@ -36,33 +35,46 @@ export default function Navbar() {
 
           {/* Logo */}
           <Link to="/" className="flex items-center gap-2 group">
-            <div className="w-9 h-9 bg-gradient-to-br from-brand-400 to-brand-600 rounded-xl flex items-center justify-center shadow-sm group-hover:shadow-md transition-all">
+            <div className="w-9 h-9 bg-[#1a5c3a] rounded-xl flex items-center justify-center shadow-sm group-hover:shadow-md transition-all">
               <Wrench size={18} className="text-white" />
             </div>
             <div>
               <span className="font-display font-bold text-gray-900 text-lg leading-none">ToolShare</span>
-              <span className="block text-xs text-brand-500 font-medium leading-none">Africa</span>
+              <span className="block text-xs text-[#1a5c3a] font-medium leading-none">Africa</span>
             </div>
           </Link>
 
           {/* Desktop nav */}
           <div className="hidden md:flex items-center gap-1">
-            <Link to="/tools" className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${isActive('/tools') ? 'bg-brand-50 text-brand-600' : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'}`}>
+            <Link
+              to="/tools"
+              className={`px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
+                isActive('/tools')
+                  ? 'bg-[#eef6f1] text-[#1a5c3a]'
+                  : 'text-gray-600 hover:text-gray-900 hover:bg-gray-50'
+              }`}
+            >
               Browse Tools
             </Link>
 
             {!user ? (
               <div className="flex items-center gap-2 ml-2">
                 <Link to="/login" className="btn-secondary py-2 px-4 text-sm">Sign In</Link>
-                <Link to="/register" className="btn-primary py-2 px-4 text-sm">Get Started</Link>
+                <Link
+                  to="/register"
+                  className="py-2 px-4 text-sm font-medium text-white bg-[#1a5c3a] rounded-xl hover:bg-[#154d30] transition-colors"
+                >
+                  Get Started
+                </Link>
               </div>
             ) : (
               <div className="flex items-center gap-2 ml-2">
-                {/* User dropdown */}
                 <div className="relative">
-                  <button onClick={() => setDropdownOpen(!dropdownOpen)}
-                    className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-gray-50 transition-colors">
-                    <div className="w-8 h-8 bg-gradient-to-br from-brand-400 to-earth-600 rounded-full flex items-center justify-center">
+                  <button
+                    onClick={() => setDropdownOpen(!dropdownOpen)}
+                    className="flex items-center gap-2 px-3 py-2 rounded-xl hover:bg-gray-50 transition-colors"
+                  >
+                    <div className="w-8 h-8 bg-[#1a5c3a] rounded-full flex items-center justify-center">
                       <span className="text-white text-xs font-bold">{user.name?.charAt(0).toUpperCase()}</span>
                     </div>
                     <div className="text-left">
@@ -90,7 +102,7 @@ export default function Navbar() {
                         <Link to="/bank-details" onClick={close} className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50">
                           <Landmark size={15} className="text-gray-400" /> Payout Settings
                         </Link>
-                        <Link to="/tools/new" onClick={close} className="flex items-center gap-3 px-4 py-2.5 text-sm text-brand-600 hover:bg-brand-50 font-medium">
+                        <Link to="/tools/new" onClick={close} className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#1a5c3a] hover:bg-[#eef6f1] font-medium">
                           <PlusCircle size={15} /> List a Tool
                         </Link>
                       </>)}
@@ -100,7 +112,7 @@ export default function Navbar() {
                         </Link>
                       )}
                       {user.role === 'admin' && (
-                        <Link to="/admin" onClick={close} className="flex items-center gap-3 px-4 py-2.5 text-sm text-brand-600 hover:bg-brand-50 font-medium">
+                        <Link to="/admin" onClick={close} className="flex items-center gap-3 px-4 py-2.5 text-sm text-[#1a5c3a] hover:bg-[#eef6f1] font-medium">
                           <Shield size={15} />
                           Admin Dashboard
                           {openTickets > 0 && (
@@ -136,7 +148,7 @@ export default function Navbar() {
             {!user ? (
               <div className="flex flex-col gap-2 mt-3">
                 <Link to="/login" onClick={close} className="btn-secondary text-center">Sign In</Link>
-                <Link to="/register" onClick={close} className="btn-primary text-center">Get Started</Link>
+                <Link to="/register" onClick={close} className="text-center py-2.5 px-4 text-sm font-medium text-white bg-[#1a5c3a] rounded-xl hover:bg-[#154d30] transition-colors">Get Started</Link>
               </div>
             ) : (<>
               <Link to="/dashboard" onClick={close} className="block py-2.5 px-3 text-gray-700 hover:bg-gray-50 rounded-lg">Dashboard</Link>
@@ -145,7 +157,7 @@ export default function Navbar() {
                 <Link to="/my-tools" onClick={close} className="block py-2.5 px-3 text-gray-700 hover:bg-gray-50 rounded-lg">My Tools</Link>
                 <Link to="/booking-requests" onClick={close} className="block py-2.5 px-3 text-gray-700 hover:bg-gray-50 rounded-lg">Booking Requests</Link>
                 <Link to="/bank-details" onClick={close} className="block py-2.5 px-3 text-gray-700 hover:bg-gray-50 rounded-lg">Payout Settings</Link>
-                <Link to="/tools/new" onClick={close} className="block py-2.5 px-3 text-brand-600 font-medium hover:bg-brand-50 rounded-lg">List a Tool</Link>
+                <Link to="/tools/new" onClick={close} className="block py-2.5 px-3 text-[#1a5c3a] font-medium hover:bg-[#eef6f1] rounded-lg">List a Tool</Link>
               </>)}
               {user.role === 'renter' && (
                 <Link to="/bookings" onClick={close} className="block py-2.5 px-3 text-gray-700 hover:bg-gray-50 rounded-lg">My Bookings</Link>

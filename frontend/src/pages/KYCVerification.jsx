@@ -98,8 +98,8 @@ export default function KYCVerification() {
     <div className="py-8 animate-fade-in">
       <div className="page-container max-w-2xl">
         <div className="mb-8 text-center">
-          <div className="w-16 h-16 bg-brand-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-            <Shield size={28} className="text-brand-500" />
+          <div className="w-16 h-16 bg-[#eef6f1] rounded-2xl flex items-center justify-center mx-auto mb-4">
+            <Shield size={28} className="text-[#1a5c3a]" />
           </div>
           <h1 className="section-title mb-2">Identity Verification</h1>
           <p className="text-gray-500">Verify your identity to unlock full access to ToolShare Africa</p>
@@ -108,9 +108,9 @@ export default function KYCVerification() {
         <StatusBanner />
 
         {/* Why we need this */}
-        <div className="card p-5 mb-6 bg-gradient-to-br from-brand-50 to-earth-50 border-brand-100">
+        <div className="card p-5 mb-6 bg-gradient-to-br from-[#eef6f1] to-[#eef6f1] border-[#d4eadd]">
           <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
-            <AlertCircle size={16} className="text-brand-500" /> Why we verify identity
+            <AlertCircle size={16} className="text-[#1a5c3a]" /> Why we verify identity
           </h3>
           <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm text-gray-600">
             {[
@@ -153,7 +153,7 @@ export default function KYCVerification() {
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
                   ID Document Photo <span className="text-gray-400 font-normal">(clear photo of your ID card/passport)</span>
                 </label>
-                <div className="border-2 border-dashed border-gray-200 rounded-xl p-4 text-center hover:border-brand-300 transition-colors cursor-pointer"
+                <div className="border-2 border-dashed border-gray-200 rounded-xl p-4 text-center hover:border-[#6db591] transition-colors cursor-pointer"
                   onClick={() => document.getElementById('idDoc').click()}>
                   {idPreview ? (
                     <img src={idPreview} className="max-h-40 mx-auto rounded-lg object-contain" />
@@ -173,7 +173,7 @@ export default function KYCVerification() {
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
                   Selfie with ID <span className="text-gray-400 font-normal">(hold your ID next to your face)</span>
                 </label>
-                <div className="border-2 border-dashed border-gray-200 rounded-xl p-4 text-center hover:border-brand-300 transition-colors cursor-pointer"
+                <div className="border-2 border-dashed border-gray-200 rounded-xl p-4 text-center hover:border-[#6db591] transition-colors cursor-pointer"
                   onClick={() => document.getElementById('selfie').click()}>
                   {selfiePreview ? (
                     <img src={selfiePreview} className="max-h-40 mx-auto rounded-lg object-contain" />

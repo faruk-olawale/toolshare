@@ -98,7 +98,7 @@ export default function Safety() {
                 { to: '/terms', icon: '📄', label: 'Terms of Service', desc: 'Rules for using the platform' },
                 { to: '/contact', icon: '💬', label: 'Contact Support', desc: 'Get direct help from our team' },
               ].map(({ to, icon, label, desc }) => (
-                <Link key={to} to={to} className="card p-4 flex items-center gap-3 hover:border-brand-200 transition-colors">
+                <Link key={to} to={to} className="card p-4 flex items-center gap-3 hover:border-[#a8d4bb] transition-colors">
                   <span className="text-xl">{icon}</span>
                   <div><p className="font-medium text-gray-800 text-sm">{label}</p><p className="text-xs text-gray-400">{desc}</p></div>
                 </Link>

@@ -14,7 +14,7 @@ export default function BookingsTab({ allBookings, bookings: bookingsProp }) {
               <tr key={b._id} className="hover:bg-gray-50">
                 <td className="px-4 py-3 font-medium text-gray-800 whitespace-nowrap">{b.toolId?.name}</td>
                 <td className="px-4 py-3 text-gray-500 whitespace-nowrap">{b.renterId?.name}</td>
-                <td className="px-4 py-3 font-semibold text-brand-600 whitespace-nowrap">₦{b.totalAmount?.toLocaleString()}</td>
+                <td className="px-4 py-3 font-semibold text-[#1a5c3a] whitespace-nowrap">₦{b.totalAmount?.toLocaleString()}</td>
                 <td className="px-4 py-3 whitespace-nowrap">
                   <span className={`badge text-xs ${b.status === 'approved' ? 'bg-green-50 text-green-700 border-green-100' : b.status === 'pending' ? 'bg-yellow-50 text-yellow-700 border-yellow-100' : b.status === 'completed' ? 'bg-blue-50 text-blue-700 border-blue-100' : 'bg-red-50 text-red-700 border-red-100'}`}>
                     {b.status}

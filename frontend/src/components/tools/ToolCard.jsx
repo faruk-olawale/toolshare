@@ -29,7 +29,7 @@ export default function ToolCard({ tool }) {
       </div>
 
       <div className="p-4">
-        <h3 className="font-display font-semibold text-gray-900 text-lg leading-snug mb-1 group-hover:text-brand-600 transition-colors line-clamp-1">
+        <h3 className="font-display font-semibold text-gray-900 text-lg leading-snug mb-1 group-hover:text-[#1a5c3a] transition-colors line-clamp-1">
           {tool.name}
         </h3>
         <p className="text-sm text-gray-500 line-clamp-2 mb-3 leading-relaxed">
@@ -42,7 +42,7 @@ export default function ToolCard({ tool }) {
             <span className="text-xs truncate max-w-[120px]">{tool.location}</span>
           </div>
           <div className="text-right">
-            <span className="text-brand-600 font-bold text-lg">
+            <span className="text-[#1a5c3a] font-bold text-lg">
               ₦{tool.pricePerDay?.toLocaleString()}
             </span>
             <span className="text-gray-400 text-xs">/day</span>
@@ -51,7 +51,7 @@ export default function ToolCard({ tool }) {
 
         {tool.ownerId?.name && (
           <div className="mt-3 pt-3 border-t border-gray-50 flex items-center gap-2">
-            <div className="w-6 h-6 bg-gradient-to-br from-brand-300 to-earth-500 rounded-full flex items-center justify-center">
+            <div className="w-6 h-6 bg-gradient-to-br from-[#6db591] to-[#3d9166] rounded-full flex items-center justify-center">
               <span className="text-white text-xs font-bold">{tool.ownerId.name.charAt(0)}</span>
             </div>
             <span className="text-xs text-gray-500">{tool.ownerId.name}</span>

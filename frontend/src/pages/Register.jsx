@@ -43,7 +43,7 @@ export default function Register() {
       <div className="w-full max-w-md animate-slide-up">
         <div className="card p-8">
           <div className="text-center mb-8">
-            <div className="w-14 h-14 bg-gradient-to-br from-brand-400 to-brand-600 rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
+            <div className="w-14 h-14 bg-gradient-to-br from-[#3d9166] to-[#1a5c3a] rounded-2xl flex items-center justify-center mx-auto mb-4 shadow-lg">
               <Wrench size={24} className="text-white" />
             </div>
             <h1 className="text-2xl font-display font-bold text-gray-900">Create Account</h1>
@@ -59,7 +59,7 @@ export default function Register() {
                 onClick={() => setForm({ ...form, role: r })}
                 className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 capitalize ${
                   form.role === r
-                    ? 'bg-white shadow-sm text-brand-600'
+                    ? 'bg-white shadow-sm text-[#1a5c3a]'
                     : 'text-gray-500 hover:text-gray-700'
                 }`}
               >
@@ -150,7 +150,7 @@ export default function Register() {
 
           <p className="mt-6 text-center text-sm text-gray-500">
             Already have an account?{' '}
-            <Link to="/login" className="text-brand-600 font-medium hover:underline">Sign in</Link>
+            <Link to="/login" className="text-[#1a5c3a] font-medium hover:underline">Sign in</Link>
           </p>
           <p className="mt-3 text-center text-xs text-gray-400">
             By registering, you agree to our Terms of Service and Privacy Policy.

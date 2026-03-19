@@ -144,7 +144,7 @@ export default function PaymentPage() {
             )}
             <div className="border-t border-gray-100 pt-2.5 flex justify-between font-bold">
               <span className="text-gray-900">Total Due</span>
-              <span className="text-brand-600 text-lg">
+              <span className="text-[#1a5c3a] text-lg">
                 ₦{(booking.totalAmount + (booking.deposit?.amount || 0)).toLocaleString()}
               </span>
             </div>

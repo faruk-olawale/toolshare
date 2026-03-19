@@ -98,7 +98,7 @@ export default function MyTools() {
                     <div className="flex items-center gap-1 text-gray-500 text-xs">
                       <MapPin size={12} /> {tool.location}
                     </div>
-                    <span className="text-brand-600 font-bold">₦{tool.pricePerDay?.toLocaleString()}/day</span>
+                    <span className="text-[#1a5c3a] font-bold">₦{tool.pricePerDay?.toLocaleString()}/day</span>
                   </div>
                   <div className="flex gap-2">
                     <button

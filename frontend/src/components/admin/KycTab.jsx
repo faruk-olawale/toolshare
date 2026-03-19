@@ -19,7 +19,7 @@ export default function KycTab({ pendingKyc, users: usersProp, onApprove, onReje
               <h3 className="font-bold text-gray-900">{user.name}</h3>
               <p className="text-sm text-gray-500">{user.email} · {user.phone}</p>
               <div className="flex gap-2 mt-1">
-                <span className={`badge text-xs ${user.role === 'owner' ? 'bg-brand-50 text-brand-700 border-brand-100' : 'bg-blue-50 text-blue-700 border-blue-100'}`}>{user.role}</span>
+                <span className={`badge text-xs ${user.role === 'owner' ? 'bg-[#eef6f1] text-[#154d30] border-[#d4eadd]' : 'bg-blue-50 text-blue-700 border-blue-100'}`}>{user.role}</span>
                 <span className="badge text-xs bg-yellow-50 text-yellow-700 border-yellow-100">KYC Pending</span>
               </div>
             </div>

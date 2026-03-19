@@ -20,8 +20,8 @@ export default function Contact() {
           <div className="space-y-4">
             <div className="card p-5">
               <div className="flex items-center gap-3 mb-2">
-                <div className="w-9 h-9 bg-brand-50 rounded-xl flex items-center justify-center">
-                  <Mail size={16} className="text-brand-500" />
+                <div className="w-9 h-9 bg-[#eef6f1] rounded-xl flex items-center justify-center">
+                  <Mail size={16} className="text-[#1a5c3a]" />
                 </div>
                 <p className="font-semibold text-gray-900 text-sm">Email Support</p>
               </div>
@@ -57,7 +57,7 @@ export default function Contact() {
                   { to: '/privacy', label: '🔒 Privacy Policy' },
                   { to: '/terms', label: '📄 Terms of Service' },
                 ].map(({ to, label }) => (
-                  <Link key={to} to={to} className="block text-sm text-brand-600 hover:underline">{label}</Link>
+                  <Link key={to} to={to} className="block text-sm text-[#1a5c3a] hover:underline">{label}</Link>
                 ))}
               </div>
             </div>

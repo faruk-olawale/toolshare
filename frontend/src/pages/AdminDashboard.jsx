@@ -169,7 +169,7 @@ export default function AdminDashboard() {
               { label: 'Bookings',        value: stats.totalBookings,                                       icon: <BookOpen size={15} />,     color: 'bg-green-50 text-green-600' },
               { label: 'Pending Tools',   value: stats.pendingTools,                                        icon: <AlertTriangle size={15} />, color: 'bg-yellow-50 text-yellow-600' },
               { label: 'Pending KYC',     value: stats.pendingKyc,                                          icon: <Shield size={15} />,       color: 'bg-orange-50 text-orange-600' },
-              { label: 'Platform Revenue',value: `₦${Math.round(stats.totalRevenue || 0).toLocaleString()}`, icon: <TrendingUp size={15} />,   color: 'bg-brand-50 text-brand-600' },
+              { label: 'Platform Revenue',value: `₦${Math.round(stats.totalRevenue || 0).toLocaleString()}`, icon: <TrendingUp size={15} />,   color: 'bg-[#eef6f1] text-[#1a5c3a]' },
               { label: 'Gross Volume',    value: `₦${Math.round(stats.grossVolume  || 0).toLocaleString()}`, icon: <TrendingUp size={15} />,   color: 'bg-green-50 text-green-700' },
               { label: 'Paid Bookings',   value: stats.paidBookings || 0,                                   icon: <BookOpen size={15} />,     color: 'bg-teal-50 text-teal-600' },
             ].map(({ label, value, icon, color }) => (
@@ -186,7 +186,7 @@ export default function AdminDashboard() {
         <div className="flex gap-1 mb-5 bg-gray-100 p-1 rounded-xl w-fit flex-wrap">
           {tabs.map(({ key, label, count, alert }) => (
             <button key={key} onClick={() => setTab(key)}
-              className={`px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 ${tab === key ? 'bg-white shadow-sm text-brand-600' : 'text-gray-500 hover:text-gray-700'}`}>
+              className={`px-3 py-2 rounded-lg text-sm font-medium transition-all flex items-center gap-1.5 ${tab === key ? 'bg-white shadow-sm text-[#1a5c3a]' : 'text-gray-500 hover:text-gray-700'}`}>
               {label}
               <span className={`text-xs px-1.5 py-0.5 rounded-full font-bold ${alert ? 'bg-red-100 text-red-700' : 'bg-gray-200 text-gray-600'}`}>{count}</span>
             </button>

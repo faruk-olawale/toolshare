@@ -8,7 +8,7 @@ export default function KYCBanner({ kyc }) {
   const config = {
     not_submitted: {
       bg: 'bg-orange-50 border-orange-200',
-      icon: <Shield size={20} className="text-orange-500 flex-shrink-0 mt-0.5" />,
+      icon: <Shield size={20} className="#3d9166 flex-shrink-0 mt-0.5" />,
       title: '⚠️ Verify Your Identity to Unlock Full Access',
       message: 'You need to complete identity verification (KYC) before you can list tools or make bookings. It takes less than 2 minutes.',
       btn: 'Complete Verification Now →',
