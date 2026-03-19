@@ -66,7 +66,7 @@ export default function ResetPassword() {
                 onChange={(e) => setPassword(e.target.value)}
                 placeholder="Min. 8 characters"
                 required
-                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition pr-12"
+                className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#6db591] focus:border-transparent outline-none transition pr-12"
               />
               <button
                 type="button"
@@ -100,7 +100,7 @@ export default function ResetPassword() {
               onChange={(e) => setConfirm(e.target.value)}
               placeholder="Re-enter password"
               required
-              className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition ${
+              className={`w-full px-4 py-3 border rounded-xl focus:ring-2 focus:ring-[#6db591] focus:border-transparent outline-none transition ${
                 confirm && confirm !== password ? 'border-red-400' : 'border-gray-200'
               }`}
             />
@@ -112,14 +112,14 @@ export default function ResetPassword() {
           <button
             type="submit"
             disabled={loading || (confirm && confirm !== password)}
-            className="w-full bg-[#1a5c3a] hover:bg-[#1a5c3a] disabled:opacity-60 text-white font-semibold py-3 rounded-xl transition"
+            className="w-full bg-[#eef6f1]0 hover:bg-[#154d30] disabled:opacity-60 text-white font-semibold py-3 rounded-xl transition"
           >
             {loading ? 'Resetting...' : 'Reset Password'}
           </button>
         </form>
 
         <p className="text-center text-sm text-gray-500 mt-6">
-          <Link to="/login" className="text-orange-500 font-semibold hover:underline">
+          <Link to="/login" className="text-[#1a5c3a] font-semibold hover:underline">
             ← Back to Login
           </Link>
         </p>

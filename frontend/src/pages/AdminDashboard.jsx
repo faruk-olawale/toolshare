@@ -168,7 +168,7 @@ export default function AdminDashboard() {
               { label: 'Tools',           value: stats.totalTools,                                          icon: <Package size={15} />,      color: 'bg-purple-50 text-purple-600' },
               { label: 'Bookings',        value: stats.totalBookings,                                       icon: <BookOpen size={15} />,     color: 'bg-green-50 text-green-600' },
               { label: 'Pending Tools',   value: stats.pendingTools,                                        icon: <AlertTriangle size={15} />, color: 'bg-yellow-50 text-yellow-600' },
-              { label: 'Pending KYC',     value: stats.pendingKyc,                                          icon: <Shield size={15} />,       color: 'bg-orange-50 text-orange-600' },
+              { label: 'Pending KYC',     value: stats.pendingKyc,                                          icon: <Shield size={15} />,       color: 'bg-[#eef6f1] text-[#1a5c3a]' },
               { label: 'Platform Revenue',value: `₦${Math.round(stats.totalRevenue || 0).toLocaleString()}`, icon: <TrendingUp size={15} />,   color: 'bg-[#eef6f1] text-[#1a5c3a]' },
               { label: 'Gross Volume',    value: `₦${Math.round(stats.grossVolume  || 0).toLocaleString()}`, icon: <TrendingUp size={15} />,   color: 'bg-green-50 text-green-700' },
               { label: 'Paid Bookings',   value: stats.paidBookings || 0,                                   icon: <BookOpen size={15} />,     color: 'bg-teal-50 text-teal-600' },

@@ -112,7 +112,7 @@ export default function ToolDetail() {
           <div className="lg:col-span-2 space-y-6">
             {/* Main Image */}
             <div className="card overflow-hidden">
-              <div className="h-80 sm:h-96 bg-earth-100">
+              <div className="h-80 sm:h-96 bg-[#d4eadd]">
                 <img
                   src={getImgUrl(images[activeImg])}
                   alt={tool.name}
@@ -176,7 +176,7 @@ export default function ToolDetail() {
               <div className="card p-6">
                 <h3 className="font-semibold text-gray-800 mb-4">About the Owner</h3>
                 <div className="flex items-start gap-4">
-                  <div className="w-14 h-14 bg-gradient-to-br from-[#3d9166] to-[#3d9166] rounded-2xl flex items-center justify-center flex-shrink-0">
+                  <div className="w-14 h-14 bg-[#3d9166] rounded-2xl flex items-center justify-center flex-shrink-0">
                     <span className="text-white text-2xl font-bold">{tool.ownerId.name?.charAt(0)}</span>
                   </div>
                   <div className="flex-1">
@@ -222,11 +222,11 @@ export default function ToolDetail() {
               ) : (
                 <>
                 {user && kycStatus !== 'approved' && (
-                  <div className={`rounded-xl p-3 mb-3 border ${kycStatus === 'pending' ? 'bg-yellow-50 border-yellow-200' : 'bg-orange-50 border-orange-200'}`}>
-                    <p className={`text-xs font-medium mb-1 ${kycStatus === 'pending' ? 'text-yellow-700' : 'text-orange-700'}`}>
+                  <div className={`rounded-xl p-3 mb-3 border ${kycStatus === 'pending' ? 'bg-yellow-50 border-yellow-200' : 'bg-[#eef6f1] border-[#a8d4bb]'}`}>
+                    <p className={`text-xs font-medium mb-1 ${kycStatus === 'pending' ? 'text-yellow-700' : 'text-[#154d30]'}`}>
                       {kycStatus === 'pending' ? '🕐 KYC Under Review' : '⚠️ Identity Verification Required'}
                     </p>
-                    <p className={`text-xs mb-2 ${kycStatus === 'pending' ? 'text-yellow-600' : 'text-orange-600'}`}>
+                    <p className={`text-xs mb-2 ${kycStatus === 'pending' ? 'text-yellow-600' : 'text-[#1a5c3a]'}`}>
                       {kycStatus === 'pending' ? 'Your documents are being reviewed. You can book once approved.' : 'Verify your identity before booking any tool.'}
                     </p>
                     <Link to="/kyc" className="text-xs font-semibold text-[#1a5c3a] hover:underline">

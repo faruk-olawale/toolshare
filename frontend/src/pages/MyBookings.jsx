@@ -17,7 +17,7 @@ const STATUS_STYLES = {
   rejected:  'bg-red-50 text-red-700 border-red-100',
   completed: 'bg-blue-50 text-blue-700 border-blue-100',
   cancelled: 'bg-gray-50 text-gray-500 border-gray-100',
-  disputed:  'bg-orange-50 text-orange-700 border-orange-100',
+  disputed:  'bg-[#eef6f1] text-[#154d30] border-[#d4eadd]',
 };
 
 // ── Cancellation Policy Modal ──────────────────────────────────────────────────
@@ -104,7 +104,7 @@ function CancelModal({ booking, onClose, onCancelled }) {
               {[
                 { label: '7+ days notice', value: '100% refund', color: 'text-green-600' },
                 { label: '3–6 days notice', value: '50% refund', color: 'text-yellow-600' },
-                { label: '1–2 days notice', value: '25% refund', color: 'text-orange-600' },
+                { label: '1–2 days notice', value: '25% refund', color: 'text-[#1a5c3a]' },
                 { label: 'Same day or later', value: 'No refund', color: 'text-red-600' },
               ].map(row => (
                 <div key={row.label} className="flex justify-between">
@@ -145,7 +145,7 @@ function BookingCard({ booking, onUpdate, reviewedIds, setReviewedIds, onCancel 
     <div className="card p-4">
       {/* Tool header */}
       <div className="flex gap-3 mb-4">
-        <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-earth-100">
+        <div className="w-16 h-16 rounded-xl overflow-hidden flex-shrink-0 bg-[#d4eadd]">
           <img
             src={getImgUrl(booking.toolId?.images?.[0])}
             className="w-full h-full object-cover"

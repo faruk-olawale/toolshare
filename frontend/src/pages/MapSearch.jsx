@@ -63,7 +63,7 @@ export default function MapSearch() {
       const [lng, lat] = coords;
 
       const icon = L.divIcon({
-        html: `<div style="background:#f2711c;color:white;padding:4px 8px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.2)">₦${Number(tool.pricePerDay).toLocaleString()}</div>`,
+        html: `<div style="background:#1a5c3a;color:white;padding:4px 8px;border-radius:12px;font-size:11px;font-weight:700;white-space:nowrap;box-shadow:0 2px 8px rgba(0,0,0,0.2)">₦${Number(tool.pricePerDay).toLocaleString()}</div>`,
         className: '', iconAnchor: [0, 0],
       });
 
@@ -142,7 +142,7 @@ export default function MapSearch() {
             <div key={tool._id} onClick={() => setSelected(tool)}
               className={`card p-3 cursor-pointer transition-all hover:border-[#a8d4bb] ${selected?._id === tool._id ? 'border-[#6db591] bg-[#eef6f1]' : ''}`}>
               <div className="flex gap-2">
-                <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-earth-100">
+                <div className="w-12 h-12 rounded-xl overflow-hidden flex-shrink-0 bg-[#d4eadd]">
                   <img src={getImgUrl(tool.images?.[0])}
                     className="w-full h-full object-cover" onError={e => { e.target.src = PLACEHOLDER; }} />
                 </div>
@@ -172,7 +172,7 @@ export default function MapSearch() {
             <div className="card p-4 shadow-xl">
               <button onClick={() => setSelected(null)} className="absolute top-2 right-2 text-gray-400 hover:text-gray-600 text-lg">×</button>
               <div className="flex gap-3 mb-3">
-                <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-earth-100">
+                <div className="w-14 h-14 rounded-xl overflow-hidden flex-shrink-0 bg-[#d4eadd]">
                   <img src={getImgUrl(selected.images?.[0])}
                     className="w-full h-full object-cover" onError={e => { e.target.src = PLACEHOLDER; }} />
                 </div>

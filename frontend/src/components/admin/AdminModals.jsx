@@ -68,7 +68,7 @@ export function SuspendUserModal({ user, onConfirm, onClose, processing }) {
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
       <div className="bg-white rounded-2xl p-6 w-full max-w-md animate-slide-up">
-        <div className="w-12 h-12 bg-orange-100 rounded-2xl flex items-center justify-center mx-auto mb-4">
+        <div className="w-12 h-12 bg-[#d4eadd] rounded-2xl flex items-center justify-center mx-auto mb-4">
           <span className="text-2xl">🚫</span>
         </div>
         <h3 className="font-display font-bold text-lg text-gray-900 mb-1 text-center">Suspend Account</h3>
@@ -82,14 +82,14 @@ export function SuspendUserModal({ user, onConfirm, onClose, processing }) {
             placeholder="e.g. Tool not returned after multiple reminders, fraudulent activity..."
             value={reason} onChange={e => setReason(e.target.value)} />
         </div>
-        <div className="bg-orange-50 border border-orange-100 rounded-xl p-3 mb-5">
-          <p className="text-xs text-orange-700">The user will be notified by email and will not be able to log in until reinstated.</p>
+        <div className="bg-[#eef6f1] border border-[#d4eadd] rounded-xl p-3 mb-5">
+          <p className="text-xs text-[#154d30]">The user will be notified by email and will not be able to log in until reinstated.</p>
         </div>
         <div className="flex gap-3">
           <button onClick={onClose} className="btn-secondary flex-1">Cancel</button>
           <button disabled={!reason.trim() || processing === user._id}
             onClick={() => onConfirm(reason)}
-            className="flex-1 bg-orange-500 hover:bg-orange-600 text-white font-medium px-6 py-3 rounded-xl transition-colors disabled:opacity-50">
+            className="flex-1 bg-[#eef6f1]0 hover:bg-[#154d30] text-white font-medium px-6 py-3 rounded-xl transition-colors disabled:opacity-50">
             {processing === user._id ? 'Suspending...' : '🚫 Suspend Account'}
           </button>
         </div>

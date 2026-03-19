@@ -20,7 +20,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
               border: '1px solid #e5e7eb',
               boxShadow: '0 4px 20px rgba(0,0,0,0.08)',
             },
-            success: { iconTheme: { primary: '#f2711c', secondary: '#fff' } },
+            success: { iconTheme: { primary: '#1a5c3a', secondary: '#fff' } },
           }}
         />
       </AuthProvider>

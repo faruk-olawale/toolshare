@@ -32,7 +32,7 @@ export default function ForgotPassword() {
           It expires in <strong>30 minutes</strong>.
         </p>
         <p className="text-sm text-gray-400 mb-6">Didn't get it? Check your spam folder.</p>
-        <Link to="/login" className="text-orange-500 font-semibold hover:underline">
+        <Link to="/login" className="text-[#1a5c3a] font-semibold hover:underline">
           ← Back to Login
         </Link>
       </div>
@@ -61,14 +61,14 @@ export default function ForgotPassword() {
               onChange={(e) => setEmail(e.target.value)}
               placeholder="you@example.com"
               required
-              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-orange-500 focus:border-transparent outline-none transition"
+              className="w-full px-4 py-3 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#6db591] focus:border-transparent outline-none transition"
             />
           </div>
 
           <button
             type="submit"
             disabled={loading}
-            className="w-full bg-orange-500 hover:bg-orange-600 disabled:opacity-60 text-white font-semibold py-3 rounded-xl transition"
+            className="w-full bg-[#eef6f1]0 hover:bg-[#154d30] disabled:opacity-60 text-white font-semibold py-3 rounded-xl transition"
           >
             {loading ? 'Sending...' : 'Send Reset Link'}
           </button>
@@ -76,7 +76,7 @@ export default function ForgotPassword() {
 
         <p className="text-center text-sm text-gray-500 mt-6">
           Remember your password?{' '}
-          <Link to="/login" className="text-orange-500 font-semibold hover:underline">
+          <Link to="/login" className="text-[#1a5c3a] font-semibold hover:underline">
             Log in
           </Link>
         </p>

@@ -51,7 +51,7 @@ export default function UsersTab({ allUsers, users: usersProp, setAllUsers, setU
                         </button>
                       ) : (
                         <button onClick={() => handleSuspend(u)}
-                          className="flex items-center gap-1 text-xs text-orange-600 hover:text-orange-800 hover:bg-orange-50 px-2 py-1.5 rounded-lg transition-colors whitespace-nowrap">
+                          className="flex items-center gap-1 text-xs text-[#1a5c3a] hover:text-[#0f3d25] hover:bg-[#eef6f1] px-2 py-1.5 rounded-lg transition-colors whitespace-nowrap">
                           🚫 Suspend
                         </button>
                       )}

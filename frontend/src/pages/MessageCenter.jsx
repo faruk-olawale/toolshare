@@ -23,7 +23,7 @@ const typeConfig = (type) => {
     booking_completed: { bg: 'bg-blue-50 border-blue-100',     icon: '🏁', badge: 'bg-blue-100 text-blue-700',     label: 'Booking Completed' },
     payment:           { bg: 'bg-purple-50 border-purple-100', icon: '💰', badge: 'bg-purple-100 text-purple-700', label: 'Payment' },
     review:            { bg: 'bg-yellow-50 border-yellow-100', icon: '⭐', badge: 'bg-yellow-100 text-yellow-700', label: 'Review' },
-    dispute:           { bg: 'bg-orange-50 border-orange-100', icon: '🚨', badge: 'bg-orange-100 text-orange-700', label: 'Dispute' },
+    dispute:           { bg: 'bg-[#eef6f1] border-[#d4eadd]', icon: '🚨', badge: 'bg-[#d4eadd] text-[#154d30]', label: 'Dispute' },
   };
   return map[type] || { bg: 'bg-gray-50 border-gray-100', icon: '🔔', badge: 'bg-gray-100 text-gray-600', label: 'Notification' };
 };

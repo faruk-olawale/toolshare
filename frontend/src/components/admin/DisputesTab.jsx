@@ -76,11 +76,11 @@ export default function DisputesTab({ disputes, onResolved }) {
         const daysSince = Math.floor((new Date() - new Date(b.dispute?.raisedAt)) / (1000 * 60 * 60 * 24));
         const level = b.dispute?.escalationLevel || 0;
         return (
-          <div key={b._id} className={`card border-l-4 ${level >= 1 ? 'border-l-red-500' : 'border-l-orange-400'}`}>
+          <div key={b._id} className={`card border-l-4 ${level >= 1 ? 'border-l-red-500' : 'border-l-[#3d9166]'}`}>
             <div className="flex items-start justify-between gap-4 flex-wrap mb-3">
               <div>
                 <div className="flex items-center gap-2 flex-wrap mb-1">
-                  <span className={`badge text-xs ${level >= 1 ? 'bg-red-50 text-red-700 border-red-200' : 'bg-orange-50 text-orange-700 border-orange-200'}`}>
+                  <span className={`badge text-xs ${level >= 1 ? 'bg-red-50 text-red-700 border-red-200' : 'bg-[#eef6f1] text-[#154d30] border-[#a8d4bb]'}`}>
                     {level === 0 ? '⚠️ Level 0 — Reported' : level === 1 ? '🚨 Level 1 — Final Warning Sent' : '💀 Level 2 — Written Off'}
                   </span>
                   <span className="text-xs text-gray-400">Day {daysSince} of dispute</span>

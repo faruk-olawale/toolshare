@@ -19,7 +19,7 @@ const STATUS_STYLES = {
   rejected:  'bg-red-50 text-red-700 border-red-100',
   completed: 'bg-blue-50 text-blue-700 border-blue-100',
   cancelled: 'bg-gray-50 text-gray-500 border-gray-100',
-  disputed:  'bg-orange-50 text-orange-700 border-orange-100',
+  disputed:  'bg-[#eef6f1] text-[#154d30] border-[#d4eadd]',
 };
 
 const PAYMENT_STYLES = {
@@ -194,13 +194,13 @@ function BookingCard({ booking, onUpdate, reviewedIds, setReviewedIds }) {
 
   return (
     <>
-      <div className={`card overflow-hidden transition-all ${isOverdue ? 'ring-2 ring-orange-200' : ''}`}>
+      <div className={`card overflow-hidden transition-all ${isOverdue ? 'ring-2 ring-[#a8d4bb]' : ''}`}>
 
         {/* Overdue banner */}
         {isOverdue && (
-          <div className="bg-orange-50 border-b border-orange-100 px-4 py-2 flex items-center gap-2">
-            <AlertTriangle size={14} className="text-orange-500" />
-            <p className="text-xs font-semibold text-orange-700">Return overdue — please confirm the tool was returned</p>
+          <div className="bg-[#eef6f1] border-b border-[#d4eadd] px-4 py-2 flex items-center gap-2">
+            <AlertTriangle size={14} className="text-[#1a5c3a]" />
+            <p className="text-xs font-semibold text-[#154d30]">Return overdue — please confirm the tool was returned</p>
           </div>
         )}
 
@@ -361,7 +361,7 @@ function BookingCard({ booking, onUpdate, reviewedIds, setReviewedIds }) {
               <button onClick={() => setShowReturn(true)}
                 className={`w-full py-2.5 text-sm font-semibold rounded-xl transition-colors flex items-center justify-center gap-2 ${
                   isOverdue
-                    ? 'bg-orange-500 hover:bg-orange-600 text-white'
+                    ? 'bg-[#eef6f1]0 hover:bg-[#154d30] text-white'
                     : 'bg-green-50 hover:bg-green-100 text-green-700 border border-green-200'
                 }`}>
                 <RotateCcw size={14} />
@@ -542,15 +542,15 @@ export default function OwnerBookings() {
         )}
 
         {overdue > 0 && (
-          <div className="bg-orange-50 border border-orange-200 rounded-2xl p-4 mb-4 flex items-center gap-3">
-            <div className="w-9 h-9 bg-orange-100 rounded-xl flex items-center justify-center flex-shrink-0">
-              <AlertTriangle size={16} className="text-orange-600" />
+          <div className="bg-[#eef6f1] border border-[#a8d4bb] rounded-2xl p-4 mb-4 flex items-center gap-3">
+            <div className="w-9 h-9 bg-[#d4eadd] rounded-xl flex items-center justify-center flex-shrink-0">
+              <AlertTriangle size={16} className="text-[#1a5c3a]" />
             </div>
             <div>
-              <p className="text-sm font-semibold text-orange-800">
+              <p className="text-sm font-semibold text-[#0f3d25]">
                 {overdue} rental{overdue > 1 ? 's' : ''} past end date — confirm tool returned
               </p>
-              <p className="text-xs text-orange-600 mt-0.5">Renter's deposit is held until you confirm return</p>
+              <p className="text-xs text-[#1a5c3a] mt-0.5">Renter's deposit is held until you confirm return</p>
             </div>
           </div>
         )}
