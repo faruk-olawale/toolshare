@@ -112,7 +112,7 @@ export default function ResetPassword() {
           <button
             type="submit"
             disabled={loading || (confirm && confirm !== password)}
-            className="w-full bg-orange-500 hover:bg-orange-600 disabled:opacity-60 text-white font-semibold py-3 rounded-xl transition"
+            className="w-full bg-[#1a5c3a] hover:bg-[#1a5c3a] disabled:opacity-60 text-white font-semibold py-3 rounded-xl transition"
           >
             {loading ? 'Resetting...' : 'Reset Password'}
           </button>
