@@ -45,7 +45,7 @@ export default function Login() {
           </div>
 
           {oauthError && (
-            <div className="bg-red-50 border border-red-100 rounded-xl p-3 mb-5 text-sm text-red-600 text-center">
+            <div className="bg-red-50 border border-red-100 rounded-xl p-3 mb-5 text-sm text-[#1a5c3a] text-center">
               Google sign-in failed. Please try again or use email.
             </div>
           )}
@@ -75,7 +75,7 @@ export default function Login() {
             <div>
               <div className="flex items-center justify-between mb-1.5">
                 <label className="block text-sm font-medium text-gray-700">Password</label>
-                <Link to="/forgot-password" className="text-xs text-orange-500 hover:underline font-medium">
+                <Link to="/forgot-password" className="text-xs text-[#1a5c3a] hover:underline font-medium">
                   Forgot password?
                 </Link>
               </div>
