@@ -1,7 +1,7 @@
 const { validationResult } = require('express-validator');
 const Booking  = require('../models/Booking');
 const Tool     = require('../models/Tool');
-const User     = require('../models/User');
+const User     = require('../models/User');   // ✅ moved to top level
 const Payment  = require('../models/Payment');
 const { sendEmail } = require('../utils/sendEmail');
 const { sendSMS }   = require('../utils/sms');
@@ -25,16 +25,23 @@ const createBooking = async (req, res, next) => {
 
     const { toolId, startDate, endDate, notes } = req.body;
     const tool = await Tool.findById(toolId);
-    if (!tool)              return res.status(404).json({ success: false, message: 'Tool not found.' });
-    if (!tool.available)    return res.status(400).json({ success: false, message: 'This tool is currently unavailable.' });
+    if (!tool)               return res.status(404).json({ success: false, message: 'Tool not found.' });
+    if (!tool.available)     return res.status(400).json({ success: false, message: 'This tool is currently unavailable.' });
     if (!tool.adminVerified) return res.status(400).json({ success: false, message: 'This tool is pending admin verification.' });
     if (tool.ownerId.toString() === req.user._id.toString())
       return res.status(400).json({ success: false, message: 'You cannot book your own tool.' });
 
     const start = new Date(startDate);
     const end   = new Date(endDate);
-    if (end <= start)    return res.status(400).json({ success: false, message: 'End date must be after start date.' });
-    if (start < new Date()) return res.status(400).json({ success: false, message: 'Start date cannot be in the past.' });
+    if (end <= start) return res.status(400).json({ success: false, message: 'End date must be after start date.' });
+
+    // ✅ FIX: Compare against start of today in Nigeria time (UTC+1)
+    // Subtract 1hr grace to avoid rejecting same-day bookings due to UTC offset
+    const todayNigeria = new Date();
+    todayNigeria.setHours(todayNigeria.getHours() - 1); // allow 1hr grace
+    todayNigeria.setHours(0, 0, 0, 0);
+    if (start < todayNigeria)
+      return res.status(400).json({ success: false, message: 'Start date cannot be in the past.' });
 
     // Check for conflicts
     const conflict = await Booking.findOne({
@@ -44,12 +51,10 @@ const createBooking = async (req, res, next) => {
     });
     if (conflict) return res.status(409).json({ success: false, message: 'Tool already booked for selected dates.' });
 
-    const days        = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
-    const totalAmount = days * tool.pricePerDay;
+    const days          = Math.ceil((end - start) / (1000 * 60 * 60 * 24));
+    const totalAmount   = days * tool.pricePerDay;
     const depositAmount = calculateDepositAmount(totalAmount);
-
-    // Expires in 48 hours if owner doesn't respond
-    const expiresAt = new Date(Date.now() + 48 * 60 * 60 * 1000);
+    const expiresAt     = new Date(Date.now() + 48 * 60 * 60 * 1000);
 
     const booking = await Booking.create({
       toolId, renterId: req.user._id, ownerId: tool.ownerId,
@@ -123,7 +128,7 @@ const createBooking = async (req, res, next) => {
 const getRenterBookings = async (req, res, next) => {
   try {
     const { page = 1, limit = 10, status } = req.query;
-    const skip = (Number(page) - 1) * Number(limit);
+    const skip  = (Number(page) - 1) * Number(limit);
     const query = { renterId: req.user._id };
     if (status) query.status = status;
     const [bookings, total] = await Promise.all([
@@ -142,7 +147,7 @@ const getRenterBookings = async (req, res, next) => {
 const getOwnerBookings = async (req, res, next) => {
   try {
     const { page = 1, limit = 10, status } = req.query;
-    const skip = (Number(page) - 1) * Number(limit);
+    const skip  = (Number(page) - 1) * Number(limit);
     const query = { ownerId: req.user._id };
     if (status) query.status = status;
     const [bookings, total] = await Promise.all([
@@ -176,16 +181,39 @@ const approveBooking = async (req, res, next) => {
     // Block tool availability
     await Tool.findByIdAndUpdate(booking.toolId, { available: false });
 
-    // Reject overlapping pending bookings
-    await Booking.updateMany(
-      {
-        toolId: booking.toolId._id,
-        _id: { $ne: booking._id },
-        status: 'pending',
-        $or: [{ startDate: { $lte: booking.endDate }, endDate: { $gte: booking.startDate } }],
-      },
-      { status: 'rejected' }
-    );
+    // ✅ FIX: Find and notify renters whose overlapping bookings are auto-rejected
+    const overlapping = await Booking.find({
+      toolId: booking.toolId._id,
+      _id: { $ne: booking._id },
+      status: 'pending',
+      $or: [{ startDate: { $lte: booking.endDate }, endDate: { $gte: booking.startDate } }],
+    }).populate('renterId', 'name email phone');
+
+    // Reject them and notify each one
+    for (const ob of overlapping) {
+      ob.status = 'rejected';
+      await ob.save();
+      await notifyAll({
+        user: ob.renterId,
+        inApp: {
+          userId: ob.renterId._id,
+          title: '❌ Booking No Longer Available',
+          message: `Unfortunately "${booking.toolId.name}" has been booked by someone else for your requested dates.`,
+          type: 'booking_rejected',
+          link: '/bookings',
+        },
+        email: {
+          subject: `Your booking for ${booking.toolId.name}`,
+          template: 'bookingRejected',
+          data: {
+            renterName: ob.renterId.name,
+            toolName: booking.toolId.name,
+            browseUrl: `${process.env.CLIENT_URL}/tools`,
+          },
+        },
+        sms: `ToolShare: Your booking for ${booking.toolId.name} is no longer available — the tool was booked by someone else. Browse more tools: ${process.env.CLIENT_URL}/tools`,
+      });
+    }
 
     await notifyAll({
       user: booking.renterId,
@@ -228,7 +256,6 @@ const rejectBooking = async (req, res, next) => {
 
     booking.status = 'rejected';
 
-    // If deposit was paid, trigger refund
     let refundMessage = '';
     if (booking.deposit?.paid && booking.deposit.amount > 0) {
       booking.paymentStatus = 'refund_pending';
@@ -238,7 +265,12 @@ const rejectBooking = async (req, res, next) => {
         processedAt: new Date(),
       };
       refundMessage = ` A refund of ₦${booking.deposit.amount.toLocaleString()} will be processed within 3–5 business days.`;
+    }
 
+    // ✅ FIX: save() FIRST, then notify — prevents ghost refund emails on save failure
+    await booking.save();
+
+    if (booking.deposit?.paid && booking.deposit.amount > 0) {
       await notifyAll({
         user: booking.renterId,
         inApp: {
@@ -261,8 +293,6 @@ const rejectBooking = async (req, res, next) => {
         sms: `ToolShare: Your booking for ${booking.toolId.name} was rejected. A refund of ₦${booking.deposit.amount.toLocaleString()} is being processed.`,
       });
     }
-
-    await booking.save();
 
     await notifyAll({
       user: booking.renterId,
@@ -298,7 +328,6 @@ const cancelBooking = async (req, res, next) => {
       .populate('toolId',   'name');
     if (!booking) return res.status(404).json({ success: false, message: 'Booking not found.' });
 
-    // Determine who is cancelling
     const isRenter = booking.renterId._id.toString() === req.user._id.toString();
     const isOwner  = booking.ownerId._id.toString()  === req.user._id.toString();
     if (!isRenter && !isOwner)
@@ -308,6 +337,9 @@ const cancelBooking = async (req, res, next) => {
 
     if (!['pending', 'approved'].includes(booking.status))
       return res.status(400).json({ success: false, message: `Cannot cancel a ${booking.status} booking.` });
+
+    // ✅ FIX: capture previous status BEFORE changing it
+    const wasApproved = booking.status === 'approved';
 
     const { percent, policy, label } = getCancellationPolicy(booking.startDate, cancellerRole);
     const refundAmount = booking.paymentStatus === 'paid' || booking.deposit?.paid
@@ -333,22 +365,21 @@ const cancelBooking = async (req, res, next) => {
         processedAt: new Date(),
       };
       if (booking.deposit?.paid) {
-        booking.deposit.refunded   = percent === 100;
-        booking.deposit.forfeited  = percent === 0;
+        booking.deposit.refunded      = percent === 100;
+        booking.deposit.forfeited     = percent === 0;
         booking.deposit.forfeitReason = percent === 0 ? 'Late cancellation' : null;
       }
     }
 
     await booking.save();
 
-    // Re-open tool availability if it was approved
-    if (booking.status === 'cancelled') {
+    // ✅ FIX: only restore tool availability if booking was previously approved
+    if (wasApproved) {
       await Tool.findByIdAndUpdate(booking.toolId, { available: true });
     }
 
     const otherParty = isRenter ? booking.ownerId : booking.renterId;
 
-    // Notify cancelling party
     await notifyAll({
       user: req.user,
       inApp: {
@@ -371,14 +402,13 @@ const cancelBooking = async (req, res, next) => {
       sms: `ToolShare: Booking for ${booking.toolId.name} cancelled. ${refundAmount > 0 ? `Refund ₦${refundAmount.toLocaleString()} processing.` : 'No refund applies.'}`,
     });
 
-    // Notify the other party
     if (isRenter) {
       await notifyAll({
         user: otherParty,
         inApp: {
           userId: otherParty._id,
           title: '⚠️ Booking Cancelled by Renter',
-          message: `${booking.renterId.name} cancelled their booking for "${booking.toolId.name}". Your tool is now available again.`,
+          message: `${booking.renterId.name} cancelled their booking for "${booking.toolId.name}".${wasApproved ? ' Your tool is now available again.' : ''}`,
           type: 'booking_rejected',
           link: '/booking-requests',
         },
@@ -392,7 +422,7 @@ const cancelBooking = async (req, res, next) => {
             dashboardUrl: `${process.env.CLIENT_URL}/booking-requests`,
           },
         },
-        sms: `ToolShare: ${booking.renterId.name} cancelled their booking for ${booking.toolId.name}. Your tool is now available.`,
+        sms: `ToolShare: ${booking.renterId.name} cancelled their booking for ${booking.toolId.name}.${wasApproved ? ' Your tool is now available.' : ''}`,
       });
     }
 
@@ -422,17 +452,21 @@ const completeBooking = async (req, res, next) => {
     booking.escrow.ownerConfirmedReturn   = true;
     booking.escrow.ownerConfirmedReturnAt = new Date();
 
-    // Refund deposit if paid and tool returned
     if (booking.deposit?.paid && !booking.deposit.refunded && !booking.deposit.forfeited) {
-      booking.deposit.refunded  = true;
+      booking.deposit.refunded   = true;
       booking.deposit.refundedAt = new Date();
-      booking.paymentStatus = 'refund_pending';
+      booking.paymentStatus      = 'refund_pending';
       booking.refund = {
-        amount:    booking.deposit.amount,
-        reason:    'Booking completed — deposit refund',
+        amount:      booking.deposit.amount,
+        reason:      'Booking completed — deposit refund',
         processedAt: new Date(),
       };
+    }
 
+    await booking.save();
+    await Tool.findByIdAndUpdate(booking.toolId, { available: true });
+
+    if (booking.deposit?.paid) {
       await notifyAll({
         user: booking.renterId,
         inApp: {
@@ -456,9 +490,6 @@ const completeBooking = async (req, res, next) => {
       });
     }
 
-    await booking.save();
-    await Tool.findByIdAndUpdate(booking.toolId, { available: true });
-
     res.status(200).json({ success: true, message: 'Booking completed! Deposit refund initiated.', booking });
   } catch (error) { next(error); }
 };
@@ -470,17 +501,16 @@ const getCancellationPolicyPreview = async (req, res, next) => {
     if (!booking) return res.status(404).json({ success: false, message: 'Booking not found.' });
 
     const isRenter = booking.renterId.toString() === req.user._id.toString();
-    const role = isRenter ? 'renter' : 'owner';
+    const role     = isRenter ? 'renter' : 'owner';
     const { percent, policy, label } = getCancellationPolicy(booking.startDate, role);
-
-    const baseAmount = booking.deposit?.paid ? booking.deposit.amount : booking.totalAmount;
+    const baseAmount   = booking.deposit?.paid ? booking.deposit.amount : booking.totalAmount;
     const refundAmount = Math.round(baseAmount * percent / 100);
 
     res.status(200).json({
       success: true,
       policy: { percent, policy, label },
       refundAmount,
-      depositPaid: booking.deposit?.paid || false,
+      depositPaid:   booking.deposit?.paid   || false,
       depositAmount: booking.deposit?.amount || 0,
     });
   } catch (error) { next(error); }
@@ -500,10 +530,8 @@ const getToolBookings = async (req, res, next) => {
 // ─── SINGLE BOOKING DETAIL ────────────────────────────────────────────────────
 const getBookingById = async (req, res, next) => {
   try {
-    // Validate ObjectId format before hitting DB
-    if (!req.params.id.match(/^[0-9a-fA-F]{24}$/)) {
+    if (!req.params.id.match(/^[0-9a-fA-F]{24}$/))
       return res.status(404).json({ success: false, message: 'Booking not found.' });
-    }
 
     const booking = await Booking.findById(req.params.id)
       .populate('toolId',   'name category images location pricePerDay')
@@ -515,13 +543,24 @@ const getBookingById = async (req, res, next) => {
     const isAdmin = req.user.role === 'admin';
     if (!isParty && !isAdmin) return res.status(403).json({ success: false, message: 'Not authorized.' });
 
-    res.status(200).json({ success: true, booking });
+    // ✅ FIX: hide contact details until booking is approved
+    const approved = ['approved', 'completed'].includes(booking.status);
+    const bookingObj = booking.toObject();
+    if (!approved && !isAdmin) {
+      if (isParty) {
+        // Renter can see their own details but not owner's private contact
+        if (booking.renterId._id.toString() === req.user._id.toString()) {
+          bookingObj.ownerId.phone = undefined;
+          bookingObj.ownerId.email = undefined;
+        }
+      }
+    }
+
+    res.status(200).json({ success: true, booking: bookingObj });
   } catch (error) { next(error); }
 };
 
 // ─── REPORT NON-RETURN ────────────────────────────────────────────────────────
-// PUT /api/bookings/:id/non-return
-// Owner calls this when renter has not returned the tool past the end date
 const reportNonReturn = async (req, res, next) => {
   try {
     const booking = await Booking.findById(req.params.id)
@@ -540,15 +579,13 @@ const reportNonReturn = async (req, res, next) => {
     if (booking.dispute?.active)
       return res.status(400).json({ success: false, message: 'A dispute is already active on this booking.' });
 
-    // Activate dispute + forfeit deposit
-    booking.status                = 'disputed';
-    booking.dispute.active        = true;
-    booking.dispute.raisedBy      = req.user._id;
-    booking.dispute.raisedByRole  = 'owner';
-    booking.dispute.reason        = 'Tool not returned by renter after rental end date';
-    booking.dispute.raisedAt      = new Date();
+    booking.status               = 'disputed';
+    booking.dispute.active       = true;
+    booking.dispute.raisedBy     = req.user._id;
+    booking.dispute.raisedByRole = 'owner';
+    booking.dispute.reason       = 'Tool not returned by renter after rental end date';
+    booking.dispute.raisedAt     = new Date();
 
-    // Forfeit the deposit — renter does not get it back
     if (booking.deposit?.paid && !booking.deposit.refunded && !booking.deposit.forfeited) {
       booking.deposit.forfeited     = true;
       booking.deposit.forfeitReason = 'Tool not returned — deposit forfeited to cover potential loss';
@@ -556,7 +593,6 @@ const reportNonReturn = async (req, res, next) => {
 
     await booking.save();
 
-    // Notify renter — strong warning
     await notifyAll({
       user: booking.renterId,
       inApp: {
@@ -570,20 +606,19 @@ const reportNonReturn = async (req, res, next) => {
         subject: `🚨 Non-Return Reported — ${booking.toolId.name}`,
         template: 'nonReturnRenter',
         data: {
-          renterName:  booking.renterId.name,
-          toolName:    booking.toolId.name,
-          ownerName:   booking.ownerId.name,
-          ownerPhone:  booking.ownerId.phone,
-          endDate:     booking.endDate.toLocaleDateString('en-NG'),
+          renterName:    booking.renterId.name,
+          toolName:      booking.toolId.name,
+          ownerName:     booking.ownerId.name,
+          ownerPhone:    booking.ownerId.phone,
+          endDate:       booking.endDate.toLocaleDateString('en-NG'),
           depositAmount: booking.deposit?.amount || 0,
-          bookingsUrl: `${process.env.CLIENT_URL}/bookings`,
+          bookingsUrl:   `${process.env.CLIENT_URL}/bookings`,
         },
       },
       sms: `URGENT ToolShare: ${booking.ownerId.name} has reported you haven't returned "${booking.toolId.name}". Your deposit of ₦${booking.deposit?.amount?.toLocaleString()} has been forfeited. Contact owner: ${booking.ownerId.phone}`,
     });
 
-    // Notify all admins
-    const User = require('../models/User');
+    // ✅ User already required at top — no inline require needed
     const admins = await User.find({ role: 'admin' }).select('_id email');
     for (const admin of admins) {
       await notifyAll({
@@ -599,13 +634,13 @@ const reportNonReturn = async (req, res, next) => {
           subject: `🚨 Non-Return Dispute — ${booking.toolId.name}`,
           template: 'disputeRaised',
           data: {
-            raisedBy:    booking.ownerId.name,
+            raisedBy:     booking.ownerId.name,
             raisedByRole: 'owner',
-            toolName:    booking.toolId.name,
-            renterName:  booking.renterId.name,
-            ownerName:   booking.ownerId.name,
-            reason:      'Tool not returned after rental end date',
-            adminUrl:    `${process.env.CLIENT_URL}/admin`,
+            toolName:     booking.toolId.name,
+            renterName:   booking.renterId.name,
+            ownerName:    booking.ownerId.name,
+            reason:       'Tool not returned after rental end date',
+            adminUrl:     `${process.env.CLIENT_URL}/admin`,
           },
         },
         sms: null,
