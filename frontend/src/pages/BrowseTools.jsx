@@ -9,22 +9,23 @@ const CITIES     = ['', 'Lagos', 'Abuja', 'Kano', 'Ibadan', 'Port Harcourt', 'Be
 
 export default function BrowseTools() {
   const [searchParams] = useSearchParams();
-  const [tools, setTools]       = useState([]);
-  const [loading, setLoading]   = useState(true);
-  const [total, setTotal]       = useState(0);
-  const [pages, setPages]       = useState(1);
-  const [filters, setFilters]   = useState({
+  const [tools, setTools]     = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [total, setTotal]     = useState(0);
+  const [pages, setPages]     = useState(1);
+  const [filters, setFilters] = useState({
     search:   searchParams.get('search')   || '',
     category: searchParams.get('category') || '',
     location: '',
     minPrice: '',
     maxPrice: '',
+    // NOTE: no `available` filter — we show ALL tools intentionally
     page: 1,
   });
-  const [searchInput, setSearchInput] = useState(filters.search); // debounced separately
+  const [searchInput, setSearchInput] = useState(filters.search);
   const [showFilters, setShowFilters] = useState(false);
 
-  // Debounce search input — only update filters after 400ms pause
+  // Debounce search — fires API 400ms after typing stops
   useEffect(() => {
     const t = setTimeout(() => {
       setFilters(prev => ({ ...prev, search: searchInput, page: 1 }));
@@ -36,10 +37,11 @@ export default function BrowseTools() {
     setLoading(true);
     try {
       const params = Object.fromEntries(Object.entries(filters).filter(([, v]) => v !== ''));
-      const { data } = await api.get('/tools', { params });
-      setTools(data.tools);
-      setTotal(data.total);
-      setPages(data.pages);
+      // showAll=true tells the backend to include unavailable tools
+      const { data } = await api.get('/tools', { params: { ...params, showAll: true } });
+      setTools(data.tools || []);
+      setTotal(data.total || 0);
+      setPages(data.pages || 1);
     } catch {
       setTools([]);
     } finally {
@@ -60,7 +62,7 @@ export default function BrowseTools() {
 
   const hasFilters = filters.search || filters.category || filters.location || filters.minPrice || filters.maxPrice;
 
-  // Truncated pagination — show first, last and ±2 around current
+  // Truncated pagination
   const getPageNumbers = () => {
     if (pages <= 7) return [...Array(pages)].map((_, i) => i + 1);
     const cur = filters.page;
@@ -74,13 +76,32 @@ export default function BrowseTools() {
     return result;
   };
 
+  // Counts for the filter bar summary
+  const availableCount   = tools.filter(t => t.available).length;
+  const unavailableCount = tools.filter(t => !t.available).length;
+
   return (
     <div className="py-8 animate-fade-in">
       <div className="page-container">
+
         {/* Header */}
         <div className="mb-6">
           <h1 className="section-title mb-2">Browse Tools</h1>
-          <p className="text-gray-500">{total > 0 ? `${total} tools available` : 'Find equipment near you'}</p>
+          <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500">
+            {total > 0 && <span>{total} tools found</span>}
+            {!loading && total > 0 && (
+              <>
+                <span className="w-1 h-1 bg-gray-300 rounded-full" />
+                <span className="text-[#1a5c3a] font-medium">{availableCount} available</span>
+                {unavailableCount > 0 && (
+                  <>
+                    <span className="w-1 h-1 bg-gray-300 rounded-full" />
+                    <span className="text-gray-400">{unavailableCount} unavailable</span>
+                  </>
+                )}
+              </>
+            )}
+          </div>
         </div>
 
         {/* Search + Filter Bar */}
