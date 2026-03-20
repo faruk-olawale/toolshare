@@ -19,7 +19,7 @@ const STATUS_STYLES = {
   rejected:  'bg-red-50 text-red-700 border-red-100',
   completed: 'bg-blue-50 text-blue-700 border-blue-100',
   cancelled: 'bg-gray-50 text-gray-500 border-gray-100',
-  disputed:  'bg-[#eef6f1] text-[#154d30] border-[#d4eadd]',
+  disputed:  'bg-amber-50 text-amber-700 border-amber-100',
 };
 
 const PAYMENT_STYLES = {

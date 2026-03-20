@@ -7,7 +7,7 @@ export default function ToolCard({ tool }) {
 
   return (
     <Link to={`/tools/${tool._id}`} className="card group hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 block">
-      <div className="relative overflow-hidden h-48 bg-earth-100">
+      <div className="relative overflow-hidden h-48 bg-[#d4eadd]">
         <img
           src={imgSrc}
           alt={tool.name}
@@ -19,7 +19,13 @@ export default function ToolCard({ tool }) {
             {tool.category}
           </span>
         </div>
-        {!tool.available && (
+        {tool.available ? (
+          <div className="absolute top-3 right-3">
+            <span className="bg-[#1a5c3a]/90 backdrop-blur-sm text-xs font-medium text-white px-2.5 py-1 rounded-full shadow-sm">
+              Available
+            </span>
+          </div>
+        ) : (
           <div className="absolute inset-0 bg-black/40 flex items-center justify-center">
             <span className="bg-white/90 text-gray-800 text-xs font-bold px-3 py-1 rounded-full uppercase tracking-wider">
               Unavailable

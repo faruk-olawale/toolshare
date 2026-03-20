@@ -35,6 +35,8 @@ export default function AddTool() {
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files);
+    const tooBig = files.filter(f => f.size > 5 * 1024 * 1024);
+    if (tooBig.length) return toast.error('Each image must be under 5MB.');
     if (files.length + images.length > 5) return toast.error('Maximum 5 photos allowed.');
     setImages(prev => [...prev, ...files]);
     files.forEach(file => {
@@ -46,6 +48,11 @@ export default function AddTool() {
 
   const handleDocChange = (e) => {
     const files = Array.from(e.target.files);
+    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'application/pdf'];
+    const invalid = files.filter(f => !allowed.includes(f.type));
+    if (invalid.length) return toast.error('Only JPG, PNG, WebP or PDF files are allowed.');
+    const tooBig = files.filter(f => f.size > 5 * 1024 * 1024);
+    if (tooBig.length) return toast.error('Each file must be under 5MB.');
     if (files.length + ownershipDocs.length > 3) return toast.error('Maximum 3 documents allowed.');
     setOwnershipDocs(prev => [...prev, ...files]);
     files.forEach(file => {
@@ -95,8 +102,8 @@ export default function AddTool() {
   if (kycStatus !== 'approved') return (
     <div className="min-h-[calc(100vh-64px)] flex items-center justify-center px-4">
       <div className="card p-8 max-w-md w-full text-center">
-        <div className="w-16 h-16 bg-orange-50 rounded-2xl flex items-center justify-center mx-auto mb-4">
-          <Shield size={28} className="text-orange-500" />
+        <div className="w-16 h-16 bg-[#eef6f1] rounded-2xl flex items-center justify-center mx-auto mb-4">
+          <Shield size={28} className="text-[#1a5c3a]" />
         </div>
         <h2 className="text-xl font-display font-bold text-gray-900 mb-2">Verify Your Identity First</h2>
         <p className="text-gray-500 text-sm mb-4">You need to complete identity verification before listing tools.</p>

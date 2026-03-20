@@ -23,8 +23,8 @@ export default function Register() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (form.password.length < 6) {
-      return toast.error('Password must be at least 6 characters.');
+    if (form.password.length < 8) {
+      return toast.error('Password must be at least 8 characters.');
     }
     setLoading(true);
     try {
@@ -94,7 +94,7 @@ export default function Register() {
             </div>
 
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone Number</label>
+              <label className="block text-sm font-medium text-gray-700 mb-1.5">Phone Number <span className="text-gray-400 font-normal">(optional)</span></label>
               <input
                 type="tel"
                 className="input-field"
@@ -124,7 +124,7 @@ export default function Register() {
                 <input
                   type={showPassword ? 'text' : 'password'}
                   className="input-field pr-11"
-                  placeholder="At least 6 characters"
+                  placeholder="At least 8 characters"
                   value={form.password}
                   onChange={(e) => setForm({ ...form, password: e.target.value })}
                   required
