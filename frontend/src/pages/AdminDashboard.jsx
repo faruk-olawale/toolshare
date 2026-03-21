@@ -71,7 +71,7 @@ const CustomTooltip = ({ active, payload, label }) => {
 };
 
 // ── Reusable UI components ────────────────────────────────────────────────────
-function AdminStatCard({ label, value, icon, gradient, badge, badgeColor, loading }) {
+function AdminStatCard({ label, value, icon, iconBg, iconColor, badge, badgeColor, loading }) {
   if (loading) return (
     <div className="bg-white rounded-2xl border border-gray-100 p-5 animate-pulse">
       <div className="w-10 h-10 bg-gray-100 rounded-xl mb-3" />
@@ -81,10 +81,9 @@ function AdminStatCard({ label, value, icon, gradient, badge, badgeColor, loadin
   );
   return (
     <div className="relative bg-white rounded-2xl border border-gray-100 p-5 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 overflow-hidden group">
-      <div className={`absolute -top-8 -right-8 w-24 h-24 rounded-full opacity-0 group-hover:opacity-5 transition-opacity duration-300 ${gradient}`} />
       <div className="flex items-start justify-between mb-3">
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-sm ${gradient}`}>
-          {icon}
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconBg}`}>
+          <span className={iconColor}>{icon}</span>
         </div>
         {badge !== undefined && badge > 0 && (
           <span className={`text-[11px] font-bold px-2 py-0.5 rounded-full ${badgeColor || 'bg-red-50 text-red-600'}`}>
@@ -284,14 +283,14 @@ export default function AdminDashboard() {
   const approvedN  = allBookings.filter(b => b.status === 'approved').length;
 
   const statItems = [
-    { label: 'Total Users',      value: stats?.totalUsers    || 0, icon: <Users size={15} />,        gradient: 'bg-gradient-to-br from-[#1a5c3a] to-[#3d9166]'   },
-    { label: 'Active Tools',     value: stats?.totalTools    || 0, icon: <Package size={15} />,      gradient: 'bg-gradient-to-br from-[#154d30] to-[#1a5c3a]',   badge: stats?.pendingTools, badgeColor: 'bg-amber-50 text-amber-700' },
-    { label: 'Total Bookings',   value: stats?.totalBookings || 0, icon: <BookOpen size={15} />,     gradient: 'bg-gradient-to-br from-[#3d9166] to-[#6db591]'    },
-    { label: 'Paid Bookings',    value: stats?.paidBookings  || 0, icon: <CheckCircle size={15} />,  gradient: 'bg-gradient-to-br from-[#0f3d25] to-[#154d30]'    },
-    { label: 'Pending KYC',      value: stats?.pendingKyc   || 0, icon: <Shield size={15} />,       gradient: 'bg-gradient-to-br from-amber-500 to-amber-600',    badge: stats?.pendingKyc, badgeColor: 'bg-amber-50 text-amber-700' },
-    { label: 'Open Disputes',    value: disputes.length,           icon: <AlertTriangle size={15} />, gradient: 'bg-gradient-to-br from-red-500 to-red-600',       badge: disputes.length, badgeColor: 'bg-red-50 text-red-600' },
-    { label: 'Platform Revenue', value: `₦${revenueK}k`,          icon: <DollarSign size={15} />,   gradient: 'bg-gradient-to-br from-[#1a5c3a] to-[#3d9166]'    },
-    { label: 'Gross Volume',     value: `₦${grossK}k`,            icon: <TrendingUp size={15} />,   gradient: 'bg-gradient-to-br from-[#3d9166] to-[#6db591]'    },
+    { label: 'Total Users',      value: stats?.totalUsers    || 0, icon: <Users size={15} />,        iconBg: 'bg-[#eef6f1]', iconColor: 'text-[#1a5c3a]' },
+    { label: 'Active Tools',     value: stats?.totalTools    || 0, icon: <Package size={15} />,      iconBg: 'bg-[#eef6f1]', iconColor: 'text-[#1a5c3a]', badge: stats?.pendingTools, badgeColor: 'bg-amber-50 text-amber-700' },
+    { label: 'Total Bookings',   value: stats?.totalBookings || 0, icon: <BookOpen size={15} />,     iconBg: 'bg-[#d4eadd]', iconColor: 'text-[#154d30]' },
+    { label: 'Paid Bookings',    value: stats?.paidBookings  || 0, icon: <CheckCircle size={15} />,  iconBg: 'bg-[#d4eadd]', iconColor: 'text-[#154d30]' },
+    { label: 'Pending KYC',      value: stats?.pendingKyc   || 0, icon: <Shield size={15} />,       iconBg: 'bg-amber-50', iconColor: 'text-amber-600', badge: stats?.pendingKyc, badgeColor: 'bg-amber-50 text-amber-700' },
+    { label: 'Open Disputes',    value: disputes.length,           icon: <AlertTriangle size={15} />, iconBg: 'bg-red-50', iconColor: 'text-red-500', badge: disputes.length, badgeColor: 'bg-red-50 text-red-600' },
+    { label: 'Platform Revenue', value: `₦${revenueK}k`,          icon: <DollarSign size={15} />,   iconBg: 'bg-[#eef6f1]', iconColor: 'text-[#1a5c3a]' },
+    { label: 'Gross Volume',     value: `₦${grossK}k`,            icon: <TrendingUp size={15} />,   iconBg: 'bg-[#d4eadd]', iconColor: 'text-[#154d30]' },
   ];
 
   const tabs = [
@@ -304,7 +303,7 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <div className="animate-fade-in max-w-7xl mx-auto">
+    <div className="animate-fade-in max-w-7xl mx-auto w-full">
 
       {/* ── Header ── */}
       <div className="flex items-center justify-between mb-6">
@@ -341,7 +340,7 @@ export default function AdminDashboard() {
           )}
           {pendingKyc.length > 0 && (
             <button onClick={() => setTab('kyc')}
-              className="flex items-center gap-2 px-4 py-2 bg-blue-50 border border-blue-200 text-blue-800 rounded-xl text-[12px] font-semibold hover:bg-blue-100 transition-colors">
+              className="flex items-center gap-2 px-4 py-2 bg-[#eef6f1] border border-[#a8d4bb] text-[#1a5c3a] rounded-xl text-[12px] font-semibold hover:bg-[#d4eadd] transition-colors">
               <Shield size={13} /> {pendingKyc.length} KYC verification{pendingKyc.length > 1 ? 's' : ''} pending
             </button>
           )}
@@ -440,7 +439,7 @@ export default function AdminDashboard() {
         <div className="grid md:grid-cols-3 gap-4 mb-6">
           <SectionCard title="Booking Breakdown" subtitle="By status">
             <div className="space-y-1 divide-y divide-gray-50">
-              <MetricRow label="Completed" value={completedN} percent={(completedN / totalBk) * 100} color="bg-blue-500" />
+              <MetricRow label="Completed" value={completedN} percent={(completedN / totalBk) * 100} color="bg-[#1a5c3a]" />
               <MetricRow label="Approved"  value={approvedN}  percent={(approvedN  / totalBk) * 100} color="bg-[#1a5c3a]" />
               <MetricRow label="Pending"   value={pendingN}   percent={(pendingN   / totalBk) * 100} color="bg-amber-400" />
               <MetricRow label="Disputes"  value={disputes.length} percent={(disputes.length / totalBk) * 100} color="bg-red-400" />
@@ -450,11 +449,11 @@ export default function AdminDashboard() {
           <SectionCard title="Platform Health" subtitle="Key metrics" className="md:col-span-2">
             <div className="grid grid-cols-2 sm:grid-cols-3 gap-4">
               {[
-                { label: 'Conversion Rate', value: totalBk > 0 ? `${Math.round((completedN / totalBk) * 100)}%` : '—', icon: <TrendingUp size={14} />, color: 'text-green-600 bg-green-50' },
-                { label: 'Active Rentals',  value: approvedN,  icon: <Zap size={14} />,          color: 'text-blue-600 bg-blue-50' },
+                { label: 'Conversion Rate', value: totalBk > 0 ? `${Math.round((completedN / totalBk) * 100)}%` : '—', icon: <TrendingUp size={14} />, color: 'text-[#1a5c3a] bg-[#eef6f1]' },
+                { label: 'Active Rentals',  value: approvedN,  icon: <Zap size={14} />,          color: 'text-[#154d30] bg-[#d4eadd]' },
                 { label: 'Open Tickets',    value: openTickets, icon: <Clock size={14} />,        color: openTickets > 0 ? 'text-red-600 bg-red-50' : 'text-gray-500 bg-gray-50' },
                 { label: 'Verified Users',  value: allUsers.filter(u => u.kyc?.status === 'approved').length, icon: <CheckCircle size={14} />, color: 'text-[#1a5c3a] bg-[#eef6f1]' },
-                { label: 'Total Revenue',   value: `₦${revenueK}k`, icon: <DollarSign size={14} />, color: 'text-violet-600 bg-violet-50' },
+                { label: 'Total Revenue',   value: `₦${revenueK}k`, icon: <DollarSign size={14} />, color: 'text-[#1a5c3a] bg-[#eef6f1]' },
                 { label: 'Pending Actions', value: pendingTools.length + pendingKyc.length, icon: <AlertTriangle size={14} />, color: pendingTools.length + pendingKyc.length > 0 ? 'text-amber-600 bg-amber-50' : 'text-gray-500 bg-gray-50' },
               ].map(({ label, value, icon, color }) => (
                 <div key={label} className="flex items-center gap-3 p-3 rounded-xl bg-gray-50 hover:bg-gray-100 transition-colors">

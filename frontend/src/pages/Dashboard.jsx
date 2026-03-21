@@ -15,7 +15,7 @@ import {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const fmt = (d) => new Date(d).toLocaleDateString('en-NG', { day: 'numeric', month: 'short' });
-
+ 
 const STATUS_CONFIG = {
   pending:   { dot: 'bg-amber-400',  text: 'text-amber-700',  bg: 'bg-amber-50  border-amber-100'  },
   approved:  { dot: 'bg-green-500',  text: 'text-green-700',  bg: 'bg-green-50  border-green-100'  },
@@ -51,7 +51,7 @@ function buildChartData(bookings) {
 
 // ── Reusable UI components ────────────────────────────────────────────────────
 
-function StatCard({ label, value, icon, gradient, trend, trendLabel, link, loading }) {
+function StatCard({ label, value, icon, iconBg, iconColor, trend, trendLabel, link, loading }) {
   if (loading) return (
     <div className="bg-white rounded-2xl border border-gray-100 p-5 animate-pulse">
       <div className="w-10 h-10 bg-gray-100 rounded-xl mb-4" />
@@ -61,11 +61,9 @@ function StatCard({ label, value, icon, gradient, trend, trendLabel, link, loadi
   );
   return (
     <Link to={link} className="group relative bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-md hover:border-gray-200 hover:-translate-y-0.5 transition-all duration-200 overflow-hidden block">
-      {/* subtle background glow on hover */}
-      <div className={`absolute -top-8 -right-8 w-24 h-24 rounded-full opacity-0 group-hover:opacity-5 transition-opacity duration-300 ${gradient}`} />
       <div className="flex items-start justify-between mb-4">
-        <div className={`w-10 h-10 rounded-xl flex items-center justify-center text-white shadow-sm ${gradient}`}>
-          {icon}
+        <div className={`w-10 h-10 rounded-xl flex items-center justify-center ${iconBg}`}>
+          <span className={iconColor}>{icon}</span>
         </div>
         {trend !== undefined && (
           <div className={`flex items-center gap-1 text-xs font-semibold px-2 py-1 rounded-full ${
@@ -98,6 +96,7 @@ function ChartCard({ title, subtitle, children, action }) {
   );
 }
 
+ 
 function StatusBadge({ status }) {
   const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.cancelled;
   return (
@@ -107,7 +106,7 @@ function StatusBadge({ status }) {
     </span>
   );
 }
-
+ 
 function SectionCard({ title, children, action, className = '' }) {
   return (
     <div className={`bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden ${className}`}>
@@ -247,15 +246,15 @@ export default function Dashboard() {
   const greeting    = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 
   const statCards = isOwner ? [
-    { label: 'My Tools',         value: loading ? '—' : stats?.totalTools || 0,                        icon: <Package size={17} />,    gradient: 'bg-gradient-to-br from-[#1a5c3a] to-[#3d9166]',   link: '/my-tools' },
-    { label: 'Total Bookings',   value: loading ? '—' : stats?.totalBookings || 0,                      icon: <BookOpen size={17} />,   gradient: 'bg-gradient-to-br from-[#154d30] to-[#1a5c3a]',   link: '/booking-requests' },
-    { label: 'Pending',          value: loading ? '—' : stats?.pending || 0,                            icon: <Clock size={17} />,      gradient: 'bg-gradient-to-br from-amber-500 to-amber-600',    link: '/booking-requests' },
-    { label: 'Total Earnings',   value: loading ? '—' : `₦${(stats?.earnings || 0).toLocaleString()}`, icon: <TrendingUp size={17} />, gradient: 'bg-gradient-to-br from-[#3d9166] to-[#6db591]',    link: '/booking-requests' },
+    { label: 'My Tools',         value: loading ? '—' : stats?.totalTools || 0,                        icon: <Package size={17} />,    iconBg: 'bg-[#eef6f1]', iconColor: 'text-[#1a5c3a]', link: '/my-tools' },
+    { label: 'Total Bookings',   value: loading ? '—' : stats?.totalBookings || 0,                      icon: <BookOpen size={17} />,   iconBg: 'bg-[#eef6f1]', iconColor: 'text-[#1a5c3a]', link: '/booking-requests' },
+    { label: 'Pending',          value: loading ? '—' : stats?.pending || 0,                            icon: <Clock size={17} />,      iconBg: 'bg-amber-50',   iconColor: 'text-amber-600',  link: '/booking-requests' },
+    { label: 'Total Earnings',   value: loading ? '—' : `₦${(stats?.earnings || 0).toLocaleString()}`, icon: <TrendingUp size={17} />, iconBg: 'bg-[#d4eadd]', iconColor: 'text-[#154d30]', link: '/booking-requests' },
   ] : [
-    { label: 'My Bookings',  value: loading ? '—' : stats?.totalBookings || 0,                        icon: <BookOpen size={17} />,   gradient: 'bg-gradient-to-br from-[#1a5c3a] to-[#3d9166]',  link: '/bookings' },
-    { label: 'Pending',      value: loading ? '—' : stats?.pending || 0,                               icon: <Clock size={17} />,      gradient: 'bg-gradient-to-br from-amber-500 to-amber-600',  link: '/bookings' },
-    { label: 'Active',       value: loading ? '—' : stats?.approved || 0,                              icon: <CheckCircle size={17} />,gradient: 'bg-gradient-to-br from-[#3d9166] to-[#6db591]',  link: '/bookings' },
-    { label: 'Total Spent',  value: loading ? '—' : `₦${(stats?.spent || 0).toLocaleString()}`,       icon: <TrendingUp size={17} />, gradient: 'bg-gradient-to-br from-[#154d30] to-[#1a5c3a]',  link: '/bookings' },
+    { label: 'My Bookings',  value: loading ? '—' : stats?.totalBookings || 0,                        icon: <BookOpen size={17} />,   iconBg: 'bg-[#eef6f1]', iconColor: 'text-[#1a5c3a]', link: '/bookings' },
+    { label: 'Pending',      value: loading ? '—' : stats?.pending || 0,                               icon: <Clock size={17} />,      iconBg: 'bg-amber-50',   iconColor: 'text-amber-600',  link: '/bookings' },
+    { label: 'Active',       value: loading ? '—' : stats?.approved || 0,                              icon: <CheckCircle size={17} />,iconBg: 'bg-[#d4eadd]', iconColor: 'text-[#154d30]', link: '/bookings' },
+    { label: 'Total Spent',  value: loading ? '—' : `₦${(stats?.spent || 0).toLocaleString()}`,       icon: <TrendingUp size={17} />, iconBg: 'bg-[#eef6f1]', iconColor: 'text-[#1a5c3a]', link: '/bookings' },
   ];
 
   const quickActions = isOwner ? [
