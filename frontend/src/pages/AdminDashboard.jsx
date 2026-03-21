@@ -284,14 +284,14 @@ export default function AdminDashboard() {
   const approvedN  = allBookings.filter(b => b.status === 'approved').length;
 
   const statItems = [
-    { label: 'Total Users',      value: stats?.totalUsers    || 0, icon: <Users size={15} />,       gradient: 'bg-gradient-to-br from-blue-500 to-cyan-500'     },
-    { label: 'Active Tools',     value: stats?.totalTools    || 0, icon: <Package size={15} />,     gradient: 'bg-gradient-to-br from-violet-500 to-purple-600', badge: stats?.pendingTools, badgeColor: 'bg-yellow-50 text-yellow-700' },
-    { label: 'Total Bookings',   value: stats?.totalBookings || 0, icon: <BookOpen size={15} />,    gradient: 'bg-gradient-to-br from-[#1a5c3a] to-[#3d9166]'   },
-    { label: 'Paid Bookings',    value: stats?.paidBookings  || 0, icon: <CheckCircle size={15} />, gradient: 'bg-gradient-to-br from-teal-500 to-emerald-500'   },
-    { label: 'Pending KYC',      value: stats?.pendingKyc   || 0, icon: <Shield size={15} />,      gradient: 'bg-gradient-to-br from-amber-400 to-orange-500',  badge: stats?.pendingKyc, badgeColor: 'bg-amber-50 text-amber-700' },
-    { label: 'Open Disputes',    value: disputes.length,           icon: <AlertTriangle size={15} />,gradient: 'bg-gradient-to-br from-red-400 to-rose-500',     badge: disputes.length, badgeColor: 'bg-red-50 text-red-600' },
-    { label: 'Platform Revenue', value: `₦${revenueK}k`,          icon: <DollarSign size={15} />,  gradient: 'bg-gradient-to-br from-[#1a5c3a] to-emerald-600' },
-    { label: 'Gross Volume',     value: `₦${grossK}k`,            icon: <TrendingUp size={15} />,  gradient: 'bg-gradient-to-br from-indigo-500 to-blue-600'    },
+    { label: 'Total Users',      value: stats?.totalUsers    || 0, icon: <Users size={15} />,        gradient: 'bg-gradient-to-br from-[#1a5c3a] to-[#3d9166]'   },
+    { label: 'Active Tools',     value: stats?.totalTools    || 0, icon: <Package size={15} />,      gradient: 'bg-gradient-to-br from-[#154d30] to-[#1a5c3a]',   badge: stats?.pendingTools, badgeColor: 'bg-amber-50 text-amber-700' },
+    { label: 'Total Bookings',   value: stats?.totalBookings || 0, icon: <BookOpen size={15} />,     gradient: 'bg-gradient-to-br from-[#3d9166] to-[#6db591]'    },
+    { label: 'Paid Bookings',    value: stats?.paidBookings  || 0, icon: <CheckCircle size={15} />,  gradient: 'bg-gradient-to-br from-[#0f3d25] to-[#154d30]'    },
+    { label: 'Pending KYC',      value: stats?.pendingKyc   || 0, icon: <Shield size={15} />,       gradient: 'bg-gradient-to-br from-amber-500 to-amber-600',    badge: stats?.pendingKyc, badgeColor: 'bg-amber-50 text-amber-700' },
+    { label: 'Open Disputes',    value: disputes.length,           icon: <AlertTriangle size={15} />, gradient: 'bg-gradient-to-br from-red-500 to-red-600',       badge: disputes.length, badgeColor: 'bg-red-50 text-red-600' },
+    { label: 'Platform Revenue', value: `₦${revenueK}k`,          icon: <DollarSign size={15} />,   gradient: 'bg-gradient-to-br from-[#1a5c3a] to-[#3d9166]'    },
+    { label: 'Gross Volume',     value: `₦${grossK}k`,            icon: <TrendingUp size={15} />,   gradient: 'bg-gradient-to-br from-[#3d9166] to-[#6db591]'    },
   ];
 
   const tabs = [

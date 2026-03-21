@@ -247,15 +247,15 @@ export default function Dashboard() {
   const greeting    = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
 
   const statCards = isOwner ? [
-    { label: 'My Tools',         value: loading ? '—' : stats?.totalTools || 0,                        icon: <Package size={17} />,    gradient: 'bg-gradient-to-br from-violet-500 to-purple-600', link: '/my-tools' },
-    { label: 'Total Bookings',   value: loading ? '—' : stats?.totalBookings || 0,                      icon: <BookOpen size={17} />,   gradient: 'bg-gradient-to-br from-blue-500 to-cyan-500',     link: '/booking-requests' },
-    { label: 'Pending',          value: loading ? '—' : stats?.pending || 0,                            icon: <Clock size={17} />,      gradient: 'bg-gradient-to-br from-amber-400 to-orange-500',  link: '/booking-requests' },
-    { label: 'Total Earnings',   value: loading ? '—' : `₦${(stats?.earnings || 0).toLocaleString()}`, icon: <TrendingUp size={17} />, gradient: 'bg-gradient-to-br from-[#1a5c3a] to-[#3d9166]',   link: '/booking-requests' },
+    { label: 'My Tools',         value: loading ? '—' : stats?.totalTools || 0,                        icon: <Package size={17} />,    gradient: 'bg-gradient-to-br from-[#1a5c3a] to-[#3d9166]',   link: '/my-tools' },
+    { label: 'Total Bookings',   value: loading ? '—' : stats?.totalBookings || 0,                      icon: <BookOpen size={17} />,   gradient: 'bg-gradient-to-br from-[#154d30] to-[#1a5c3a]',   link: '/booking-requests' },
+    { label: 'Pending',          value: loading ? '—' : stats?.pending || 0,                            icon: <Clock size={17} />,      gradient: 'bg-gradient-to-br from-amber-500 to-amber-600',    link: '/booking-requests' },
+    { label: 'Total Earnings',   value: loading ? '—' : `₦${(stats?.earnings || 0).toLocaleString()}`, icon: <TrendingUp size={17} />, gradient: 'bg-gradient-to-br from-[#3d9166] to-[#6db591]',    link: '/booking-requests' },
   ] : [
-    { label: 'My Bookings',  value: loading ? '—' : stats?.totalBookings || 0,                        icon: <BookOpen size={17} />,   gradient: 'bg-gradient-to-br from-blue-500 to-cyan-500',     link: '/bookings' },
-    { label: 'Pending',      value: loading ? '—' : stats?.pending || 0,                               icon: <Clock size={17} />,      gradient: 'bg-gradient-to-br from-amber-400 to-orange-500', link: '/bookings' },
-    { label: 'Active',       value: loading ? '—' : stats?.approved || 0,                              icon: <CheckCircle size={17} />,gradient: 'bg-gradient-to-br from-[#1a5c3a] to-[#3d9166]',  link: '/bookings' },
-    { label: 'Total Spent',  value: loading ? '—' : `₦${(stats?.spent || 0).toLocaleString()}`,       icon: <TrendingUp size={17} />, gradient: 'bg-gradient-to-br from-violet-500 to-purple-600', link: '/bookings' },
+    { label: 'My Bookings',  value: loading ? '—' : stats?.totalBookings || 0,                        icon: <BookOpen size={17} />,   gradient: 'bg-gradient-to-br from-[#1a5c3a] to-[#3d9166]',  link: '/bookings' },
+    { label: 'Pending',      value: loading ? '—' : stats?.pending || 0,                               icon: <Clock size={17} />,      gradient: 'bg-gradient-to-br from-amber-500 to-amber-600',  link: '/bookings' },
+    { label: 'Active',       value: loading ? '—' : stats?.approved || 0,                              icon: <CheckCircle size={17} />,gradient: 'bg-gradient-to-br from-[#3d9166] to-[#6db591]',  link: '/bookings' },
+    { label: 'Total Spent',  value: loading ? '—' : `₦${(stats?.spent || 0).toLocaleString()}`,       icon: <TrendingUp size={17} />, gradient: 'bg-gradient-to-br from-[#154d30] to-[#1a5c3a]',  link: '/bookings' },
   ];
 
   const quickActions = isOwner ? [
