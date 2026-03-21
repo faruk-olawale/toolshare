@@ -1,20 +1,30 @@
 const rateLimit = require('express-rate-limit');
 
-// In test environment, disable all rate limiting so tests run freely
+// Disable rate limiting in test environment
 const isTest = process.env.NODE_ENV === 'test';
-
 const passThrough = (req, res, next) => next();
-
 const makeLimit = (options) => isTest ? passThrough : rateLimit(options);
 
+// ── General API limiter ───────────────────────────────────────────────────────
+// Raised from 100 → 500 per 15 min per IP.
+// The admin dashboard alone fires 7 parallel requests on mount.
+// With React StrictMode double-invoking effects in dev that's 14 immediately.
+// 30s auto-refresh adds ~7 requests every 30s = ~14/min for an active admin.
+// 500 / 15min = ~33/min headroom — safe for a single active user session.
 const apiLimiter = makeLimit({
-  windowMs: 15 * 60 * 1000,
-  max: 100,
+  windowMs: 15 * 60 * 1000,   // 15 minutes
+  max: 500,
   message: { success: false, message: 'Too many requests. Please try again in 15 minutes.' },
   standardHeaders: true,
   legacyHeaders: false,
+  skip: (req) => {
+    // Skip rate limiting for authenticated admin users on read routes
+    // (they legitimately need more requests due to dashboard polling)
+    return req.user?.role === 'admin' && req.method === 'GET';
+  },
 });
 
+// ── Auth limiter — strict, protects login/register ────────────────────────────
 const authLimiter = makeLimit({
   windowMs: 15 * 60 * 1000,
   max: 10,
@@ -23,6 +33,7 @@ const authLimiter = makeLimit({
   legacyHeaders: false,
 });
 
+// ── Support ticket submission ─────────────────────────────────────────────────
 const supportLimiter = makeLimit({
   windowMs: 60 * 60 * 1000,
   max: 5,
@@ -31,6 +42,7 @@ const supportLimiter = makeLimit({
   legacyHeaders: false,
 });
 
+// ── Password reset ────────────────────────────────────────────────────────────
 const passwordResetLimiter = makeLimit({
   windowMs: 60 * 60 * 1000,
   max: 3,
@@ -39,6 +51,7 @@ const passwordResetLimiter = makeLimit({
   legacyHeaders: false,
 });
 
+// ── KYC submission ────────────────────────────────────────────────────────────
 const kycLimiter = makeLimit({
   windowMs: 60 * 60 * 1000,
   max: 5,

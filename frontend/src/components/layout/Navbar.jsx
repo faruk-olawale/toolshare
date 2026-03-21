@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef } from 'react';
 import { Link, useNavigate, useLocation } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { Menu, X, Wrench, ChevronDown, LogOut, User, Package, BookOpen, PlusCircle, Landmark, MessageSquare, Shield } from 'lucide-react';
@@ -11,16 +11,20 @@ export default function Navbar() {
   const [mobileOpen, setMobileOpen]     = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const [openTickets, setOpenTickets]   = useState(0);
+  const ticketFetched = useRef(false); // prevent StrictMode double-fetch
 
   useEffect(() => {
     if (user?.role !== 'admin') return;
+    // Guard against StrictMode double-invoke
+    if (ticketFetched.current) return;
+    ticketFetched.current = true;
     const fetchTickets = () => {
       api.get('/support/admin/tickets?status=open')
         .then(({ data }) => setOpenTickets(data.counts?.open || 0))
         .catch(() => {});
     };
     fetchTickets();
-    const interval = setInterval(fetchTickets, 60000);
+    const interval = setInterval(fetchTickets, 120000); // poll every 2 min (was 60s)
     return () => clearInterval(interval);
   }, [user]);
 
