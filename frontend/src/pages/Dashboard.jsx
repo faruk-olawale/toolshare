@@ -15,7 +15,7 @@ import {
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
 const fmt = (d) => new Date(d).toLocaleDateString('en-NG', { day: 'numeric', month: 'short' });
- 
+
 const STATUS_CONFIG = {
   pending:   { dot: 'bg-amber-400',  text: 'text-amber-700',  bg: 'bg-amber-50  border-amber-100'  },
   approved:  { dot: 'bg-green-500',  text: 'text-green-700',  bg: 'bg-green-50  border-green-100'  },
@@ -96,7 +96,6 @@ function ChartCard({ title, subtitle, children, action }) {
   );
 }
 
- 
 function StatusBadge({ status }) {
   const cfg = STATUS_CONFIG[status] || STATUS_CONFIG.cancelled;
   return (
@@ -106,7 +105,7 @@ function StatusBadge({ status }) {
     </span>
   );
 }
- 
+
 function SectionCard({ title, children, action, className = '' }) {
   return (
     <div className={`bg-white rounded-2xl border border-gray-100 shadow-sm overflow-hidden ${className}`}>
@@ -270,7 +269,7 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="animate-fade-in max-w-6xl mx-auto">
+    <div className="animate-fade-in w-full">
 
       {/* ── Header ── */}
       <div className="flex items-start justify-between mb-6">
