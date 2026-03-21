@@ -303,7 +303,7 @@ export default function AdminDashboard() {
   ];
 
   return (
-    <div className="animate-fade-in max-w-7xl mx-auto w-full min-w-0 px-0">
+    <div className="animate-fade-in max-w-7xl mx-auto w-full min-w-0 px-4 sm:px-6 lg:px-8">
 
       {/* ── Header ── */}
       <div className="flex items-center justify-between mb-6">

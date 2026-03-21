@@ -269,7 +269,7 @@ export default function Dashboard() {
   ];
 
   return (
-    <div className="animate-fade-in w-full">
+    <div className="animate-fade-in max-w-7xl mx-auto w-full min-w-0 px-4 sm:px-6 lg:px-8">
 
       {/* ── Header ── */}
       <div className="flex items-start justify-between mb-6">
