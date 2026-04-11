@@ -1,70 +1,107 @@
 const User = require('../models/User');
 const { sendEmail } = require('../utils/sendEmail');
+const cloudinary = require('../config/cloudinary');
 
-// POST /api/kyc/submit
+// ─────────────────────────────────────────────
+// 📤 UPLOAD TO CLOUDINARY
+// ─────────────────────────────────────────────
+const uploadToCloudinary = (fileBuffer) => {
+  return new Promise((resolve, reject) => {
+    const stream = cloudinary.uploader.upload_stream(
+      { folder: 'toolshare/kyc' },
+      (error, result) => {
+        if (error) return reject(error);
+        resolve(result.secure_url);
+      }
+    );
+
+    stream.end(fileBuffer);
+  });
+};
+
+// ─────────────────────────────────────────────
+// 🆔 SUBMIT KYC
+// ─────────────────────────────────────────────
 const submitKyc = async (req, res, next) => {
   try {
     const { idType, idNumber } = req.body;
 
-    if (!idType || !idNumber)
-      return res.status(400).json({ success: false, message: 'ID type and number are required.' });
+    if (!idType || !idNumber) {
+      return res.status(400).json({
+        success: false,
+        message: 'ID type and number required',
+      });
+    }
 
-    if (!req.files?.idDocument?.[0])
-      return res.status(400).json({ success: false, message: 'ID document image is required.' });
+    const idDocFile = req.files?.idDocument?.[0];
+    const selfieFile = req.files?.selfie?.[0];
 
-    if (!req.files?.selfie?.[0])
-      return res.status(400).json({ success: false, message: 'Selfie photo is required.' });
+    if (!idDocFile || !selfieFile) {
+      return res.status(400).json({
+        success: false,
+        message: 'Both ID document and selfie are required',
+      });
+    }
 
-    const idFile  = req.files.idDocument[0];
-    const selfFile = req.files.selfie[0];
+    // 🔥 Upload files
+    const [idDocUrl, selfieUrl] = await Promise.all([
+      uploadToCloudinary(idDocFile.buffer),
+      uploadToCloudinary(selfieFile.buffer),
+    ]);
 
-    // Handle both Cloudinary (has .path or .secure_url) and local disk (has .filename)
-    const getFileUrl = (file) => {
-      if (file.path && file.path.startsWith('http')) return file.path.trim();   // Cloudinary URL
-      if (file.secure_url) return file.secure_url.trim();                        // Cloudinary secure_url
-      if (file.path) return `/uploads/kyc/${file.filename}`;                     // local path
-      return `/uploads/kyc/${file.filename}`;                                    // fallback
-    };
-
-    const idDocUrl  = getFileUrl(idFile);
-    const selfieUrl = getFileUrl(selfFile);
-
-    const user = await User.findByIdAndUpdate(req.user._id, {
-      kyc: {
-        status: 'pending',
-        idType,
-        idNumber,
-        idDocument: idDocUrl,
-        selfie: selfieUrl,
-        rejectionReason: null,
-        submittedAt: new Date(),
+    // 🔥 Save to DB
+    const user = await User.findByIdAndUpdate(
+      req.user._id,
+      {
+        kyc: {
+          status: 'pending',
+          idType,
+          idNumber,
+          idDocument: idDocUrl,
+          selfie: selfieUrl,
+          submittedAt: new Date(),
+        },
       },
-    }, { new: true });
+      { new: true }
+    );
 
+    // 🔥 Email (non-blocking)
     sendEmail({
       to: user.email,
-      subject: '📋 KYC Submitted — Under Review',
+      subject: 'KYC Submitted',
       template: 'kycSubmitted',
       data: { name: user.name },
-    });
+    }).catch(() => {});
 
     res.status(200).json({
       success: true,
-      message: 'KYC submitted! Our team will review within 24 hours.',
+      message: 'KYC submitted successfully',
       kyc: user.kyc,
     });
+
   } catch (error) {
-    console.error('KYC submit error:', error);
+    console.error('❌ KYC ERROR:', error.message);
     next(error);
   }
 };
 
-// GET /api/kyc/status
+// ─────────────────────────────────────────────
+// 📊 GET STATUS
+// ─────────────────────────────────────────────
 const getKycStatus = async (req, res, next) => {
   try {
-    const user = await User.findById(req.user._id).select('kyc name email role');
-    res.status(200).json({ success: true, kyc: user.kyc, kycRequired: user.role !== 'admin' });
-  } catch (error) { next(error); }
+    const user = await User.findById(req.user._id).select('kyc');
+
+    res.status(200).json({
+      success: true,
+      kyc: user.kyc,
+    });
+  } catch (error) {
+    next(error);
+  }
 };
 
-module.exports = { submitKyc, getKycStatus };
+module.exports = {
+  submitKyc,
+  getKycStatus,
+};

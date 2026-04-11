@@ -1,49 +1,54 @@
-const express  = require('express');
-const router   = express.Router();
-const multer   = require('multer');
-const path     = require('path');
-const fs       = require('fs');
+const express = require('express');
+const router = express.Router();
+const multer = require('multer');
+
 const { protect } = require('../middleware/auth');
-const { kycValidation } = require('../middleware/validate');
 const { submitKyc, getKycStatus } = require('../controllers/kycController');
 
-const hasCloudinary = process.env.CLOUDINARY_CLOUD_NAME &&
-                      process.env.CLOUDINARY_API_KEY &&
-                      process.env.CLOUDINARY_API_SECRET;
+// ─────────────────────────────────────────────
+// 📦 FILE UPLOAD (SIMPLE & STABLE)
+// ─────────────────────────────────────────────
+const storage = multer.memoryStorage(); // 🔥 safer for Cloudinary
 
-let uploadKyc;
+const upload = multer({
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB
+  fileFilter: (req, file, cb) => {
+    const allowed = [
+      'image/jpeg',
+      'image/png',
+      'image/webp',
+      'application/pdf'
+    ];
 
-if (hasCloudinary) {
-  const multerCloudinary = require('multer-storage-cloudinary');
-  const CloudinaryStorage = multerCloudinary.CloudinaryStorage || multerCloudinary.default?.CloudinaryStorage || multerCloudinary;
-  const cloudinary = require('../config/cloudinary');
-  const kycStorage = new CloudinaryStorage({
-    cloudinary,
-    params: async (req, file) => ({
-      folder: 'toolshare/kyc',
-      allowed_formats: ['jpg', 'jpeg', 'png', 'webp', 'pdf'],
-      resource_type: 'auto',
-    }),
-  });
-  uploadKyc = multer({ storage: kycStorage, limits: { fileSize: 10 * 1024 * 1024 } })
-    .fields([{ name: 'idDocument', maxCount: 1 }, { name: 'selfie', maxCount: 1 }]);
-} else {
-  const uploadsDir = path.join(__dirname, '../uploads/kyc');
-  if (!fs.existsSync(uploadsDir)) fs.mkdirSync(uploadsDir, { recursive: true });
-  const diskStorage = multer.diskStorage({
-    destination: (req, file, cb) => cb(null, uploadsDir),
-    filename:    (req, file, cb) => cb(null, `${Date.now()}-${file.originalname}`),
-  });
-  uploadKyc = multer({ storage: diskStorage, limits: { fileSize: 10 * 1024 * 1024 } })
-    .fields([{ name: 'idDocument', maxCount: 1 }, { name: 'selfie', maxCount: 1 }]);
-}
+    if (allowed.includes(file.mimetype)) cb(null, true);
+    else cb(new Error('Only JPG, PNG, WEBP, PDF allowed'));
+  },
+});
 
+const uploadKyc = upload.fields([
+  { name: 'idDocument', maxCount: 1 },
+  { name: 'selfie', maxCount: 1 },
+]);
+
+// ─────────────────────────────────────────────
+// 🚀 ROUTES
+// ─────────────────────────────────────────────
 router.get('/status', protect, getKycStatus);
+
 router.post('/submit', protect, (req, res, next) => {
   uploadKyc(req, res, (err) => {
-    if (err) return res.status(500).json({ success: false, message: err.message || 'File upload failed.' });
+    if (err) {
+      console.error('❌ Upload error:', err.message);
+
+      return res.status(400).json({
+        success: false,
+        message: err.message,
+      });
+    }
     next();
   });
-}, kycValidation, submitKyc);
+}, submitKyc);
 
+// ✅ IMPORTANT
 module.exports = router;
