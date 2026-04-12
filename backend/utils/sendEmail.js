@@ -1,5 +1,4 @@
 const { Resend } = require('resend');
-const resend = new Resend(process.env.RESEND_API_KEY);
 
 const btn = `display:inline-block;background:#f2711c;color:white;padding:12px 28px;border-radius:10px;text-decoration:none;font-weight:600;font-size:15px;margin-top:16px;`;
 const h2 = `color:#1a1a1a;font-size:22px;margin:0 0 8px;`;
@@ -460,6 +459,7 @@ const templates = {
 };
 
 const sendEmail = async ({ to, subject, template, data }) => {
+  const resend = new Resend(process.env.RESEND_API_KEY); 
   try {
     if (!process.env.RESEND_API_KEY) {
       console.log(`📧 Email skipped (no RESEND_API_KEY): ${subject} → ${to}`);
