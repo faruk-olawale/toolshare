@@ -197,4 +197,24 @@ module.exports = {
   updateProfile,
   completeOnboarding,
   upgradeListing,
+  setActiveMode,
+};
+
+// ── Set active mode ───────────────────────────────────────────────────────────
+// PUT /api/auth/active-mode
+// Lightweight preference save — does NOT affect capabilities or security.
+// Frontend calls this best-effort after localStorage update.
+const setActiveMode = async (req, res, next) => {
+  try {
+    const { mode } = req.body;
+    if (!['renter', 'owner'].includes(mode)) {
+      return res.status(400).json({ success: false, message: 'mode must be renter or owner.' });
+    }
+    // Validate capability — can't set owner mode without canList
+    if (mode === 'owner' && !req.user.canList && req.user.role !== 'owner' && req.user.type !== 'admin') {
+      return res.status(403).json({ success: false, message: 'You do not have listing capability.' });
+    }
+    await User.findByIdAndUpdate(req.user._id, { activeMode: mode });
+    res.status(200).json({ success: true, message: `Mode set to ${mode}.` });
+  } catch (error) { next(error); }
 };

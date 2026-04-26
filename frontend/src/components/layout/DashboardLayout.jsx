@@ -10,7 +10,7 @@ import {
 } from 'lucide-react';
 
 export default function DashboardLayout({ children }) {
-  const { user, logout } = useAuth();
+  const { user, logout, activeMode, switchMode, canSwitchMode, can } = useAuth();
   const location = useLocation();
   const navigate  = useNavigate();
   const [sidebarOpen, setSidebarOpen] = useState(false);
@@ -57,15 +57,15 @@ export default function DashboardLayout({ children }) {
     { to: '/messages',  icon: <MessageSquare size={16} />,   label: 'Messages' },
   ];
 
-  const navLinks   = user?.role === 'owner' ? ownerLinks  : user?.role === 'admin' ? adminLinks  : renterLinks;
-  const ctaActions = user?.role === 'owner' ? ownerActions : user?.role === 'admin' ? [] : renterActions;
+  const navLinks   = can.admin ? adminLinks : activeMode === 'owner' && can.list ? ownerLinks : renterLinks;
+  const ctaActions = can.admin ? [] : activeMode === 'owner' && can.list ? ownerActions : renterActions;
 
-  const roleColor  = user?.role === 'admin' ? 'from-red-500 to-rose-600'
-                   : user?.role === 'owner' ? 'from-[#1a5c3a] to-[#3d9166]'
+  const roleColor  = can.admin ? 'from-red-500 to-rose-600'
+                   : activeMode === 'owner' && can.list ? 'from-[#1a5c3a] to-[#3d9166]'
                    : 'from-blue-500 to-cyan-500';
 
-  const roleBg     = user?.role === 'admin' ? 'bg-red-500'
-                   : user?.role === 'owner' ? 'bg-[#1a5c3a]'
+  const roleBg     = can.admin ? 'bg-red-500'
+                   : activeMode === 'owner' && can.list ? 'bg-[#1a5c3a]'
                    : 'bg-blue-500';
 
   const pageName = [...navLinks, ...ctaActions].find(l => isActive(l.to))?.label || 'Dashboard';
@@ -116,7 +116,7 @@ export default function DashboardLayout({ children }) {
           <p className="text-[13px] font-semibold text-white truncate leading-tight">{user?.name?.split(' ')[0]}</p>
           <div className="flex items-center gap-1.5 mt-0.5">
             <span className={`w-1.5 h-1.5 rounded-full flex-shrink-0 ${roleBg}`} />
-            <p className="text-[11px] text-[#8fa89c] capitalize">{user?.role}</p>
+            <p className="text-[11px] text-[#8fa89c] capitalize">{can.admin ? 'Admin' : activeMode === 'owner' && can.list ? 'Owner Mode' : 'Renter Mode'}</p>
           </div>
         </div>
         <Link to="/kyc" onClick={close} className="p-1.5 rounded-lg hover:bg-white/10 transition-colors flex-shrink-0">
@@ -128,6 +128,35 @@ export default function DashboardLayout({ children }) {
       {ctaActions.length > 0 && (
         <div className="px-3 mb-4">
           {ctaActions.map(l => <NavLink key={l.to} {...l} />)}
+        </div>
+      )}
+
+      {/* Mode switcher — only for dual-capability users */}
+      {canSwitchMode && (
+        <div className="mx-3 mb-4">
+          <p className="text-[9px] font-semibold text-[#4a6358] uppercase tracking-[0.14em] mb-2 px-1">Active Mode</p>
+          <div className="grid grid-cols-2 gap-1.5">
+            <button
+              onClick={() => switchMode('renter')}
+              className={`py-2 rounded-xl text-[11px] font-semibold transition-all ${
+                activeMode === 'renter'
+                  ? 'bg-blue-500 text-white shadow-sm'
+                  : 'bg-white/6 text-[#8fa89c] hover:bg-white/10 hover:text-white'
+              }`}
+            >
+              🔍 Renter
+            </button>
+            <button
+              onClick={() => switchMode('owner')}
+              className={`py-2 rounded-xl text-[11px] font-semibold transition-all ${
+                activeMode === 'owner'
+                  ? 'bg-[#1a5c3a] text-white shadow-sm'
+                  : 'bg-white/6 text-[#8fa89c] hover:bg-white/10 hover:text-white'
+              }`}
+            >
+              🏠 Owner
+            </button>
+          </div>
         </div>
       )}
 
@@ -244,13 +273,12 @@ export default function DashboardLayout({ children }) {
         </header>
 
         {/* Page content */}
-        <main className="flex-1 min-w-0 overflow-x-hidden">
-  <div className="px-4 sm:px-6 md:px-8 py-4 sm:py-6">
-    <div className="w-full max-w-7xl mx-auto">
-      {children}
-    </div>
-  </div>
-</main>
+        <main
+          className="flex-1 min-w-0 overflow-x-hidden"
+          style={{ padding: 'clamp(1rem, 4vw, 2rem)' }}
+        >
+          {children}
+        </main>
       </div>
     </div>
   );

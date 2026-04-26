@@ -21,6 +21,10 @@ const userSchema = new mongoose.Schema({
   canList:            { type: Boolean, default: false },
   onboardingComplete: { type: Boolean, default: false },
 
+  // Active mode — UI preference only, not a security field.
+  // Lets dual-capability users persist their last selected view.
+  activeMode: { type: String, enum: ['renter', 'owner'], default: 'renter' },
+
   // ── Legacy role field — kept for migration safety ─────────────────────────
   // Will be removed in a future release once all users are migrated.
   // Do NOT use this in new code — use type/canRent/canList instead.

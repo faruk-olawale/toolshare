@@ -4,7 +4,7 @@ const { body } = require('express-validator');
 const passport = require('../config/passport');
 const {
   register, login, getProfile, updateProfile,
-  completeOnboarding, upgradeListing,
+  completeOnboarding, upgradeListing, setActiveMode,
 } = require('../controllers/authController');
 const { forgotPassword, resetPassword } = require('../controllers/passwordController');
 const { protect }                        = require('../middleware/auth');
@@ -66,6 +66,9 @@ router.put('/complete-onboarding', protect, [
 // ── Upgrade to listing ────────────────────────────────────────────────────────
 // Called from dashboard upgrade banner — no body needed
 router.put('/upgrade-listing', protect, upgradeListing);
+
+// ── Active mode (UI preference only) ─────────────────────────────────────────
+router.put('/active-mode', protect, setActiveMode);
 
 // ── Password reset ────────────────────────────────────────────────────────────
 router.post('/forgot-password', passwordResetLimiter, forgotPassword);

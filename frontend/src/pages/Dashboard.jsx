@@ -153,7 +153,7 @@ function SkeletonRows({ count = 4 }) {
 
 // ── Main Dashboard ────────────────────────────────────────────────────────────
 export default function Dashboard() {
-  const { user, can, upgradeListing } = useAuth();
+  const { user, can, activeMode, upgradeListing, canSwitchMode } = useAuth();
   const [stats,       setStats]       = useState(null);
   const [kycStatus,   setKycStatus]   = useState(null);
   const [loading,     setLoading]     = useState(true);
@@ -170,7 +170,7 @@ export default function Dashboard() {
       const kycRes = await api.get('/kyc/status', { signal: controller.signal });
       setKycStatus(kycRes.data.kyc);
 
-      if (user.role === 'owner') {
+      if (activeMode || user.role === 'owner') {
         const [toolsRes, bookingsRes] = await Promise.all([
           api.get('/tools/my-tools',        { signal: controller.signal }),
           api.get('/bookings/owner-bookings', { signal: controller.signal }),
@@ -239,7 +239,9 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, [fetchAll]);
 
-  const isOwner     = can.list;  // canList capability
+  // isOwner: true when in owner mode AND user has listing capability
+  // This drives ALL dashboard content changes
+  const isOwner = activeMode === 'owner' && can.list;
   const kycApproved = kycStatus?.status === 'approved';
   const hour        = new Date().getHours();
   const greeting    = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
@@ -315,7 +317,7 @@ export default function Dashboard() {
       <KYCBanner kyc={kycStatus} />
 
       {/* ── Upgrade to listing banner — shown to renters who haven't enabled listing ── */}
-      {!isOwner && !loading && kycStatus?.status !== 'pending' && (
+      {/* {!isOwner && !loading && kycStatus?.status !== 'pending' && (
         <div className="flex items-center gap-4 bg-gray-900 rounded-2xl p-4 mb-6">
           <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center flex-shrink-0 text-xl">💰</div>
           <div className="flex-1 min-w-0">
@@ -333,6 +335,19 @@ export default function Dashboard() {
           >
             Start Listing →
           </button>
+        </div>
+      )} */}
+
+      {/* ── Mode indicator — shows for users who can switch ── */}
+      {canSwitchMode && (
+        <div className={`flex items-center gap-2 px-3 py-2 rounded-xl mb-5 border text-xs font-medium ${
+          isOwner
+            ? 'bg-[#eef6f1] border-[#c0dece] text-[#1a5c3a]'
+            : 'bg-blue-50 border-blue-100 text-blue-700'
+        }`}>
+          <span>{isOwner ? '🏠' : '🔍'}</span>
+          <span>{isOwner ? 'Owner Mode — managing your tools and earnings' : 'Renter Mode — browsing and booking tools'}</span>
+          <span className="ml-auto text-gray-400 font-normal">Switch in menu →</span>
         </div>
       )}
 
