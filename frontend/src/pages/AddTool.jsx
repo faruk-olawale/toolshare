@@ -102,6 +102,23 @@ export default function AddTool() {
   if (kycStatus !== 'approved') return (
     <div className="min-h-[calc(100vh-64px)] flex items-center justify-center px-4">
       <div className="card p-8 max-w-md w-full text-center">
+        {/* Step indicator */}
+        <div className="flex items-center justify-center gap-2 mb-6">
+          <div className="flex items-center gap-1.5 text-xs text-gray-400">
+            <div className="w-5 h-5 bg-[#1a5c3a] text-white rounded-full flex items-center justify-center text-[10px] font-bold">✓</div>
+            <span className="text-[#1a5c3a] font-medium">Account created</span>
+          </div>
+          <div className="w-8 h-px bg-gray-200" />
+          <div className="flex items-center gap-1.5 text-xs">
+            <div className="w-5 h-5 bg-[#1a5c3a] text-white rounded-full flex items-center justify-center text-[10px] font-bold">2</div>
+            <span className="text-[#1a5c3a] font-medium">Verify identity</span>
+          </div>
+          <div className="w-8 h-px bg-gray-200" />
+          <div className="flex items-center gap-1.5 text-xs text-gray-300">
+            <div className="w-5 h-5 bg-gray-100 rounded-full flex items-center justify-center text-[10px] font-bold text-gray-400">3</div>
+            <span>List tool</span>
+          </div>
+        </div>
         <div className="w-16 h-16 bg-[#eef6f1] rounded-2xl flex items-center justify-center mx-auto mb-4">
           <Shield size={28} className="text-[#1a5c3a]" />
         </div>

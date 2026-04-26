@@ -29,8 +29,8 @@ export default function Register() {
     setLoading(true);
     try {
       await register(form);
-      toast.success('Account created successfully! Please sign in. 🎉');
-      navigate('/login');
+      toast.success(`Welcome to ToolShare, ${form.name.split(' ')[0]}! 🎉`);
+      navigate('/welcome');
     } catch (err) {
       toast.error(err.response?.data?.message || 'Registration failed.');
     } finally {
@@ -47,26 +47,19 @@ export default function Register() {
               <Wrench size={24} className="text-white" />
             </div>
             <h1 className="text-2xl font-display font-bold text-gray-900">Create Account</h1>
-            <p className="text-gray-500 text-sm mt-1">Join ToolShare Africa today — it's free</p>
+            <p className="text-gray-500 text-sm mt-1">Free to join. No subscription. Cancel anytime.</p>
           </div>
 
-          {/* Role Toggle */}
-          <div className="flex bg-gray-100 rounded-xl p-1 mb-6">
-            {['renter', 'owner'].map((r) => (
-              <button
-                key={r}
-                type="button"
-                onClick={() => setForm({ ...form, role: r })}
-                className={`flex-1 py-2.5 text-sm font-medium rounded-lg transition-all duration-200 capitalize ${
-                  form.role === r
-                    ? 'bg-white shadow-sm text-[#1a5c3a]'
-                    : 'text-gray-500 hover:text-gray-700'
-                }`}
-              >
-                {r === 'renter' ? '🔧 I Want to Rent' : '💼 I Want to List'}
-              </button>
-            ))}
-          </div>
+          {/* Role indicator — not a toggle, just shows what they're signing up as */}
+          {form.role === 'owner' && (
+            <div className="flex items-center gap-2 bg-[#eef6f1] border border-[#c0dece] rounded-xl px-4 py-3 mb-4">
+              <span className="text-lg">💼</span>
+              <div>
+                <p className="text-sm font-semibold text-[#1a5c3a]">Signing up as a Tool Owner</p>
+                <p className="text-xs text-gray-500">You can also rent tools after signing up</p>
+              </div>
+            </div>
+          )}
 
           <form onSubmit={handleSubmit} className="space-y-4">
             <div>
@@ -144,7 +137,7 @@ export default function Register() {
               disabled={loading}
               className="btn-primary w-full text-base py-3.5 mt-2"
             >
-              {loading ? 'Creating Account...' : `Create ${form.role === 'owner' ? 'Owner' : 'Renter'} Account`}
+              {loading ? 'Creating your account...' : 'Create free account →'}
             </button>
           </form>
 
@@ -153,7 +146,7 @@ export default function Register() {
             <Link to="/login" className="text-[#1a5c3a] font-medium hover:underline">Sign in</Link>
           </p>
           <p className="mt-3 text-center text-xs text-gray-400">
-            By registering, you agree to our Terms of Service and Privacy Policy.
+            By signing up you agree to our Terms of Service. Your data is never sold.
           </p>
         </div>
       </div>

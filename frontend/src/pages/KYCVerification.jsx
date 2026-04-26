@@ -41,24 +41,42 @@ export default function KYCVerification() {
 
   const handleSubmit = async (e) => {
     e.preventDefault();
-    if (!idFile) return toast.error('Please upload your ID document.');
-    if (!selfieFile) return toast.error('Please upload a selfie photo.');
+    if (!form.idType)   return toast.error('Please select your ID type.');
+    if (!form.idNumber.trim()) return toast.error('Please enter your ID number.');
+    if (!idFile)        return toast.error('Please upload your ID document.');
+    if (!selfieFile)    return toast.error('Please upload a selfie photo.');
+
+    // File size check (max 10MB each)
+    if (idFile.size > 10 * 1024 * 1024)     return toast.error('ID document must be under 10MB.');
+    if (selfieFile.size > 10 * 1024 * 1024) return toast.error('Selfie must be under 10MB.');
+
     setSubmitting(true);
     try {
       const formData = new FormData();
-      formData.append('idType', form.idType);
-      formData.append('idNumber', form.idNumber);
+      formData.append('idType',     form.idType);
+      formData.append('idNumber',   form.idNumber);
       formData.append('idDocument', idFile);
-      formData.append('selfie', selfieFile);
+      formData.append('selfie',     selfieFile);
 
       const { data } = await api.post('/kyc/submit', formData, {
         headers: { 'Content-Type': 'multipart/form-data' },
+        timeout: 60000, // 60s — Cloudinary uploads can be slow
+        onUploadProgress: (e) => {
+          const pct = Math.round((e.loaded * 100) / e.total);
+          if (pct < 100) toast.loading(`Uploading... ${pct}%`, { id: 'kyc-upload' });
+        },
       });
-      toast.success(data.message);
+      toast.dismiss('kyc-upload');
+      toast.success(data.message || 'KYC submitted successfully!');
       setKycStatus(data.kyc);
     } catch (err) {
-      toast.error(err.response?.data?.message || 'Submission failed.');
-    } finally { setSubmitting(false); }
+      toast.dismiss('kyc-upload');
+      const msg = err.response?.data?.message || err.message || 'Submission failed. Please try again.';
+      toast.error(msg);
+      console.error('KYC submit error:', err.response?.data || err.message);
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   if (loading) return (
@@ -108,7 +126,7 @@ export default function KYCVerification() {
         <StatusBanner />
 
         {/* Why we need this */}
-        <div className="card p-5 mb-6 bg-gradient-to-br from-[#eef6f1] to-[#eef6f1] border-[#d4eadd]">
+        <div className="card p-5 mb-6 bg-[#eef6f1] border-[#d4eadd]">
           <h3 className="font-semibold text-gray-800 mb-3 flex items-center gap-2">
             <AlertCircle size={16} className="text-[#1a5c3a]" /> Why we verify identity
           </h3>
@@ -161,10 +179,10 @@ export default function KYCVerification() {
                     <div className="py-4">
                       <Upload size={24} className="mx-auto text-gray-300 mb-2" />
                       <p className="text-sm text-gray-500">Click to upload ID document</p>
-                      <p className="text-xs text-gray-400 mt-1">JPG, PNG or PDF · Max 10MB</p>
+                      <p className="text-xs text-gray-400 mt-1">📸 Tap to open camera or upload · JPG, PNG, PDF · Max 10MB</p>
                     </div>
                   )}
-                  <input id="idDoc" type="file" className="hidden" accept="image/*,.pdf" onChange={e => handleFileChange(e, 'id')} />
+                  <input id="idDoc" type="file" className="hidden" accept="image/*,.pdf" capture="environment" onChange={e => handleFileChange(e, 'id')} />
                 </div>
               </div>
 
@@ -181,10 +199,10 @@ export default function KYCVerification() {
                     <div className="py-4">
                       <Upload size={24} className="mx-auto text-gray-300 mb-2" />
                       <p className="text-sm text-gray-500">Click to upload selfie</p>
-                      <p className="text-xs text-gray-400 mt-1">JPG or PNG · Max 10MB</p>
+                      <p className="text-xs text-gray-400 mt-1">📸 Tap to take a selfie or upload · JPG, PNG · Max 10MB</p>
                     </div>
                   )}
-                  <input id="selfie" type="file" className="hidden" accept="image/*" onChange={e => handleFileChange(e, 'selfie')} />
+                  <input id="selfie" type="file" className="hidden" accept="image/*" capture="user" onChange={e => handleFileChange(e, 'selfie')} />
                 </div>
               </div>
 
@@ -200,7 +218,7 @@ export default function KYCVerification() {
               </div>
 
               <button type="submit" disabled={submitting} className="btn-primary w-full py-4 text-base">
-                {submitting ? 'Submitting...' : 'Submit for Verification →'}
+                {submitting ? '⏳ Uploading documents...' : '✅ Submit for Verification'}
               </button>
             </form>
           </div>

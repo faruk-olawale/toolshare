@@ -126,6 +126,15 @@ export default function Navbar() {
                           )}
                         </Link>
                       )}
+                      <a
+                        href="https://wa.me/2348000000000?text=Hi, I need help with ToolShare Africa"
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        onClick={close}
+                        className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-gray-50"
+                      >
+                        <span className="text-green-500 text-base">💬</span> WhatsApp Support
+                      </a>
                       <hr className="my-1 border-gray-100" />
                       <button onClick={handleLogout} className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-500 hover:bg-red-50">
                         <LogOut size={15} /> Sign Out

@@ -5,7 +5,7 @@ import ToolCard from '../components/tools/ToolCard';
 import { Search, SlidersHorizontal, X, ChevronLeft, ChevronRight } from 'lucide-react';
 
 const CATEGORIES = ['', 'Construction', 'Agriculture', 'Electrical', 'Plumbing', 'Woodworking', 'Gardening', 'Transportation', 'Cleaning', 'Safety', 'Other'];
-const CITIES     = ['', 'Lagos', 'Abuja', 'Kano', 'Ibadan', 'Port Harcourt', 'Benin City', 'Enugu', 'Kaduna', 'Owerri', 'Calabar'];
+const CITIES     = ['', 'Malete', 'Ilorin', 'Lagos', 'Abuja', 'Kano', 'Ibadan', 'Port Harcourt', 'Benin City', 'Enugu', 'Kaduna', 'Owerri', 'Calabar'];
 
 export default function BrowseTools() {
   const [searchParams] = useSearchParams();
@@ -86,7 +86,7 @@ export default function BrowseTools() {
 
         {/* Header */}
         <div className="mb-6">
-          <h1 className="section-title mb-2">Browse Tools</h1>
+          <h1 className="section-title mb-2">Browse Tools Near You</h1>
           <div className="flex flex-wrap items-center gap-3 text-sm text-gray-500">
             {total > 0 && <span>{total} tools found</span>}
             {!loading && total > 0 && (
@@ -111,7 +111,7 @@ export default function BrowseTools() {
             <input
               type="text"
               className="input-field pl-11"
-              placeholder="Search tools, equipment..."
+              placeholder="Search drills, generators, ladders..."
               value={searchInput}
               onChange={(e) => setSearchInput(e.target.value)}
             />

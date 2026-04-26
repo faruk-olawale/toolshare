@@ -1,39 +1,57 @@
-import { useEffect } from 'react';
+import { useEffect, useRef } from 'react';
 import { useNavigate, useSearchParams } from 'react-router-dom';
 import { useAuth } from '../context/AuthContext';
-import toast from 'react-hot-toast';
 
+// Handles redirect back from Google OAuth.
+// New users → /welcome (onboarding)
+// Returning users → /dashboard
 export default function GoogleSuccess() {
-  const [searchParams] = useSearchParams();
-  const navigate = useNavigate();
-  const { login } = useAuth();   // ← uses the existing AuthContext, NOT googleLogin()
+  const [searchParams]    = useSearchParams();
+  const { login: ctxLogin, updateUser } = useAuth();
+  const navigate          = useNavigate();
+  const processed         = useRef(false);
 
   useEffect(() => {
-    const token = searchParams.get('token');
-    const userRaw = searchParams.get('user');
+    if (processed.current) return;
+    processed.current = true;
 
-    if (!token || !userRaw) {
-      toast.error('Google login failed. Please try again.');
-      return navigate('/login');
+    const token = searchParams.get('token');
+    const userParam = searchParams.get('user');
+
+    if (!token || !userParam) {
+      navigate('/login?error=google');
+      return;
     }
 
     try {
-      const user = JSON.parse(decodeURIComponent(userRaw));
-      // Store token manually since we're not going through login()
+      const user = JSON.parse(decodeURIComponent(userParam));
+
+      // Store token and update auth context
       localStorage.setItem('tsa_token', token);
-      // Reload the page so AuthContext.loadUser() picks up the new token
-      window.location.href = '/dashboard';
+      updateUser(user);
+
+      // Determine if this is a brand-new user
+      // Google OAuth users are created with a createdAt — if it's within
+      // the last 60 seconds, treat them as new and show onboarding
+      const isNewUser = user.createdAt
+        ? Date.now() - new Date(user.createdAt).getTime() < 60_000
+        : false;
+
+      if (isNewUser) {
+        navigate('/welcome');
+      } else {
+        navigate(user.role === 'admin' ? '/admin' : '/dashboard');
+      }
     } catch {
-      toast.error('Google login failed. Please try again.');
-      navigate('/login');
+      navigate('/login?error=google');
     }
-  }, []);
+  }, [searchParams, navigate, updateUser]);
 
   return (
     <div className="min-h-screen flex items-center justify-center">
       <div className="text-center">
-        <div className="w-10 h-10 border-4 border-[#1a5c3a] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
-        <p className="text-gray-500 text-sm">Completing sign-in...</p>
+        <div className="w-10 h-10 border-2 border-[#1a5c3a] border-t-transparent rounded-full animate-spin mx-auto mb-4" />
+        <p className="text-gray-500 text-sm">Signing you in...</p>
       </div>
     </div>
   );

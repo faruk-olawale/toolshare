@@ -9,16 +9,17 @@ export default function KYCBanner({ kyc }) {
     not_submitted: {
       bg: 'bg-[#eef6f1] border-[#a8d4bb]',
       icon: <Shield size={20} className="text-[#1a5c3a] flex-shrink-0 mt-0.5" />,
-      title: '⚠️ Verify Your Identity to Unlock Full Access',
-      message: 'You need to complete identity verification (KYC) before you can list tools or make bookings. It takes less than 2 minutes.',
-      btn: 'Complete Verification Now →',
+      title: '🪪 One quick step before you book',
+      message: 'Verify your identity to book or list tools. Takes under 2 minutes — just your ID and a selfie.',
+      btn: 'Verify now — it\'s quick →',
       btnStyle: 'bg-[#1a5c3a] hover:bg-[#154d30] text-white',
     },
     pending: {
+
       bg: 'bg-yellow-50 border-yellow-200',
       icon: <Clock size={20} className="text-yellow-500 flex-shrink-0 mt-0.5" />,
-      title: '🕐 Identity Verification Under Review',
-      message: 'Your documents are being reviewed. This usually takes less than 24 hours. You will receive an email once approved.',
+      title: '🕐 We\'re reviewing your documents',
+      message: 'Usually done within a few hours. We\'ll email you the moment you\'re approved.',
       btn: 'View KYC Status →',
       btnStyle: 'bg-yellow-500 hover:bg-yellow-600 text-white',
     },

@@ -22,7 +22,7 @@ export default function Login() {
     try {
       const data = await login(form.email, form.password);
       toast.success(`Welcome back, ${data.user.name.split(' ')[0]}! 👋`);
-      navigate(data.user.role === 'admin' ? '/admin' : '/dashboard');
+      navigate(data.redirect || (data.user?.type === 'admin' || data.user?.role === 'admin' ? '/admin' : '/dashboard'));
     } catch (err) {
       toast.error(err.response?.data?.message || 'Login failed.');
     } finally { setLoading(false); }
@@ -44,7 +44,7 @@ export default function Login() {
               <Wrench size={24} className="text-white" />
             </div>
             <h1 className="text-2xl font-display font-bold text-gray-900">Welcome Back</h1>
-            <p className="text-gray-500 text-sm mt-1">Sign in to your ToolShare account</p>
+            <p className="text-gray-500 text-sm mt-1">Welcome back — tools are waiting 🔧</p>
           </div>
 
           {oauthError && (
@@ -73,7 +73,7 @@ export default function Login() {
 
           <div className="flex items-center gap-3 mb-5">
             <div className="flex-1 h-px bg-gray-100" />
-            <span className="text-xs text-gray-400 font-medium">OR</span>
+            <span className="text-xs text-gray-400 font-medium">or sign in with email</span>
             <div className="flex-1 h-px bg-gray-100" />
           </div>
 
@@ -86,7 +86,7 @@ export default function Login() {
               <div className="flex items-center justify-between mb-1.5">
                 <label className="block text-sm font-medium text-gray-700">Password</label>
                 <Link to="/forgot-password" className="text-xs text-[#1a5c3a] hover:underline font-medium">
-                  Forgot password?
+                  Forgot your password?
                 </Link>
               </div>
               <div className="relative">
@@ -102,7 +102,7 @@ export default function Login() {
           </form>
 
           <p className="mt-6 text-center text-sm text-gray-500">
-            Don't have an account? <Link to="/register" className="text-[#1a5c3a] font-medium hover:underline">Create one free</Link>
+            New here? <Link to="/register" className="text-[#1a5c3a] font-medium hover:underline">Create a free account →</Link>
           </p>
         </div>
       </div>

@@ -153,7 +153,7 @@ function SkeletonRows({ count = 4 }) {
 
 // ── Main Dashboard ────────────────────────────────────────────────────────────
 export default function Dashboard() {
-  const { user } = useAuth();
+  const { user, can, upgradeListing } = useAuth();
   const [stats,       setStats]       = useState(null);
   const [kycStatus,   setKycStatus]   = useState(null);
   const [loading,     setLoading]     = useState(true);
@@ -239,7 +239,7 @@ export default function Dashboard() {
     return () => clearInterval(interval);
   }, [fetchAll]);
 
-  const isOwner     = user.role === 'owner';
+  const isOwner     = can.list;  // canList capability
   const kycApproved = kycStatus?.status === 'approved';
   const hour        = new Date().getHours();
   const greeting    = hour < 12 ? 'Good morning' : hour < 17 ? 'Good afternoon' : 'Good evening';
@@ -262,14 +262,14 @@ export default function Dashboard() {
     { label: 'Booking Requests',      to: '/booking-requests', icon: '📋', desc: `${stats?.pending || 0} pending approval` },
     { label: 'Payout Settings',       to: '/bank-details',     icon: '🏦', desc: 'Manage bank details' },
   ] : [
-    { label: kycApproved ? 'Browse Tools' : 'Complete KYC first', to: kycApproved ? '/tools' : '/kyc', icon: '🔍', desc: kycApproved ? 'Find equipment near you' : 'Required to book' },
+    { label: 'Browse Tools', to: '/tools', icon: '🔍', desc: 'Find equipment near you' },
     { label: 'My Bookings',      to: '/bookings', icon: '📋', desc: `${stats?.totalBookings || 0} total bookings` },
     { label: 'Explore Tools',    to: '/tools',    icon: '📂', desc: 'Construction, farming & more' },
     { label: 'Help Center',      to: '/help',     icon: '❓', desc: 'FAQs and guides' },
   ];
 
   return (
-    <div className="animate-fade-in max-w-7xl mx-auto w-full min-w-0 px-4 sm:px-6 lg:px-8">
+    <div className="animate-fade-in w-full max-w-6xl mx-auto min-w-0">
 
       {/* ── Header ── */}
       <div className="flex items-start justify-between mb-6">
@@ -313,6 +313,28 @@ export default function Dashboard() {
 
       {/* ── KYC Banner ── */}
       <KYCBanner kyc={kycStatus} />
+
+      {/* ── Upgrade to listing banner — shown to renters who haven't enabled listing ── */}
+      {!isOwner && !loading && kycStatus?.status !== 'pending' && (
+        <div className="flex items-center gap-4 bg-gray-900 rounded-2xl p-4 mb-6">
+          <div className="w-10 h-10 bg-white/10 rounded-xl flex items-center justify-center flex-shrink-0 text-xl">💰</div>
+          <div className="flex-1 min-w-0">
+            <p className="text-white text-[13px] font-semibold">Own tools sitting idle?</p>
+            <p className="text-gray-400 text-xs mt-0.5">Earn money from equipment you already own — it takes 5 minutes to list.</p>
+          </div>
+          <button
+            onClick={async () => {
+              try {
+                const data = await upgradeListing();
+                if (data.redirect) window.location.href = data.redirect;
+              } catch {}
+            }}
+            className="flex-shrink-0 bg-[#1a5c3a] hover:bg-[#154d30] text-white text-xs font-semibold px-4 py-2.5 rounded-xl transition-colors whitespace-nowrap"
+          >
+            Start Listing →
+          </button>
+        </div>
+      )}
 
       {/* ── Stat Cards ── */}
       <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6">

@@ -41,7 +41,7 @@ export default function ToolCard({ tool }) {
             </span>
           ) : (
             <span className="bg-[#1a5c3a]/90 backdrop-blur-sm text-xs font-semibold text-white px-2.5 py-1 rounded-full shadow-sm">
-              Available
+              ✓ Available
             </span>
           )}
         </div>
@@ -66,7 +66,7 @@ export default function ToolCard({ tool }) {
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-1 text-gray-500">
             <MapPin size={13} />
-            <span className="text-xs truncate max-w-[120px]">{tool.location}</span>
+            <span className="text-xs truncate max-w-[140px] font-medium">{tool.location}</span>
           </div>
           <div className="text-right">
             <span className={`font-bold text-lg ${unavailable ? 'text-gray-400' : 'text-[#1a5c3a]'}`}>
