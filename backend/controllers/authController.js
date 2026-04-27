@@ -1,5 +1,7 @@
+'use strict';
+
 const { validationResult } = require('express-validator');
-const User          = require('../models/User');
+const User              = require('../models/User');
 const { generateToken } = require('../utils/generateToken');
 const { sendEmail }     = require('../utils/sendEmail');
 
@@ -16,8 +18,6 @@ const register = async (req, res, next) => {
     if (exists)
       return res.status(409).json({ success: false, message: 'Email already registered.' });
 
-    // New users: canRent true, canList false, onboarding not complete
-    // Role defaults to 'renter' for legacy compat — will be synced by pre-save
     const user = await User.create({
       name, email, passwordHash: password, phone, location,
       type:               'user',
@@ -37,11 +37,10 @@ const register = async (req, res, next) => {
     }).catch(() => {});
 
     res.status(201).json({
-      success: true,
-      message: 'Account created!',
+      success:  true,
+      message:  'Account created!',
       token,
-      user:    user.toJSON(),
-      // Tell frontend to redirect to onboarding
+      user:     user.toJSON(),
       redirect: '/welcome',
     });
   } catch (error) { next(error); }
@@ -65,19 +64,15 @@ const login = async (req, res, next) => {
 
     const token = generateToken(user._id);
 
-    // Tell frontend where to send them:
-    // - Incomplete onboarding → /welcome
-    // - Admin → /admin
-    // - Otherwise → /dashboard
     let redirect = '/dashboard';
-    if (!user.onboardingComplete) redirect = '/welcome';
+    if (!user.onboardingComplete)                        redirect = '/welcome';
     else if (user.type === 'admin' || user.role === 'admin') redirect = '/admin';
 
     res.status(200).json({
       success: true,
       message: 'Login successful.',
       token,
-      user:     user.toJSON(),
+      user:    user.toJSON(),
       redirect,
     });
   } catch (error) { next(error); }
@@ -106,8 +101,7 @@ const updateProfile = async (req, res, next) => {
 
 // ── Complete onboarding ───────────────────────────────────────────────────────
 // PUT /api/auth/complete-onboarding
-// Called from the /welcome page after user picks rent or list.
-// intent: 'rent' | 'list'
+// Called once from /welcome after user picks rent or list.
 const completeOnboarding = async (req, res, next) => {
   try {
     const { intent } = req.body;
@@ -119,7 +113,6 @@ const completeOnboarding = async (req, res, next) => {
       });
     }
 
-    // Admins can't accidentally downgrade via this endpoint
     if (req.user.type === 'admin' || req.user.role === 'admin') {
       return res.status(403).json({
         success: false,
@@ -127,36 +120,33 @@ const completeOnboarding = async (req, res, next) => {
       });
     }
 
-    const update = {
-      onboardingComplete: true,
-      canRent:            true,                    // always true
-      canList:            intent === 'list',       // only if they chose to list
-      role:               intent === 'list' ? 'owner' : 'renter', // legacy sync
-    };
-
     const user = await User.findByIdAndUpdate(
       req.user._id,
-      { $set: update },
+      {
+        $set: {
+          onboardingComplete: true,
+          canRent:            true,
+          canList:            intent === 'list',
+          role:               intent === 'list' ? 'owner' : 'renter',
+        },
+      },
       { new: true, runValidators: true }
     ).select('-passwordHash');
 
-    const redirect = intent === 'list' ? '/kyc' : '/tools';
-
     res.status(200).json({
-      success: true,
-      message: intent === 'list'
+      success:  true,
+      message:  intent === 'list'
         ? 'Great! Verify your identity to start listing tools.'
         : 'Welcome! Browse tools available near you.',
       user,
-      redirect,
+      redirect: intent === 'list' ? '/kyc' : '/tools',
     });
   } catch (error) { next(error); }
 };
 
 // ── Upgrade to listing ────────────────────────────────────────────────────────
 // PUT /api/auth/upgrade-listing
-// Called from the dashboard "Start Listing Tools" CTA.
-// No intent needed — this is always an upgrade to canList.
+// Called from dashboard CTA — enables canList without requiring re-signup.
 const upgradeListing = async (req, res, next) => {
   try {
     if (req.user.type === 'admin' || req.user.role === 'admin') {
@@ -182,14 +172,46 @@ const upgradeListing = async (req, res, next) => {
     ).select('-passwordHash');
 
     res.status(200).json({
-      success: true,
-      message: 'Listing enabled! Complete identity verification to publish tools.',
+      success:  true,
+      message:  'Listing enabled! Complete identity verification to publish tools.',
       user,
       redirect: '/kyc',
     });
   } catch (error) { next(error); }
 };
 
+// ── Set active mode ───────────────────────────────────────────────────────────
+// PUT /api/auth/active-mode
+// UI preference only — does NOT affect capabilities or security.
+// Frontend calls this best-effort after updating localStorage.
+const setActiveMode = async (req, res, next) => {
+  try {
+    const { mode } = req.body;
+
+    if (!['renter', 'owner'].includes(mode)) {
+      return res.status(400).json({
+        success: false,
+        message: 'mode must be "renter" or "owner".',
+      });
+    }
+
+    // Prevent setting owner mode without listing capability
+    const hasListing = req.user.canList || req.user.role === 'owner' || req.user.type === 'admin';
+    if (mode === 'owner' && !hasListing) {
+      return res.status(403).json({
+        success: false,
+        message: 'You do not have listing capability.',
+      });
+    }
+
+    await User.findByIdAndUpdate(req.user._id, { activeMode: mode });
+
+    res.status(200).json({ success: true, message: `Mode set to ${mode}.` });
+  } catch (error) { next(error); }
+};
+
+// ── Exports ───────────────────────────────────────────────────────────────────
+// ALL functions must be declared above this line.
 module.exports = {
   register,
   login,
@@ -198,23 +220,4 @@ module.exports = {
   completeOnboarding,
   upgradeListing,
   setActiveMode,
-};
-
-// ── Set active mode ───────────────────────────────────────────────────────────
-// PUT /api/auth/active-mode
-// Lightweight preference save — does NOT affect capabilities or security.
-// Frontend calls this best-effort after localStorage update.
-const setActiveMode = async (req, res, next) => {
-  try {
-    const { mode } = req.body;
-    if (!['renter', 'owner'].includes(mode)) {
-      return res.status(400).json({ success: false, message: 'mode must be renter or owner.' });
-    }
-    // Validate capability — can't set owner mode without canList
-    if (mode === 'owner' && !req.user.canList && req.user.role !== 'owner' && req.user.type !== 'admin') {
-      return res.status(403).json({ success: false, message: 'You do not have listing capability.' });
-    }
-    await User.findByIdAndUpdate(req.user._id, { activeMode: mode });
-    res.status(200).json({ success: true, message: `Mode set to ${mode}.` });
-  } catch (error) { next(error); }
 };
