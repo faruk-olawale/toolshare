@@ -5,7 +5,7 @@ import toast from 'react-hot-toast';
 import { X, ImagePlus, Shield, FileText, CheckCircle } from 'lucide-react';
 
 const CATEGORIES = ['Construction', 'Agriculture', 'Electrical', 'Plumbing', 'Woodworking', 'Gardening', 'Transportation', 'Cleaning', 'Safety', 'Other'];
-const CITIES = ['Lagos', 'Abuja', 'Kano', 'Ibadan', 'Port Harcourt', 'Benin City', 'Maiduguri', 'Zaria', 'Aba', 'Jos', 'Ilorin', 'Enugu', 'Abeokuta', 'Onitsha', 'Warri', 'Kaduna', 'Calabar', 'Uyo', 'Owerri'];
+const CITIES = ['Malete', 'Ilorin', 'Lagos', 'Abuja', 'Kano', 'Ibadan', 'Port Harcourt', 'Benin City', 'Maiduguri', 'Zaria', 'Aba', 'Jos', 'Enugu', 'Abeokuta', 'Onitsha', 'Warri', 'Kaduna', 'Calabar', 'Uyo', 'Owerri'];
 
 export default function AddTool() {
   const navigate = useNavigate();
@@ -127,7 +127,7 @@ export default function AddTool() {
         {kycStatus === 'pending' && <p className="text-yellow-600 text-sm mb-4 bg-yellow-50 rounded-xl p-3">⏳ Your KYC is under review. You'll be notified once approved.</p>}
         {kycStatus === 'rejected' && <p className="text-red-600 text-sm mb-4 bg-red-50 rounded-xl p-3">❌ Verification was rejected. Please resubmit your documents.</p>}
         <Link to="/kyc" className="btn-primary w-full block text-center">
-          {kycStatus === 'pending' ? 'View KYC Status →' : 'Complete Verification →'}
+          {kycStatus === 'pending' ? 'Back to Dashboard →' : 'Complete Verification →'}
         </Link>
         <Link to="/dashboard" className="text-sm text-gray-400 hover:text-gray-600 mt-3 block">← Back to Dashboard</Link>
       </div>

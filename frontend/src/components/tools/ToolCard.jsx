@@ -64,9 +64,20 @@ export default function ToolCard({ tool }) {
         </p>
 
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-1 text-gray-500">
-            <MapPin size={13} />
-            <span className="text-xs truncate max-w-[140px] font-medium">{tool.location}</span>
+          <div className="flex flex-col gap-0.5">
+            <div className="flex items-center gap-1 text-gray-500">
+              <MapPin size={13} />
+              <span className="text-xs truncate max-w-[120px] font-medium">{tool.location}</span>
+            </div>
+            {/* Review count — shows social proof at browse level */}
+            {tool.reviewCount > 0 && (
+              <div className="flex items-center gap-1">
+                <span className="text-amber-400 text-xs">★</span>
+                <span className="text-xs text-gray-500 font-medium">
+                  {tool.averageRating?.toFixed(1)} ({tool.reviewCount})
+                </span>
+              </div>
+            )}
           </div>
           <div className="text-right">
             <span className={`font-bold text-lg ${unavailable ? 'text-gray-400' : 'text-[#1a5c3a]'}`}>
@@ -83,7 +94,13 @@ export default function ToolCard({ tool }) {
               <div className="w-6 h-6 bg-gradient-to-br from-[#6db591] to-[#3d9166] rounded-full flex items-center justify-center flex-shrink-0">
                 <span className="text-white text-xs font-bold">{tool.ownerId.name.charAt(0)}</span>
               </div>
-              <span className="text-xs text-gray-500">{tool.ownerId.name}</span>
+              <span className="text-xs text-gray-500 truncate max-w-[100px]">{tool.ownerId.name}</span>
+              {/* Verified badge — shows if owner passed KYC */}
+              {tool.ownerId.kyc?.status === 'approved' && (
+                <span className="text-[9px] bg-[#eef6f1] text-[#1a5c3a] border border-[#c0dece] font-semibold px-1.5 py-0.5 rounded-full flex-shrink-0">
+                  ✓ Verified
+                </span>
+              )}
             </div>
             {/* Inline CTA */}
             {unavailable ? (

@@ -61,7 +61,7 @@ function ConfirmModal({ tool, booking, totalDays, totalCost, onConfirm, onClose,
 
 export default function ToolDetail() {
   const { id } = useParams();
-  const { user } = useAuth();
+  const { user, can } = useAuth();
   const navigate = useNavigate();
   const [tool, setTool]               = useState(null);
   const [loading, setLoading]         = useState(true);
@@ -73,7 +73,7 @@ export default function ToolDetail() {
   const [avgRating, setAvgRating]     = useState(null);
   const [kycStatus, setKycStatus]     = useState(null);
   const [bookedRanges, setBookedRanges] = useState([]);
-  const [showCalendar, setShowCalendar] = useState(false);
+  const [showCalendar, setShowCalendar] = useState(true);
 
   useEffect(() => {
     api.get(`/tools/${id}`)
@@ -102,7 +102,7 @@ export default function ToolDetail() {
       toast.error('Please sign in to book this tool.');
       return navigate('/login');
     }
-    if (user.role !== 'renter') return toast.error('Only renters can book tools.');
+    if (!can.rent) return toast.error('Switch to Renter Mode to book tools.');
     if (kycStatus !== 'approved') {
       toast.error('Complete identity verification (KYC) before booking.');
       return navigate('/kyc');
@@ -115,10 +115,15 @@ export default function ToolDetail() {
   const handleBookConfirm = async () => {
     setSubmitting(true);
     try {
-      await api.post('/bookings', { toolId: id, ...booking });
-      toast.success('Booking request sent! The owner will respond soon. 📩');
+      const { data } = await api.post('/bookings', { toolId: id, ...booking });
       setShowConfirm(false);
-      navigate('/bookings');
+      navigate('/booking/success', {
+        state: {
+          booking:   data.booking,
+          toolName:  tool.name,
+          ownerName: tool.ownerId?.name || 'the owner',
+        },
+      });
     } catch (err) {
       toast.error(err.response?.data?.message || 'Booking failed.');
     } finally {
@@ -248,7 +253,14 @@ export default function ToolDetail() {
                     <span className="text-white text-2xl font-bold">{tool.ownerId.name?.charAt(0)}</span>
                   </div>
                   <div className="flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
                     <p className="font-semibold text-gray-900">{tool.ownerId.name}</p>
+                    {tool.ownerId.kyc?.status === 'approved' && (
+                      <span className="inline-flex items-center gap-1 text-[10px] bg-[#eef6f1] text-[#1a5c3a] border border-[#c0dece] font-semibold px-2 py-0.5 rounded-full">
+                        ✓ KYC Verified
+                      </span>
+                    )}
+                  </div>
                     <div className="flex flex-wrap gap-4 mt-2">
                       {tool.ownerId.location && (
                         <div className="flex items-center gap-1 text-sm text-gray-500">
@@ -268,7 +280,7 @@ export default function ToolDetail() {
                       )}
                     </div>
                     {/* Message owner button for logged-in renters */}
-                    {user && user.role === 'renter' && (
+                    {user && can?.rent && (
                       <Link
                         to={`/messages?userId=${tool.ownerId._id}`}
                         className="inline-flex items-center gap-2 mt-3 text-sm text-[#1a5c3a] hover:underline font-medium"
@@ -306,6 +318,49 @@ export default function ToolDetail() {
               />
             </div>
           </div>
+        </div>
+
+        {/* ── Safety FAQ — builds trust before reviews ── */}
+        <div className="card mt-8 overflow-hidden">
+          <details className="group">
+            <summary className="flex items-center justify-between p-5 cursor-pointer list-none">
+              <div className="flex items-center gap-3">
+                <div className="w-9 h-9 bg-[#eef6f1] rounded-xl flex items-center justify-center flex-shrink-0">
+                  <span className="text-base">🛡️</span>
+                </div>
+                <div>
+                  <p className="text-[13px] font-semibold text-gray-900">Your protection on ToolShare</p>
+                  <p className="text-[11px] text-gray-400">What happens if something goes wrong</p>
+                </div>
+              </div>
+              <span className="text-gray-400 group-open:rotate-180 transition-transform text-lg">⌄</span>
+            </summary>
+            <div className="px-5 pb-5 border-t border-gray-50 space-y-4 pt-4">
+              {[
+                {
+                  q: "What if the tool doesn't show up?",
+                  a: "Your payment stays in escrow until you confirm receipt. If the tool never arrives, you get a full refund — no questions asked.",
+                },
+                {
+                  q: "What if the tool is broken or not as described?",
+                  a: "Report it within 24 hours of pickup. Our team will review and refund your deposit if the issue is valid.",
+                },
+                {
+                  q: "What if the owner stops responding?",
+                  a: "Contact our support team on WhatsApp. We'll step in and resolve it within 48 hours.",
+                },
+                {
+                  q: "Is my money safe before approval?",
+                  a: "Yes. You don't pay anything until the owner approves your booking request. Paystack processes all payments securely.",
+                },
+              ].map(({ q, a }) => (
+                <div key={q} className="pb-4 border-b border-gray-50 last:border-0 last:pb-0">
+                  <p className="text-[13px] font-semibold text-gray-800 mb-1">{q}</p>
+                  <p className="text-[12px] text-gray-500 leading-relaxed">{a}</p>
+                </div>
+              ))}
+            </div>
+          </details>
         </div>
 
         {/* ── Reviews — full width below grid ── */}
@@ -348,7 +403,7 @@ function BookingCard({ tool, user, kycStatus, booking, setBooking, bookedRanges,
         </div>
       ) : user?.role === 'owner' ? (
         <div className="bg-yellow-50 border border-yellow-100 rounded-xl p-4 text-center">
-          <p className="text-yellow-700 text-sm font-medium">Owners can't book tools. Switch to a renter account to book.</p>
+          <p className="text-yellow-700 text-sm font-medium">Switch to Renter Mode from your profile menu to book tools.</p>
         </div>
       ) : (
         <>
@@ -455,9 +510,19 @@ function BookingCard({ tool, user, kycStatus, booking, setBooking, bookedRanges,
         </>
       )}
 
-      <div className="mt-4 flex items-start gap-2 bg-gray-50 rounded-xl p-3">
-        <CheckCircle size={14} className="text-green-500 flex-shrink-0 mt-0.5" />
-        <p className="text-xs text-gray-500">Payment is only required after the owner approves your booking request.</p>
+      <div className="mt-4 bg-gray-50 rounded-xl p-4 space-y-2">
+        <div className="flex items-start gap-2">
+          <CheckCircle size={13} className="text-green-500 flex-shrink-0 mt-0.5" />
+          <p className="text-xs text-gray-500">Pay only after the owner approves — not before.</p>
+        </div>
+        <div className="flex items-start gap-2">
+          <CheckCircle size={13} className="text-green-500 flex-shrink-0 mt-0.5" />
+          <p className="text-xs text-gray-500">Your money is held in escrow until you confirm receipt.</p>
+        </div>
+        <div className="flex items-start gap-2">
+          <CheckCircle size={13} className="text-green-500 flex-shrink-0 mt-0.5" />
+          <p className="text-xs text-gray-500">All owners are KYC verified. Disputes are handled by our team.</p>
+        </div>
       </div>
     </div>
   );
