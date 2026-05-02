@@ -4,7 +4,7 @@ import Navbar        from './components/layout/Navbar';
 import Footer        from './components/layout/Footer';
 import LoadingScreen from './components/ui/LoadingScreen';
 
-// Pages
+// ── Pages ─────────────────────────────────────────────────────────────────────
 import Landing         from './pages/Landing';
 import Login           from './pages/Login';
 import Register        from './pages/Register';
@@ -40,14 +40,11 @@ const PrivateRoute = ({ children, capability }) => {
 
   if (loading) return <LoadingScreen />;
   if (!user)   return <Navigate to="/login" replace />;
-
-  // Redirect to onboarding if not completed (except for /welcome itself)
   if (needsOnboarding) return <Navigate to="/welcome" replace />;
 
-  // Capability check
-  if (capability === 'canList'  && !can.list)  return <Navigate to="/dashboard" replace />;
-  if (capability === 'canRent'  && !can.rent)  return <Navigate to="/dashboard" replace />;
-  if (capability === 'admin'    && !can.admin) return <Navigate to="/dashboard" replace />;
+  if (capability === 'canList' && !can.list)  return <Navigate to="/dashboard" replace />;
+  if (capability === 'canRent' && !can.rent)  return <Navigate to="/dashboard" replace />;
+  if (capability === 'admin'   && !can.admin) return <Navigate to="/dashboard" replace />;
 
   return children;
 };
@@ -99,38 +96,34 @@ export default function App() {
         <Route path="/safety"    element={<Safety />} />
         <Route path="/contact"   element={<Contact />} />
 
-        {/* ── Auth pages (redirect logged-in users) ── */}
+        {/* ── Auth (redirect logged-in users away) ── */}
         <Route path="/login"    element={<PublicRoute><Login /></PublicRoute>} />
         <Route path="/register" element={<PublicRoute><Register /></PublicRoute>} />
 
-        {/* ── OAuth ── */}
+        {/* ── OAuth callback ── */}
         <Route path="/auth/google/success" element={<GoogleSuccess />} />
 
-        {/* ── Onboarding (fullscreen, must be logged in) ── */}
-        <Route path="/welcome" element={
-          // PrivateRoute without needsOnboarding check to avoid redirect loop
-          <WelcomeRoute><Welcome /></WelcomeRoute>
-        } />
+        {/* ── Onboarding — fullscreen, login required, no onboarding redirect ── */}
+        <Route path="/welcome" element={<WelcomeRoute><Welcome /></WelcomeRoute>} />
 
         {/* ── Shared private routes ── */}
-        <Route path="/dashboard"     element={<PrivateRoute><Dashboard /></PrivateRoute>} />
-        <Route path="/kyc"           element={<PrivateRoute><KYCVerification /></PrivateRoute>} />
-        <Route path="/notifications" element={<PrivateRoute><Notifications /></PrivateRoute>} />
+        <Route path="/dashboard" element={<PrivateRoute><Dashboard /></PrivateRoute>} />
+        <Route path="/kyc"       element={<PrivateRoute><KYCVerification /></PrivateRoute>} />
+        <Route path="/messages"  element={<PrivateRoute><MessageCenter /></PrivateRoute>} />
 
-        {/* ── Booking success confirmation ── */}
+        {/* /notifications → redirect to /messages (Notifications page does not exist) */}
+        <Route path="/notifications" element={<Navigate to="/messages" replace />} />
+
+        {/* ── Booking ── */}
         <Route path="/booking/success" element={<PrivateRoute><BookingSuccess /></PrivateRoute>} />
+        <Route path="/bookings"        element={<PrivateRoute capability="canRent"><MyBookings /></PrivateRoute>} />
 
-        {/* ── Renter capability required ── */}
-        <Route path="/bookings" element={
-          <PrivateRoute capability="canRent"><MyBookings /></PrivateRoute>
-        } />
-
-        {/* ── Listing capability required ── */}
-        <Route path="/tools/new"      element={<PrivateRoute capability="canList"><AddTool /></PrivateRoute>} />
-        <Route path="/tools/:id/edit" element={<PrivateRoute capability="canList"><EditTool /></PrivateRoute>} />
-        <Route path="/my-tools"       element={<PrivateRoute capability="canList"><MyTools /></PrivateRoute>} />
+        {/* ── Owner — listing capability required ── */}
+        <Route path="/tools/new"        element={<PrivateRoute capability="canList"><AddTool /></PrivateRoute>} />
+        <Route path="/tools/:id/edit"   element={<PrivateRoute capability="canList"><EditTool /></PrivateRoute>} />
+        <Route path="/my-tools"         element={<PrivateRoute capability="canList"><MyTools /></PrivateRoute>} />
         <Route path="/booking-requests" element={<PrivateRoute capability="canList"><OwnerBookings /></PrivateRoute>} />
-        <Route path="/bank-details"   element={<PrivateRoute capability="canList"><BankDetails /></PrivateRoute>} />
+        <Route path="/bank-details"     element={<PrivateRoute capability="canList"><BankDetails /></PrivateRoute>} />
 
         {/* ── Admin ── */}
         <Route path="/admin" element={<PrivateRoute capability="admin"><AdminDashboard /></PrivateRoute>} />
@@ -143,8 +136,8 @@ export default function App() {
   );
 }
 
-// WelcomeRoute: must be logged in, but doesn't redirect if onboarding incomplete
-// (prevents infinite redirect loop between /welcome and itself)
+// WelcomeRoute: logged in required, but does NOT check needsOnboarding
+// — prevents infinite redirect loop (/welcome → needsOnboarding → /welcome)
 function WelcomeRoute({ children }) {
   const { user, loading } = useAuth();
   if (loading) return <LoadingScreen />;
